@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zenpho — Master Code with Serenity & Focus</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            zenDark: {
+              950: '#070a10',
+              900: '#090d16',
+              850: '#0d1320',
+              800: '#111927',
+              700: '#1e293b',
+              600: '#334155'
+            },
+            zenCyan: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2'
+            },
+            zenEmerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669'
+            },
+            zenFlame: {
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c'
+            }
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 25px -5px rgba(6, 182, 212, 0.25)',
+            'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.25)',
+            'glow-flame': '0 0 25px -5px rgba(249, 115, 22, 0.3)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Subtle Animated Glow Gradient */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    .animate-pulse-glow {
+      animation: pulseGlow 8s infinite ease-in-out;
+    }
+
+    /* Heatmap Square */
+    .heatmap-cell {
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.3);
+      z-index: 10;
+    }
+
+    /* Glass effect */
+    .zen-glass {
+      background: rgba(13, 19, 32, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .zen-card {
+      background: #0d1320;
+      border: 1px solid #1e293b;
+    }
+  </style>
+</head>
+
+<body class="bg-zenDark-950 text-slate-200 font-sans antialiased min-h-screen flex flex-col selection:bg-zenEmerald-500/20 selection:text-zenEmerald-400">
+
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <header class="sticky top-0 z-40 w-full zen-glass border-b border-zenDark-700/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Left: Logo & Brand -->
+      <div class="flex items-center gap-6">
+        <button onclick="navigateTo('landing')" class="flex items-center gap-3 group focus:outline-none">
+          <div class="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-zenEmerald-500 to-zenCyan-500 p-[1.5px] shadow-glow-cyan transition-transform group-hover:scale-105">
+            <div class="w-full h-full bg-zenDark-950 rounded-[10px] flex items-center justify-center">
+              <span class="text-zenCyan-400 text-lg font-bold font-mono group-hover:rotate-12 transition-transform duration-300">禅</span>
+            </div>
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="font-extrabold text-xl tracking-tight text-white flex items-center gap-1">
+              zen<span class="text-transparent bg-clip-text bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400">pho</span>
+            </span>
+          </div>
+        </button>
+
+        <!-- Main Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-1 pl-4 border-l border-zenDark-700/60" id="mainNavLinks">
+          <button onclick="navigateTo('landing')" data-nav="landing" class="nav-item px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-zenDark-800 transition">
+            Explore
+          </button>
+          <button onclick="requireAuth('dashboard')" data-nav="dashboard" class="nav-item px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-zenDark-800 transition">
+            Dashboard
+          </button>
+          <button onclick="requireAuth('learn')" data-nav="learn" class="nav-item px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-zenDark-800 transition">
+            Learning Paths
+          </button>
+          <button onclick="requireAuth('profile')" data-nav="profile" class="nav-item px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-zenDark-800 transition">
+            Profile & Ranks
+          </button>
+        </nav>
+      </div>
+
+      <!-- Right: Gamification HUD & Auth Controls -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        
+        <!-- Gamification HUD (Visible when Logged In) -->
+        <div id="loggedHud" class="hidden items-center gap-3">
+          
+          <!-- Streak Indicator -->
+          <div class="relative group cursor-pointer" onclick="openStreakModal()" title="Current Streak">
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zenFlame-500/10 border border-zenFlame-500/30 text-zenFlame-400 hover:bg-zenFlame-500/20 transition">
+              <i data-lucide="flame" class="w-4 h-4 fill-zenFlame-500 text-zenFlame-500 animate-bounce"></i>
+              <span id="navStreakCount" class="text-sm font-bold font-mono">7</span>
+              <span class="text-xs text-slate-400 hidden sm:inline">d</span>
+            </div>
+            <!-- Streak hover mini badge -->
+            <div class="absolute top-full right-0 mt-2 hidden group-hover:flex flex-col w-48 p-2.5 bg-zenDark-850 border border-zenDark-700 rounded-lg shadow-xl text-xs z-50 pointer-events-none">
+              <span class="font-bold text-white flex items-center gap-1">🔥 7-Day Hot Streak!</span>
+              <span class="text-slate-400 mt-1">Complete today's challenge to maintain your flow.</span>
+            </div>
+          </div>
+
+          <!-- XP Level Progress Badge -->
+          <div class="relative group cursor-pointer hidden sm:flex items-center gap-2.5 px-3 py-1 rounded-full bg-zenDark-850 border border-zenDark-700 hover:border-zenCyan-500/40 transition" onclick="triggerLevelBonus()">
+            <div class="flex items-center gap-1 text-xs font-semibold text-zenCyan-400">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-zenCyan-400 fill-zenCyan-400"></i>
+              <span>Lvl <span id="navLevelNumber">14</span></span>
+            </div>
+            <div class="w-20 bg-zenDark-700 h-1.5 rounded-full overflow-hidden">
+              <div id="navXpBar" class="bg-gradient-to-r from-zenCyan-500 to-zenEmerald-400 h-full rounded-full transition-all duration-500" style="width: 78%;"></div>
+            </div>
+            <span id="navXpText" class="text-[11px] font-mono text-slate-400">3,450 XP</span>
+          </div>
+
+          <!-- Quick Practice Icon -->
+          <button onclick="triggerQuickPractice()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-zenDark-800 transition" title="Daily Zen Practice">
+            <i data-lucide="sparkles" class="w-4 h-4 text-zenEmerald-400"></i>
+          </button>
+
+          <!-- User Avatar Menu Button -->
+          <button onclick="navigateTo('profile')" class="relative flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-zenCyan-500/50 transition">
+            <img class="w-8 h-8 rounded-full border border-zenEmerald-500/50 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Avatar" />
+            <span class="w-2.5 h-2.5 bg-zenEmerald-500 border-2 border-zenDark-950 rounded-full absolute bottom-0 right-0"></span>
+          </button>
+          
+          <!-- Log Out quick toggle -->
+          <button onclick="toggleMockAuth(false)" class="p-2 text-slate-400 hover:text-rose-400 transition" title="Log Out">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Auth CTA (Visible when Logged Out) -->
+        <div id="unloggedHud" class="flex items-center gap-2.5">
+          <button onclick="openAuthModal('signin')" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-zenDark-800 transition">
+            Sign In
+          </button>
+          <button onclick="openAuthModal('signup')" class="text-sm font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 px-4 py-1.5 rounded-lg shadow-glow-cyan transition">
+            Get Started
+          </button>
+        </div>
+
+        <!-- Mobile Menu Trigger -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-zenDark-800">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation -->
+    <div id="mobileMenu" class="hidden md:hidden px-4 pt-2 pb-4 border-t border-zenDark-700 bg-zenDark-900 flex flex-col gap-2">
+      <button onclick="navigateTo('landing'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Explore</button>
+      <button onclick="requireAuth('dashboard'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Dashboard</button>
+      <button onclick="requireAuth('learn'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Learning Paths</button>
+      <button onclick="requireAuth('profile'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Profile & Ranks</button>
+    </div>
+  </header>
+
+  <main class="flex-grow flex flex-col relative overflow-hidden" id="appMain">
+
+    <!-- ==============================================
+         VIEW 1: LANDING PAGE (MARKETING)
+         ============================================== -->
+    <section id="view-landing" class="view-panel active flex flex-col">
+      
+      <!-- Background Ambient Glow -->
+      <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-zenCyan-500/15 via-zenEmerald-500/10 to-transparent blur-3xl pointer-events-none rounded-full animate-pulse-glow"></div>
+
+      <!-- Hero Section -->
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zenEmerald-500/10 border border-zenEmerald-500/25 text-zenEmerald-400 text-xs font-semibold mb-6">
+          <span class="flex h-2 w-2 rounded-full bg-zenEmerald-400 animate-ping"></span>
+          Zenpho 2.0 is live • Pure Focus Coding Architecture
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.1]">
+          Master Code with <br/>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-zenEmerald-400 via-zenCyan-300 to-teal-200">
+            Serenity & Focus
+          </span>
+        </h1>
+
+        <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+          Say goodbye to brutal grind fatigue. Progress through curated algorithmic skill trees, unlock zen ranks, and retain problem-solving patterns that stick.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button onclick="handleHeroCTA()" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 shadow-glow-emerald flex items-center justify-center gap-2 transition group">
+            <span>Start Training Free</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </button>
+          
+          <button onclick="navigateTo('learn')" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-semibold text-slate-300 bg-zenDark-850 hover:bg-zenDark-800 border border-zenDark-700 hover:border-zenDark-600 transition flex items-center justify-center gap-2">
+            <i data-lucide="compass" class="w-4 h-4 text-zenCyan-400"></i>
+            <span>Explore Learning Paths</span>
+          </button>
+        </div>
+
+        <!-- Metric highlights -->
+        <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-y border-zenDark-700/60 py-6 max-w-4xl mx-auto">
+          <div>
+            <div class="text-2xl sm:text-3xl font-bold font-mono text-white">450+</div>
+            <div class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Curated Katas</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-bold font-mono text-zenEmerald-400">94.2%</div>
+            <div class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Interview Retention</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-bold font-mono text-zenCyan-400">18 Ranks</div>
+            <div class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Mastery Belt System</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-bold font-mono text-zenFlame-400">120K+</div>
+            <div class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Daily Streaks Kept</div>
+          </div>
+        </div>
+
+        <!-- Interactive Terminal / Gamified Milestone Preview -->
+        <div class="mt-12 text-left max-w-4xl mx-auto rounded-2xl overflow-hidden zen-card shadow-2xl border border-zenDark-700">
+          <div class="bg-zenDark-900 px-4 py-3 flex items-center justify-between border-b border-zenDark-700">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+              <span class="ml-2 text-xs font-mono text-slate-400">zenpho_core // two_pointers_meditation.py</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] px-2 py-0.5 rounded bg-zenEmerald-500/10 text-zenEmerald-400 font-mono">XP +120</span>
+              <span class="text-[11px] text-slate-400 font-mono">Python 3.12</span>
+            </div>
+          </div>
+          <div class="p-6 font-mono text-sm leading-relaxed overflow-x-auto bg-zenDark-950/70">
+            <p class="text-slate-500"># Step 4 of 8: Find two elements matching the serene target sum</p>
+            <p><span class="text-purple-400">def</span> <span class="text-blue-400">balanced_pair</span>(elements: <span class="text-amber-300">list[int]</span>, harmony_target: <span class="text-amber-300">int</span>) -&gt; <span class="text-amber-300">tuple[int, int]</span>:</p>
+            <p class="pl-4 text-slate-300">left, right = <span class="text-zenCyan-400">0</span>, <span class="text-purple-400">len</span>(elements) - <span class="text-zenCyan-400">1</span></p>
+            <p class="pl-4 text-purple-400">while <span class="text-slate-300">left &lt; right:</span></p>
+            <p class="pl-8 text-slate-300">current_sum = elements[left] + elements[right]</p>
+            <p class="pl-8 text-purple-400">if <span class="text-slate-300">current_sum == harmony_target:</span></p>
+            <p class="pl-12 text-zenEmerald-400 font-semibold">return (left, right)  # Flow state achieved ✨</p>
+            <p class="pl-8 text-purple-400">elif <span class="text-slate-300">current_sum &lt; harmony_target:</span></p>
+            <p class="pl-12 text-slate-300">left += <span class="text-zenCyan-400">1</span></p>
+            <p class="pl-8 text-purple-400">else:</p>
+            <p class="pl-12 text-slate-300">right -= <span class="text-zenCyan-400">1</span></p>
+            <p class="pl-4 text-purple-400">return <span class="text-slate-400">(-1, -1)</span></p>
+          </div>
+          <div class="bg-zenDark-900/90 px-6 py-3 flex items-center justify-between border-t border-zenDark-700 text-xs">
+            <div class="flex items-center gap-2 text-zenEmerald-400">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>Optimal Time Complexity: O(N) &bull; Space: O(1)</span>
+            </div>
+            <button onclick="demoInstantSolve()" class="px-3 py-1 rounded bg-zenDark-800 hover:bg-zenDark-700 text-slate-200 border border-zenDark-700 transition">
+              Simulate Run
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 border-t border-zenDark-700/60">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold text-white">Engineered for Deliberate Mastery</h2>
+          <p class="text-slate-400 mt-2 text-sm max-w-lg mx-auto">Traditional platforms overwhelm you with unstructured lists. Zenpho constructs focused, calm paths to clarity.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Feature 1 -->
+          <div class="zen-card p-6 rounded-2xl relative group hover:border-zenCyan-500/50 transition">
+            <div class="w-12 h-12 rounded-xl bg-zenCyan-500/10 border border-zenCyan-500/20 flex items-center justify-center text-zenCyan-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="git-branch" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Visual Skill Trees</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              No guesswork. Follow prerequisite-based branching roadmaps from foundational two pointers up to graph topological traversals.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="zen-card p-6 rounded-2xl relative group hover:border-zenEmerald-500/50 transition">
+            <div class="w-12 h-12 rounded-xl bg-zenEmerald-500/10 border border-zenEmerald-500/20 flex items-center justify-center text-zenEmerald-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="flame" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Gamified Discipline</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Earn XP for clean submissions, maintain your daily serenity streak, unlock rare title belts, and ascend the global Zen leaderboard.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="zen-card p-6 rounded-2xl relative group hover:border-purple-500/50 transition">
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="coffee" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Anti-Burnout Cadence</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Intelligent spaced repetition prompts problems right before pattern decay, keeping memory fresh without demanding 8-hour marathon sessions.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==============================================
+         VIEW 2: DASHBOARD (STUDENT COCKPIT)
+         ============================================== -->
+    <section id="view-dashboard" class="view-panel hidden flex-col max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      
+      <!-- Greeting and Quick XP Banner -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zenDark-700/70">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-bold text-white">Welcome back, <span class="text-transparent bg-clip-text bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400" id="dashUsername">SereneCoder</span></h1>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded bg-zenEmerald-500/10 text-zenEmerald-400 border border-zenEmerald-500/20 font-mono">ZENITH-14</span>
+          </div>
+          <p class="text-slate-400 text-sm mt-1">Your focus momentum is strong. You are in the top 4% of active problem solvers this week.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="claimDailyCheckIn()" id="dailyCheckInBtn" class="px-4 py-2 rounded-xl bg-zenDark-850 hover:bg-zenDark-800 border border-zenEmerald-500/40 text-zenEmerald-400 text-sm font-semibold flex items-center gap-2 shadow-glow-emerald transition">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Claim Daily +50 XP</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Dashboard Stat Cards (HUD) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        
+        <!-- Stat: Streak Card -->
+        <div class="zen-card p-5 rounded-xl border border-zenDark-700 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Flow Streak</span>
+            <div class="p-2 bg-zenFlame-500/10 rounded-lg text-zenFlame-400">
+              <i data-lucide="flame" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-bold text-white font-mono" id="dashStreakValue">7</span>
+            <span class="text-xs text-zenFlame-400 font-medium">Days on Fire</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-zenDark-800 pt-2.5">
+            <span>Next milestone: 10d</span>
+            <span class="text-zenCyan-400 font-mono">+150 XP</span>
+          </div>
+        </div>
+
+        <!-- Stat: Global Rank -->
+        <div class="zen-card p-5 rounded-xl border border-zenDark-700">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Zenith Tier</span>
+            <div class="p-2 bg-zenCyan-500/10 rounded-lg text-zenCyan-400">
+              <i data-lucide="award" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-bold text-white font-mono">#42</span>
+            <span class="text-xs text-zenCyan-400 font-medium">Grandmaster</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-zenDark-800 pt-2.5">
+            <span>Top 1.2% Worldwide</span>
+            <span class="text-zenEmerald-400">▲ 4 Ranks</span>
+          </div>
+        </div>
+
+        <!-- Stat: Total Solved -->
+        <div class="zen-card p-5 rounded-xl border border-zenDark-700">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Katas Conquered</span>
+            <div class="p-2 bg-zenEmerald-500/10 rounded-lg text-zenEmerald-400">
+              <i data-lucide="code-2" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-bold text-white font-mono" id="dashKatasSolved">184</span>
+            <span class="text-xs text-slate-400">/ 450 total</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-zenDark-800 pt-2.5">
+            <span class="text-emerald-400">40.8% coverage</span>
+            <span class="text-slate-400">8 today</span>
+          </div>
+        </div>
+
+        <!-- Stat: Active XP Level -->
+        <div class="zen-card p-5 rounded-xl border border-zenDark-700">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Level Progression</span>
+            <div class="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+              <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-bold text-white font-mono" id="dashLevelVal">14</span>
+            <span class="text-xs text-purple-400 font-medium">Zen Master</span>
+          </div>
+          <div class="mt-3 w-full bg-zenDark-800 h-1.5 rounded-full overflow-hidden">
+            <div id="dashXpProgress" class="bg-gradient-to-r from-purple-500 to-zenCyan-400 h-full rounded-full transition-all duration-500" style="width: 78%;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Main Dashboard Content 2-Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        
+        <!-- Left 2 Cols: Daily Challenge & Current Path Progress -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Daily Zen Challenge Banner Card -->
+          <div class="zen-card rounded-2xl p-6 border border-zenCyan-500/30 bg-gradient-to-br from-zenDark-850 to-zenDark-900 relative overflow-hidden shadow-glow-cyan/20">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zenCyan-500/20 text-zenCyan-400 border border-zenCyan-500/30 uppercase tracking-wide">
+                  Daily Challenge #284
+                </span>
+                <span class="text-xs text-slate-400 font-mono">Expires in 07h 42m</span>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
+                Medium &bull; 62% Acceptance
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-bold text-white hover:text-zenCyan-300 transition cursor-pointer">
+                Minimum Window Substring Harmony
+              </h3>
+              <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+                Given two strings <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zenDark-800 text-slate-300">s</code> and <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zenDark-800 text-slate-300">t</code>, return the minimum substring window of <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zenDark-800 text-slate-300">s</code> such that every character in <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-zenDark-800 text-slate-300">t</code> (including duplicates) is included in the window.
+              </p>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-zenDark-700/60">
+              <div class="flex items-center gap-2 text-xs text-slate-400">
+                <span class="px-2 py-1 rounded bg-zenDark-800 text-slate-300">Sliding Window</span>
+                <span class="px-2 py-1 rounded bg-zenDark-800 text-slate-300">Hash Table</span>
+                <span class="text-zenEmerald-400 font-semibold font-mono">+120 XP Bounty</span>
+              </div>
+
+              <button onclick="solveChallengeAction()" id="solveChallengeBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-zenEmerald-500 to-zenCyan-500 text-zenDark-950 font-semibold text-sm hover:brightness-110 shadow-glow-cyan flex items-center gap-2 transition">
+                <i data-lucide="play" class="w-4 h-4 fill-zenDark-950"></i>
+                <span>Solve Challenge</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- In-Progress Learning Path Snapshot -->
+          <div class="zen-card rounded-2xl p-6 border border-zenDark-700">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-white">Active Roadmap</h3>
+                <p class="text-xs text-slate-400">Zenith 75: High-Yield Algorithmic Patterns</p>
+              </div>
+              <button onclick="navigateTo('learn')" class="text-xs text-zenCyan-400 hover:text-zenCyan-300 font-semibold flex items-center gap-1">
+                <span>View Full Tree</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Path Progress Bar -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs font-medium">
+                <span class="text-slate-300">Milestone 3 of 6: Sliding Window & Pointers</span>
+                <span class="text-zenEmerald-400 font-mono">18 / 25 Solved (72%)</span>
+              </div>
+              <div class="w-full bg-zenDark-800 h-2.5 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-zenCyan-500 to-zenEmerald-400 h-full rounded-full" style="width: 72%;"></div>
+              </div>
+            </div>
+
+            <!-- Step items -->
+            <div class="mt-5 space-y-3">
+              <div class="p-3 rounded-xl bg-zenDark-850 border border-zenEmerald-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg bg-zenEmerald-500/20 text-zenEmerald-400 flex items-center justify-center text-xs">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-white">Container With Most Water</h4>
+                    <p class="text-[11px] text-slate-400">Two Pointers &bull; Completed yesterday</p>
+                  </div>
+                </div>
+                <span class="text-xs font-mono text-zenEmerald-400">+100 XP</span>
+              </div>
+
+              <div class="p-3 rounded-xl bg-zenDark-800/60 border border-zenCyan-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg bg-zenCyan-500/20 text-zenCyan-400 flex items-center justify-center text-xs font-bold font-mono">
+                    3.4
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-white">Longest Repeating Character Replacement</h4>
+                    <p class="text-[11px] text-slate-400">Sliding Window &bull; Up Next</p>
+                  </div>
+                </div>
+                <button onclick="demoInstantSolve('Longest Repeating Character Replacement', 110)" class="text-xs font-medium px-3 py-1 rounded bg-zenCyan-500 text-zenDark-950 hover:brightness-110">
+                  Enter
+                </button>
+              </div>
+
+              <div class="p-3 rounded-xl bg-zenDark-850/40 border border-zenDark-700/50 flex items-center justify-between opacity-60">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg bg-zenDark-700 text-slate-400 flex items-center justify-center text-xs">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-300">Tree BFS & Top View Traversal</h4>
+                    <p class="text-[11px] text-slate-500">Prerequisite: Finish Sliding Window</p>
+                  </div>
+                </div>
+                <span class="text-xs text-slate-500 font-mono">Locked</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right 1 Col: Weekly Streak Calendar & Recent Submissions -->
+        <div class="space-y-6">
+          
+          <!-- 7-Day Streak Calendar Check-In Box -->
+          <div class="zen-card rounded-2xl p-6 border border-zenDark-700">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="calendar" class="w-4 h-4 text-zenFlame-400"></i>
+              Weekly Serenity Flow
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Keep 7 consecutive days active to gain 2x Streak Multiplier.</p>
+
+            <div class="grid grid-cols-7 gap-2 mt-4 text-center">
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">M</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">T</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">W</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">T</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">F</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 font-mono">S</span>
+                <div class="w-8 h-8 rounded-lg bg-zenFlame-500/20 border border-zenFlame-500/40 text-zenFlame-400 flex items-center justify-center text-xs">✓</div>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <span class="text-[10px] text-zenFlame-400 font-bold font-mono">SUN</span>
+                <div id="todayCheckIcon" class="w-8 h-8 rounded-lg bg-zenEmerald-500 text-zenDark-950 font-bold flex items-center justify-center text-xs animate-pulse">✓</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-zenDark-800 flex items-center justify-between text-xs">
+              <span class="text-slate-400">Multiplier Status:</span>
+              <span class="text-zenEmerald-400 font-bold font-mono">Active (1.5x XP)</span>
+            </div>
+          </div>
+
+          <!-- Recent Submissions List -->
+          <div class="zen-card rounded-2xl p-6 border border-zenDark-700">
+            <h3 class="text-base font-bold text-white flex items-center justify-between mb-3">
+              <span>Recent Submissions</span>
+              <span class="text-xs text-zenCyan-400 cursor-pointer hover:underline" onclick="navigateTo('profile')">All</span>
+            </h3>
+
+            <div class="space-y-3">
+              
+              <div class="flex items-center justify-between text-xs py-2 border-b border-zenDark-800">
+                <div>
+                  <div class="text-white font-medium hover:text-zenEmerald-400 cursor-pointer">Trapping Rain Water</div>
+                  <div class="text-slate-400 text-[11px]">Hard &bull; 42ms (Faster than 91%)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">Accepted</span>
+              </div>
+
+              <div class="flex items-center justify-between text-xs py-2 border-b border-zenDark-800">
+                <div>
+                  <div class="text-white font-medium hover:text-zenEmerald-400 cursor-pointer">Valid Anagram</div>
+                  <div class="text-slate-400 text-[11px]">Easy &bull; 34ms (Faster than 96%)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">Accepted</span>
+              </div>
+
+              <div class="flex items-center justify-between text-xs py-2 border-b border-zenDark-800">
+                <div>
+                  <div class="text-white font-medium hover:text-zenEmerald-400 cursor-pointer">Lowest Common Ancestor</div>
+                  <div class="text-slate-400 text-[11px]">Medium &bull; 58ms (Faster than 84%)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">Accepted</span>
+              </div>
+
+              <div class="flex items-center justify-between text-xs py-2">
+                <div>
+                  <div class="text-white font-medium hover:text-rose-400 cursor-pointer">Word Break II</div>
+                  <div class="text-slate-400 text-[11px]">Hard &bull; Memory Limit</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-mono">Refactor</span>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==============================================
+         VIEW 3: LEARNING PATHS (ROADMAPS & TREES)
+         ============================================== -->
+    <section id="view-learn" class="view-panel hidden flex-col max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      
+      <div class="pb-6 border-b border-zenDark-700/70 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold text-white">Curated Learning Paths</h1>
+          <p class="text-slate-400 text-sm mt-1">Structured algorithmic trees designed to eliminate cognitive overload and build lifelong pattern instincts.</p>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex items-center gap-1 bg-zenDark-850 p-1 rounded-xl border border-zenDark-700">
+          <button onclick="filterPaths('all')" class="path-filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-zenDark-700 transition" data-filter="all">All Paths</button>
+          <button onclick="filterPaths('interview')" class="path-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition" data-filter="interview">Interviews</button>
+          <button onclick="filterPaths('advanced')" class="path-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition" data-filter="advanced">Advanced</button>
+        </div>
+      </div>
+
+      <!-- Path Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        
+        <!-- Path 1: Zenith 75 -->
+        <div class="zen-card rounded-2xl p-6 border-2 border-zenEmerald-500/50 relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute top-0 right-0 bg-zenEmerald-500 text-zenDark-950 font-extrabold text-[10px] uppercase px-3 py-0.5 tracking-wider rounded-bl-lg font-mono">
+            Active
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-zenEmerald-500/10 border border-zenEmerald-500/30 text-zenEmerald-400 flex items-center justify-center font-bold text-lg font-mono">
+                75
+              </div>
+              <div>
+                <h3 class="font-bold text-white text-lg">Zenith 75 Core</h3>
+                <p class="text-xs text-slate-400">High-yield algorithmic patterns</p>
+              </div>
+            </div>
+
+            <p class="text-slate-300 text-xs mt-4 leading-relaxed">
+              Master the exact 75 questions that cover 90% of Big Tech coding interview patterns without grind fatigue.
+            </p>
+
+            <div class="mt-6 space-y-2">
+              <div class="flex justify-between text-xs text-slate-400 font-medium">
+                <span>Progress</span>
+                <span class="text-zenEmerald-400 font-mono">18 / 25 Unlocked</span>
+              </div>
+              <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-zenEmerald-500 h-full rounded-full" style="width: 72%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-zenDark-800 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400">Tier: <span class="text-zenEmerald-400">Intermediate</span></span>
+            <button onclick="togglePathModal('Zenith 75 Core')" class="px-4 py-2 rounded-lg bg-zenEmerald-500 text-zenDark-950 font-bold text-xs hover:brightness-110 transition">
+              Resume Path
+            </button>
+          </div>
+        </div>
+
+        <!-- Path 2: Modern Frontend & Data Structures -->
+        <div class="zen-card rounded-2xl p-6 border border-zenDark-700 relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-zenCyan-500/10 border border-zenCyan-500/30 text-zenCyan-400 flex items-center justify-center">
+                <i data-lucide="layout" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-white text-lg">Frontend Systems</h3>
+                <p class="text-xs text-slate-400">DOM Algorithms & State Trees</p>
+              </div>
+            </div>
+
+            <p class="text-slate-300 text-xs mt-4 leading-relaxed">
+              Virtual DOM diffing, reactive observable graphs, debounce / throttle mechanics, and concurrency management.
+            </p>
+
+            <div class="mt-6 space-y-2">
+              <div class="flex justify-between text-xs text-slate-400 font-medium">
+                <span>Progress</span>
+                <span class="text-zenCyan-400 font-mono">8 / 20 Unlocked</span>
+              </div>
+              <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-zenCyan-500 h-full rounded-full" style="width: 40%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-zenDark-800 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400">Tier: <span class="text-zenCyan-400">Specialist</span></span>
+            <button onclick="togglePathModal('Frontend Systems')" class="px-4 py-2 rounded-lg bg-zenDark-800 hover:bg-zenDark-700 text-white font-bold text-xs border border-zenDark-700 transition">
+              Explore Tree
+            </button>
+          </div>
+        </div>
+
+        <!-- Path 3: Distributed Graphs & DP -->
+        <div class="zen-card rounded-2xl p-6 border border-zenDark-700 relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center">
+                <i data-lucide="network" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-white text-lg">Dynamic Programming</h3>
+                <p class="text-xs text-slate-400">State Machines & Hard Graphs</p>
+              </div>
+            </div>
+
+            <p class="text-slate-300 text-xs mt-4 leading-relaxed">
+              Unpack complex state transition equations, memoization trees, topological DAGs, and minimax algorithms.
+            </p>
+
+            <div class="mt-6 space-y-2">
+              <div class="flex justify-between text-xs text-slate-400 font-medium">
+                <span>Progress</span>
+                <span class="text-purple-400 font-mono">2 / 30 Unlocked</span>
+              </div>
+              <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-purple-500 h-full rounded-full" style="width: 6.6%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-zenDark-800 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400">Tier: <span class="text-purple-400">Grandmaster</span></span>
+            <button onclick="togglePathModal('Dynamic Programming')" class="px-4 py-2 rounded-lg bg-zenDark-800 hover:bg-zenDark-700 text-white font-bold text-xs border border-zenDark-700 transition">
+              Explore Tree
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Interactive Skill Tree Visual Explorer preview -->
+      <div class="mt-10 zen-card rounded-2xl p-6 border border-zenDark-700">
+        <div class="flex items-center justify-between pb-4 border-b border-zenDark-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">Interactive Skill Graph &bull; Zenith 75</h2>
+            <p class="text-xs text-slate-400">Click any unlocked node to jump into practice mode.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-zenDark-800 text-slate-300 font-mono">Branch: Master Tree</span>
+        </div>
+
+        <div class="py-8 flex flex-col md:flex-row items-center justify-center gap-6 overflow-x-auto">
+          
+          <!-- Node 1: Completed -->
+          <div class="flex flex-col items-center group cursor-pointer" onclick="showNodeDetails('Arrays & Hashing', 'Mastered', 100)">
+            <div class="w-16 h-16 rounded-2xl bg-zenEmerald-500/20 border-2 border-zenEmerald-500 flex items-center justify-center text-zenEmerald-400 shadow-glow-emerald group-hover:scale-105 transition-transform">
+              <i data-lucide="hash" class="w-8 h-8"></i>
+            </div>
+            <span class="text-xs font-bold text-white mt-2">Arrays & Hashing</span>
+            <span class="text-[10px] text-zenEmerald-400 font-mono">100% Mastered</span>
+          </div>
+
+          <!-- Connector -->
+          <div class="w-12 h-0.5 bg-zenEmerald-500 hidden md:block"></div>
+
+          <!-- Node 2: Completed -->
+          <div class="flex flex-col items-center group cursor-pointer" onclick="showNodeDetails('Two Pointers', 'Mastered', 100)">
+            <div class="w-16 h-16 rounded-2xl bg-zenEmerald-500/20 border-2 border-zenEmerald-500 flex items-center justify-center text-zenEmerald-400 shadow-glow-emerald group-hover:scale-105 transition-transform">
+              <i data-lucide="arrow-left-right" class="w-8 h-8"></i>
+            </div>
+            <span class="text-xs font-bold text-white mt-2">Two Pointers</span>
+            <span class="text-[10px] text-zenEmerald-400 font-mono">100% Mastered</span>
+          </div>
+
+          <!-- Connector -->
+          <div class="w-12 h-0.5 bg-zenCyan-500 hidden md:block"></div>
+
+          <!-- Node 3: In Progress (Active) -->
+          <div class="flex flex-col items-center group cursor-pointer" onclick="showNodeDetails('Sliding Window', 'In Progress', 72)">
+            <div class="w-16 h-16 rounded-2xl bg-zenCyan-500/20 border-2 border-zenCyan-400 flex items-center justify-center text-zenCyan-400 shadow-glow-cyan animate-pulse group-hover:scale-105 transition-transform">
+              <i data-lucide="layers" class="w-8 h-8"></i>
+            </div>
+            <span class="text-xs font-bold text-zenCyan-400 mt-2">Sliding Window</span>
+            <span class="text-[10px] text-zenCyan-400 font-mono">72% Active</span>
+          </div>
+
+          <!-- Connector -->
+          <div class="w-12 h-0.5 bg-zenDark-700 hidden md:block"></div>
+
+          <!-- Node 4: Locked -->
+          <div class="flex flex-col items-center group cursor-pointer opacity-50" onclick="showNodeDetails('Binary Search Trees', 'Locked', 0)">
+            <div class="w-16 h-16 rounded-2xl bg-zenDark-800 border-2 border-zenDark-700 flex items-center justify-center text-slate-500">
+              <i data-lucide="lock" class="w-7 h-7"></i>
+            </div>
+            <span class="text-xs font-medium text-slate-400 mt-2">Trees & BST</span>
+            <span class="text-[10px] text-slate-500 font-mono">Locked</span>
+          </div>
+
+          <!-- Connector -->
+          <div class="w-12 h-0.5 bg-zenDark-700 hidden md:block"></div>
+
+          <!-- Node 5: Locked -->
+          <div class="flex flex-col items-center group cursor-pointer opacity-50" onclick="showNodeDetails('Graphs & Topological Sort', 'Locked', 0)">
+            <div class="w-16 h-16 rounded-2xl bg-zenDark-800 border-2 border-zenDark-700 flex items-center justify-center text-slate-500">
+              <i data-lucide="git-merge" class="w-7 h-7"></i>
+            </div>
+            <span class="text-xs font-medium text-slate-400 mt-2">Graph Theory</span>
+            <span class="text-[10px] text-slate-500 font-mono">Locked</span>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==============================================
+         VIEW 4: PROFILE & PROGRESSION (GAMIFICATION HUB)
+         ============================================== -->
+    <section id="view-profile" class="view-panel hidden flex-col max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      
+      <!-- User Profile Header Card -->
+      <div class="zen-card rounded-2xl p-6 sm:p-8 border border-zenDark-700 relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          
+          <div class="flex items-center gap-5">
+            <div class="relative">
+              <img class="w-20 h-20 rounded-2xl border-2 border-zenEmerald-500 shadow-glow-emerald object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80" alt="Avatar" />
+              <div class="absolute -bottom-2 -right-2 px-2 py-0.5 bg-zenDark-900 border border-zenCyan-500 rounded text-[11px] font-mono text-zenCyan-400 font-bold">
+                Lvl 14
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-white">Alex Zhang</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zenEmerald-500/10 text-zenEmerald-400 border border-zenEmerald-500/30">
+                  Zenith Grandmaster #42
+                </span>
+              </div>
+              <p class="text-slate-400 text-xs sm:text-sm mt-1">Algorithmic problem solver & distributed systems enthusiast. Focusing on serenity under pressure.</p>
+              
+              <div class="flex items-center gap-4 mt-3 text-xs text-slate-400">
+                <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500"></i> San Francisco / Remote</span>
+                <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-500"></i> Joined Oct 2025</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- XP Boost Trigger & Level Info -->
+          <div class="flex flex-col sm:items-end w-full sm:w-auto bg-zenDark-850 p-4 rounded-xl border border-zenDark-700">
+            <span class="text-xs text-slate-400">Total Experience</span>
+            <div class="text-2xl font-extrabold text-white font-mono mt-0.5" id="profileTotalXp">3,450 XP</div>
+            
+            <div class="w-full sm:w-44 bg-zenDark-700 h-2 rounded-full mt-2 overflow-hidden">
+              <div id="profileXpBar" class="bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 h-full rounded-full transition-all duration-500" style="width: 78%;"></div>
+            </div>
+            
+            <span class="text-[11px] text-slate-400 mt-1 font-mono">550 XP to Lvl 15 (Ascendant)</span>
+
+            <button onclick="triggerLevelBonus()" class="mt-3 w-full sm:w-auto px-4 py-1.5 rounded-lg bg-zenCyan-500/20 hover:bg-zenCyan-500/30 text-zenCyan-300 border border-zenCyan-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-zenCyan-400"></i>
+              <span>Claim +150 Practice XP</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Problem Solving Breakdown & Heatmap Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        
+        <!-- Solved Breakdown (LeetCode Style Rings/Bars) -->
+        <div class="zen-card rounded-2xl p-6 border border-zenDark-700 flex flex-col justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white mb-4">Solved Problems Breakdown</h3>
+
+            <div class="flex items-center justify-center py-4">
+              <div class="relative w-36 h-36 flex items-center justify-center">
+                <!-- Circular representation -->
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <!-- Background Circle -->
+                  <path class="text-zenDark-800" stroke-width="3.5" stroke="currentColor" fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <!-- Easy arc (Green) -->
+                  <path class="text-zenEmerald-400" stroke-dasharray="45, 100" stroke-width="3.5" stroke="currentColor" fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <!-- Medium arc (Yellow) -->
+                  <path class="text-amber-400" stroke-dashoffset="-45" stroke-dasharray="32, 100" stroke-width="3.5" stroke="currentColor" fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <!-- Hard arc (Red) -->
+                  <path class="text-rose-500" stroke-dashoffset="-77" stroke-dasharray="14, 100" stroke-width="3.5" stroke="currentColor" fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+
+                <div class="absolute flex flex-col items-center">
+                  <span class="text-2xl font-bold font-mono text-white" id="profileSolvedCircle">184</span>
+                  <span class="text-[10px] text-slate-400 uppercase tracking-widest">Solved</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Segment details -->
+            <div class="space-y-3 mt-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-zenEmerald-400 font-semibold">Easy</span>
+                  <span class="text-slate-300 font-mono">92 / 120</span>
+                </div>
+                <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-zenEmerald-500 h-full rounded-full" style="width: 76%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-amber-400 font-semibold">Medium</span>
+                  <span class="text-slate-300 font-mono">74 / 210</span>
+                </div>
+                <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-amber-400 h-full rounded-full" style="width: 35%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-rose-400 font-semibold">Hard</span>
+                  <span class="text-slate-300 font-mono">18 / 120</span>
+                </div>
+                <div class="w-full bg-zenDark-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-rose-500 h-full rounded-full" style="width: 15%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-zenDark-800 text-center">
+            <span class="text-xs text-slate-400">Acceptance Rate: <strong class="text-white font-mono">78.4%</strong></span>
+          </div>
+        </div>
+
+        <!-- 365-Day Activity Heatmap -->
+        <div class="lg:col-span-2 zen-card rounded-2xl p-6 border border-zenDark-700 flex flex-col justify-between">
+          <div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <h3 class="text-base font-bold text-white">365-Day Serenity Matrix</h3>
+                <p class="text-xs text-slate-400">412 submissions across the past calendar cycle</p>
+              </div>
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <span>Less</span>
+                <span class="w-2.5 h-2.5 rounded bg-zenDark-800"></span>
+                <span class="w-2.5 h-2.5 rounded bg-zenEmerald-950/60 border border-zenEmerald-800"></span>
+                <span class="w-2.5 h-2.5 rounded bg-zenEmerald-600"></span>
+                <span class="w-2.5 h-2.5 rounded bg-zenEmerald-400"></span>
+                <span>More</span>
+              </div>
+            </div>
+
+            <!-- Heatmap simulation -->
+            <div class="overflow-x-auto pb-2">
+              <div id="heatmapGrid" class="grid grid-flow-col grid-rows-7 gap-1 w-max">
+                <!-- Dynamically populated via JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-zenDark-800 flex flex-wrap items-center justify-between text-xs text-slate-400">
+            <span>Longest Streak: <strong class="text-white font-mono">24 days</strong></span>
+            <span>Current Streak: <strong class="text-zenFlame-400 font-mono">7 days</strong></span>
+            <span>Active Days: <strong class="text-zenCyan-400 font-mono">182 days</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Gamified Badges & Achievements Showcase -->
+      <div class="mt-8 zen-card rounded-2xl p-6 border border-zenDark-700">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-white">Zen Mastery Badges & Relics</h3>
+            <p class="text-xs text-slate-400">Earn medals by mastering algorithmic constraints and consistency.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-zenDark-850 border border-zenDark-700 text-zenEmerald-400 font-mono">
+            6 / 12 Unlocked
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          
+          <!-- Badge 1: Flamekeeper -->
+          <div onclick="showBadgeDetail('Flamekeeper', 'Maintained a 7-day uninterrupted coding streak.', true)" class="p-4 rounded-xl bg-zenDark-850 border border-zenFlame-500/40 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition group">
+            <div class="w-12 h-12 rounded-xl bg-zenFlame-500/10 text-zenFlame-400 flex items-center justify-center text-xl mb-2 group-hover:rotate-6 transition">
+              🔥
+            </div>
+            <span class="text-xs font-bold text-white">Flamekeeper</span>
+            <span class="text-[10px] text-zenFlame-400 font-mono mt-0.5">Unlocked</span>
+          </div>
+
+          <!-- Badge 2: Two Pointer Sage -->
+          <div onclick="showBadgeDetail('Two Pointer Sage', 'Solved all Two Pointer problems with O(1) space complexity.', true)" class="p-4 rounded-xl bg-zenDark-850 border border-zenEmerald-500/40 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition group">
+            <div class="w-12 h-12 rounded-xl bg-zenEmerald-500/10 text-zenEmerald-400 flex items-center justify-center text-xl mb-2 group-hover:rotate-6 transition">
+              ☯️
+            </div>
+            <span class="text-xs font-bold text-white">Pointer Sage</span>
+            <span class="text-[10px] text-zenEmerald-400 font-mono mt-0.5">Unlocked</span>
+          </div>
+
+          <!-- Badge 3: Speed Demon -->
+          <div onclick="showBadgeDetail('Speed Demon', 'Submissions beating >95% runtime speed on 20 problems.', true)" class="p-4 rounded-xl bg-zenDark-850 border border-zenCyan-500/40 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition group">
+            <div class="w-12 h-12 rounded-xl bg-zenCyan-500/10 text-zenCyan-400 flex items-center justify-center text-xl mb-2 group-hover:rotate-6 transition">
+              ⚡
+            </div>
+            <span class="text-xs font-bold text-white">Speed Demon</span>
+            <span class="text-[10px] text-zenCyan-400 font-mono mt-0.5">Unlocked</span>
+          </div>
+
+          <!-- Badge 4: Night Owl -->
+          <div onclick="showBadgeDetail('Night Owl', 'Solved 10 katas during midnight serene quiet hours.', true)" class="p-4 rounded-xl bg-zenDark-850 border border-purple-500/40 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition group">
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl mb-2 group-hover:rotate-6 transition">
+              🦉
+            </div>
+            <span class="text-xs font-bold text-white">Night Owl</span>
+            <span class="text-[10px] text-purple-400 font-mono mt-0.5">Unlocked</span>
+          </div>
+
+          <!-- Badge 5: Tree Whisperer (Locked) -->
+          <div onclick="showBadgeDetail('Tree Whisperer', 'Complete 30 recursive Tree traversals without hints.', false)" class="p-4 rounded-xl bg-zenDark-900 border border-zenDark-700/60 flex flex-col items-center text-center opacity-50 cursor-pointer hover:opacity-75 transition">
+            <div class="w-12 h-12 rounded-xl bg-zenDark-800 text-slate-500 flex items-center justify-center text-xl mb-2">
+              🌲
+            </div>
+            <span class="text-xs font-medium text-slate-300">Tree Whisperer</span>
+            <span class="text-[10px] text-slate-500 font-mono mt-0.5">Locked</span>
+          </div>
+
+          <!-- Badge 6: Graph Ascendant (Locked) -->
+          <div onclick="showBadgeDetail('Graph Ascendant', 'Conquer Dijkstra, Prim, and Tarjans SCC modules.', false)" class="p-4 rounded-xl bg-zenDark-900 border border-zenDark-700/60 flex flex-col items-center text-center opacity-50 cursor-pointer hover:opacity-75 transition">
+            <div class="w-12 h-12 rounded-xl bg-zenDark-800 text-slate-500 flex items-center justify-center text-xl mb-2">
+              🪐
+            </div>
+            <span class="text-xs font-medium text-slate-300">Graph Titan</span>
+            <span class="text-[10px] text-slate-500 font-mono mt-0.5">Locked</span>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="border-t border-zenDark-700/70 bg-zenDark-950 py-8 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-zenCyan-400 font-mono font-bold">禅 zenpho</span>
+        <span>&bull; Coding with serenity and cognitive clarity.</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <button onclick="navigateTo('landing')" class="hover:text-slate-300 transition">Landing</button>
+        <button onclick="requireAuth('dashboard')" class="hover:text-slate-300 transition">Dashboard</button>
+        <button onclick="requireAuth('learn')" class="hover:text-slate-300 transition">Roadmaps</button>
+        <button onclick="requireAuth('profile')" class="hover:text-slate-300 transition">Leaderboards</button>
+      </div>
+    </div>
+  </footer>
+
+  <div id="authModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="zen-card w-full max-w-md rounded-2xl border border-zenDark-700 p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close button -->
+      <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Modal Title -->
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-zenEmerald-500 to-zenCyan-500 p-[1.5px] mb-3">
+          <div class="w-full h-full bg-zenDark-950 rounded-[10px] flex items-center justify-center">
+            <span class="text-zenCyan-400 text-xl font-bold font-mono">禅</span>
+          </div>
+        </div>
+        <h2 id="authModalTitle" class="text-2xl font-bold text-white">Enter the Flow State</h2>
+        <p id="authModalSubtitle" class="text-xs text-slate-400 mt-1">Sign in to sync your streaks and problem solving progress.</p>
+      </div>
+
+      <!-- Quick Instant Demo Login Button -->
+      <button onclick="demoInstantLogin()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 text-zenDark-950 font-bold text-sm hover:brightness-110 shadow-glow-cyan flex items-center justify-center gap-2 transition mb-4">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span>Instant 1-Click Demo Login</span>
+      </button>
+
+      <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-zenDark-700"></div>
+        <span class="flex-shrink mx-4 text-[11px] text-slate-500 uppercase tracking-widest font-mono">or email</span>
+        <div class="flex-grow border-t border-zenDark-700"></div>
+      </div>
+
+      <!-- Form Inputs -->
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-4 mt-2">
+        <div id="nameInputGroup" class="hidden">
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Developer Handle</label>
+          <input type="text" id="authName" placeholder="e.g. NeoCoder" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+          <input type="email" id="authEmail" required placeholder="zen@zenpho.dev" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" value="alex@zenpho.dev" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+          <input type="password" id="authPassword" required placeholder="••••••••••••" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" value="harmony123" />
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-xl bg-zenDark-800 hover:bg-zenDark-700 text-white font-semibold text-sm border border-zenDark-600 transition">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Toggle Sign In / Sign Up -->
+      <div class="mt-4 text-center text-xs text-slate-400">
+        <span id="authToggleQuestion">Don't have an account?</span>
+        <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-zenCyan-400 hover:underline font-semibold ml-1">
+          Create Account
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="streakModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="zen-card w-full max-w-sm rounded-2xl border border-zenFlame-500/40 p-6 text-center shadow-glow-flame relative">
+      <button onclick="closeStreakModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="w-16 h-16 rounded-full bg-zenFlame-500/20 text-zenFlame-500 mx-auto flex items-center justify-center text-3xl mb-3 animate-bounce">
+        🔥
+      </div>
+      <h3 class="text-xl font-bold text-white">7-Day Fire Streak!</h3>
+      <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+        Consistency creates genius. You have maintained your algorithmic rhythm for seven straight days.
+      </p>
+
+      <div class="my-4 p-3 bg-zenDark-850 rounded-xl border border-zenDark-700 text-xs">
+        <div class="flex justify-between text-slate-300">
+          <span>Streak Bonus Multiplier:</span>
+          <span class="text-zenFlame-400 font-bold font-mono">1.5x XP</span>
+        </div>
+        <div class="flex justify-between text-slate-300 mt-1">
+          <span>Next Milestone Badge:</span>
+          <span class="text-zenEmerald-400 font-bold">14-Day Sage</span>
+        </div>
+      </div>
+
+      <button onclick="closeStreakModal()" class="w-full py-2 bg-zenDark-800 hover:bg-zenDark-700 text-white rounded-xl text-xs font-semibold">
+        Stay in Flow
+      </button>
+    </div>
+  </div>
+
+  <div id="pathModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="zen-card w-full max-w-lg rounded-2xl border border-zenDark-700 p-6 shadow-2xl relative">
+      <button onclick="closePathModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <h3 id="pathModalTitle" class="text-xl font-bold text-white">Path Explorer</h3>
+      <p id="pathModalDesc" class="text-xs text-slate-400 mt-1">Master all prerequisites to clear the pathway.</p>
+      
+      <div id="pathModalItems" class="space-y-3 mt-4 max-h-72 overflow-y-auto pr-1">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button onclick="closePathModal()" class="px-4 py-2 rounded-lg bg-zenEmerald-500 text-zenDark-950 font-bold text-xs hover:brightness-110">
+          Continue Roadmap
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State store
+    const appState = {
+      isLoggedIn: true,
+      user: {
+        name: "Alex Zhang",
+        handle: "SereneCoder",
+        level: 14,
+        xp: 3450,
+        xpMax: 4000,
+        streak: 7,
+        solved: 184,
+        dailyCheckedIn: false
+      },
+      currentView: 'landing',
+      authMode: 'signin' // 'signin' or 'signup'
+    };
+
+    // Initialize UI on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Setup Lucide icons
+      lucide.createIcons();
+      // Render activity heatmap
+      renderHeatmap();
+      // Sync initial state
+      updateUI();
+    });
+
+    function navigateTo(viewId) {
+      appState.currentView = viewId;
+      
+      // Update nav button active states
+      document.querySelectorAll('#mainNavLinks .nav-item').forEach(btn => {
+        const target = btn.getAttribute('data-nav');
+        if (target === viewId) {
+          btn.classList.add('text-white', 'bg-zenDark-800');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('text-white', 'bg-zenDark-800');
+          btn.classList.add('text-slate-400');
+        }
+      });
+
+      // Switch view panel visibility
+      document.querySelectorAll('.view-panel').forEach(panel => {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex', 'active');
+      });
+
+      const activePanel = document.getElementById(`view-${viewId}`);
+      if (activePanel) {
+        activePanel.classList.remove('hidden');
+        activePanel.classList.add('flex', 'active');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function requireAuth(viewId) {
+      if (!appState.isLoggedIn) {
+        openAuthModal('signin');
+        showToast("Please sign in or use 1-Click Demo Login to access the student dashboard!", "info");
+      } else {
+        navigateTo(viewId);
+      }
+    }
+
+    function handleHeroCTA() {
+      if (appState.isLoggedIn) {
+        navigateTo('dashboard');
+      } else {
+        openAuthModal('signup');
+      }
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileMenu');
+      menu.classList.toggle('hidden');
+    }
+
+    function updateUI() {
+      const loggedHud = document.getElementById('loggedHud');
+      const unloggedHud = document.getElementById('unloggedHud');
+
+      if (appState.isLoggedIn) {
+        loggedHud.classList.remove('hidden');
+        loggedHud.classList.add('flex');
+        unloggedHud.classList.add('hidden');
+      } else {
+        loggedHud.classList.add('hidden');
+        loggedHud.classList.remove('flex');
+        unloggedHud.classList.remove('hidden');
+      }
+
+      // Update XP & Stats across UI
+      const percent = Math.min(100, Math.round((appState.user.xp / appState.user.xpMax) * 100));
+      
+      // Nav HUD
+      document.getElementById('navStreakCount').textContent = appState.user.streak;
+      document.getElementById('navLevelNumber').textContent = appState.user.level;
+      document.getElementById('navXpBar').style.width = `${percent}%`;
+      document.getElementById('navXpText').textContent = `${appState.user.xp.toLocaleString()} XP`;
+
+      // Dashboard
+      document.getElementById('dashUsername').textContent = appState.user.handle;
+      document.getElementById('dashStreakValue').textContent = appState.user.streak;
+      document.getElementById('dashLevelVal').textContent = appState.user.level;
+      document.getElementById('dashKatasSolved').textContent = appState.user.solved;
+      document.getElementById('dashXpProgress').style.width = `${percent}%`;
+
+      // Profile View
+      document.getElementById('profileTotalXp').textContent = `${appState.user.xp.toLocaleString()} XP`;
+      document.getElementById('profileXpBar').style.width = `${percent}%`;
+      document.getElementById('profileSolvedCircle').textContent = appState.user.solved;
+
+      // Re-trigger icon creation for dynamic nodes
+      lucide.createIcons();
+    }
+
+    function toggleMockAuth(status) {
+      appState.isLoggedIn = status;
+      updateUI();
+      if (!status) {
+        navigateTo('landing');
+        showToast("Logged out successfully.", "info");
+      } else {
+        showToast("Logged in as SereneCoder!", "success");
+      }
+    }
+
+    function openAuthModal(mode = 'signin') {
+      appState.authMode = mode;
+      const modal = document.getElementById('authModal');
+      const title = document.getElementById('authModalTitle');
+      const subtitle = document.getElementById('authModalSubtitle');
+      const submitBtn = document.getElementById('authSubmitBtn');
+      const nameGroup = document.getElementById('nameInputGroup');
+      const toggleQuestion = document.getElementById('authToggleQuestion');
+      const toggleBtn = document.getElementById('authToggleBtn');
+
+      if (mode === 'signup') {
+        title.textContent = "Begin Your Zen Journey";
+        subtitle.textContent = "Start tracking daily progress and algorithmic mastery.";
+        submitBtn.textContent = "Create Free Account";
+        nameGroup.classList.remove('hidden');
+        toggleQuestion.textContent = "Already have an account?";
+        toggleBtn.textContent = "Sign In";
+      } else {
+        title.textContent = "Enter the Flow State";
+        subtitle.textContent = "Sign in to sync your streaks and problem solving progress.";
+        submitBtn.textContent = "Sign In";
+        nameGroup.classList.add('hidden');
+        toggleQuestion.textContent = "Don't have an account?";
+        toggleBtn.textContent = "Create Account";
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('authModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function toggleAuthMode() {
+      openAuthModal(appState.authMode === 'signin' ? 'signup' : 'signin');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      closeAuthModal();
+      toggleMockAuth(true);
+      navigateTo('dashboard');
+      showToast("Authentication successful! Welcome to Zenpho.", "success");
+    }
+
+    function demoInstantLogin() {
+      closeAuthModal();
+      toggleMockAuth(true);
+      navigateTo('dashboard');
+      showToast("Signed in as demo master: SereneCoder ✨", "success");
+    }
+
+    function claimDailyCheckIn() {
+      if (appState.user.dailyCheckedIn) {
+        showToast("Daily serenity check-in already claimed for today!", "info");
+        return;
+      }
+      appState.user.dailyCheckedIn = true;
+      appState.user.xp += 50;
+      appState.user.streak += 1;
+      
+      const btn = document.getElementById('dailyCheckInBtn');
+      btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-slate-400"></i><span class="text-slate-400">Claimed (+50 XP)</span>`;
+      btn.classList.remove('border-zenEmerald-500/40', 'text-zenEmerald-400');
+      btn.classList.add('border-zenDark-700', 'text-slate-400', 'cursor-not-allowed');
+
+      updateUI();
+      showToast("🔥 Daily check-in complete! +50 XP and streak extended.", "success");
+    }
+
+    function solveChallengeAction() {
+      const btn = document.getElementById('solveChallengeBtn');
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Verifying Harmony...</span>`;
+      
+      setTimeout(() => {
+        appState.user.xp += 120;
+        appState.user.solved += 1;
+        checkLevelProgression();
+        updateUI();
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-zenEmerald-400"></i><span>Completed (+120 XP)</span>`;
+        btn.classList.add('bg-zenEmerald-950', 'text-zenEmerald-400', 'border', 'border-zenEmerald-500');
+        showToast("✨ Challenge Cleared: Minimum Window Substring! +120 XP gained.", "success");
+      }, 1200);
+    }
+
+    function demoInstantSolve(name = "Two Pointers Meditation", xpGained = 120) {
+      appState.user.xp += xpGained;
+      appState.user.solved += 1;
+      checkLevelProgression();
+      updateUI();
+      showToast(`⚡ Kata solved: "${name}" (+${xpGained} XP)`, "success");
+    }
+
+    function triggerLevelBonus() {
+      appState.user.xp += 150;
+      checkLevelProgression();
+      updateUI();
+      showToast("🎉 Serene focus bonus claimed! +150 XP added.", "success");
+    }
+
+    function triggerQuickPractice() {
+      demoInstantSolve("Quick Breath Interval Subarray", 80);
+    }
+
+    function checkLevelProgression() {
+      if (appState.user.xp >= appState.user.xpMax) {
+        appState.user.level += 1;
+        appState.user.xp = appState.user.xp - appState.user.xpMax;
+        appState.user.xpMax += 500;
+        showToast(`🏆 LEVEL UP! You reached Zenith Level ${appState.user.level}!`, "success");
+      }
+    }
+
+    function openStreakModal() {
+      const modal = document.getElementById('streakModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeStreakModal() {
+      const modal = document.getElementById('streakModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePathModal(pathName) {
+      const modal = document.getElementById('pathModal');
+      const title = document.getElementById('pathModalTitle');
+      const items = document.getElementById('pathModalItems');
+
+      title.textContent = pathName;
+      items.innerHTML = `
+        <div class="p-3 bg-zenDark-850 rounded-xl border border-zenEmerald-500/30 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold text-white">Module 1: Two Pointers Foundation</div>
+            <div class="text-xs text-slate-400">8 problems &bull; Optimal O(N) patterns</div>
+          </div>
+          <span class="text-xs text-zenEmerald-400 font-bold">100% Cleared</span>
+        </div>
+        <div class="p-3 bg-zenDark-850 rounded-xl border border-zenCyan-500/30 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold text-white">Module 2: Sliding Window Expansion</div>
+            <div class="text-xs text-slate-400">10 problems &bull; Dynamic length windows</div>
+          </div>
+          <span class="text-xs text-zenCyan-400 font-bold">72% Active</span>
+        </div>
+        <div class="p-3 bg-zenDark-850 rounded-xl border border-zenDark-700 flex items-center justify-between opacity-50">
+          <div>
+            <div class="text-sm font-semibold text-slate-300">Module 3: Monotonic Stack & Queue</div>
+            <div class="text-xs text-slate-500">7 problems &bull; Next greater element</div>
+          </div>
+          <span class="text-xs text-slate-500 font-mono">Prerequisite Needed</span>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePathModal() {
+      const modal = document.getElementById('pathModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function showNodeDetails(name, status, percent) {
+      showToast(`Node Selected: ${name} (${status} - ${percent}%)`, "info");
+    }
+
+    function showBadgeDetail(name, desc, isUnlocked) {
+      showToast(`${name}: ${desc} [${isUnlocked ? 'Unlocked' : 'In Progress'}]`, "info");
+    }
+
+    function filterPaths(category) {
+      document.querySelectorAll('.path-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === category) {
+          btn.classList.add('bg-zenDark-700', 'text-white');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('bg-zenDark-700', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+      showToast(`Filtered paths by: ${category.toUpperCase()}`, "info");
+    }
+
+    function renderHeatmap() {
+      const grid = document.getElementById('heatmapGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      // Generate 52 weeks x 7 days = 364 tiles
+      for (let i = 0; i < 364; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'w-3 h-3 rounded-[3px] heatmap-cell cursor-pointer';
+
+        // Deterministic pseudo-random generation with higher density on recent days
+        const weight = Math.sin(i * 0.15) + (i / 364);
+        let colorClass = 'bg-zenDark-800/80';
+        let count = 0;
+
+        if (weight > 1.4) {
+          colorClass = 'bg-zenEmerald-400';
+          count = 4 + (i % 3);
+        } else if (weight > 1.0) {
+          colorClass = 'bg-zenEmerald-500';
+          count = 2 + (i % 2);
+        } else if (weight > 0.6) {
+          colorClass = 'bg-zenEmerald-900 border border-zenEmerald-700/60';
+          count = 1;
+        }
+
+        cell.className += ` ${colorClass}`;
+        cell.title = `Day ${i + 1}: ${count} problems solved`;
+        cell.onclick = () => showToast(`Activity Log: ${count} solutions submitted on Day ${i + 1}`, "info");
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const borderColor = type === 'success' ? 'border-zenEmerald-500' : 'border-zenCyan-500';
+      const icon = type === 'success' ? 'check-circle' : 'info';
+      const iconColor = type === 'success' ? 'text-zenEmerald-400' : 'text-zenCyan-400';
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-zenDark-900 border ${borderColor} text-slate-200 text-xs shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 font-medium max-w-sm`;
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} flex-shrink-0"></i>
+        <span class="flex-grow">${message}</span>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Fade in
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      // Auto dismiss after 3.2s
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+  </script>
+
+</body>
+</html>

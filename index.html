@@ -9,6 +9,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -196,17 +198,19 @@
         </div>
 
         <!-- Auth CTA (Visible when Logged Out) -->
-        <div id="unloggedHud" class="flex items-center gap-2.5">
-          <button onclick="openAuthModal('signin')" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-zenDark-800 transition">
-            Sign In
+        <div id="unloggedHud" class="flex items-center gap-2">
+          <button id="navLoginBtn" onclick="openAuthModal('signin')" class="flex items-center gap-1.5 text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-zenDark-700/80 hover:border-zenDark-600 hover:bg-zenDark-800 transition">
+            <i data-lucide="log-in" class="w-4 h-4 text-zenCyan-400"></i>
+            <span>Login</span>
           </button>
-          <button onclick="openAuthModal('signup')" class="text-sm font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 px-4 py-1.5 rounded-lg shadow-glow-cyan transition">
-            Get Started
+          <button id="navRegisterBtn" onclick="openAuthModal('signup')" class="flex items-center gap-1.5 text-sm font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 px-3.5 py-1.5 rounded-lg shadow-glow-cyan transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Register</span>
           </button>
         </div>
 
         <!-- Mobile Menu Trigger -->
-        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-zenDark-800">
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-zenDark-800" aria-label="Toggle navigation menu">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
 
@@ -219,6 +223,25 @@
       <button onclick="requireAuth('dashboard'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Dashboard</button>
       <button onclick="requireAuth('learn'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Learning Paths</button>
       <button onclick="requireAuth('profile'); toggleMobileMenu()" class="text-left px-3 py-2 rounded-lg text-slate-300 hover:bg-zenDark-800 text-sm">Profile & Ranks</button>
+      
+      <!-- Mobile Auth Buttons -->
+      <div id="mobileUnloggedAuth" class="pt-3 mt-1 border-t border-zenDark-700/80 flex flex-col gap-2">
+        <button onclick="openAuthModal('signin'); toggleMobileMenu()" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-200 bg-zenDark-800 hover:bg-zenDark-700 border border-zenDark-700 transition">
+          <i data-lucide="log-in" class="w-4 h-4 text-zenCyan-400"></i>
+          <span>Login</span>
+        </button>
+        <button onclick="openAuthModal('signup'); toggleMobileMenu()" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 transition shadow-glow-cyan">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Register</span>
+        </button>
+      </div>
+
+      <div id="mobileLoggedAuth" class="hidden pt-3 mt-1 border-t border-zenDark-700/80 flex flex-col gap-2">
+        <button onclick="toggleMockAuth(false); toggleMobileMenu()" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Log Out</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -252,14 +275,20 @@
 
         <!-- CTA Action Buttons -->
         <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button onclick="handleHeroCTA()" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 shadow-glow-emerald flex items-center justify-center gap-2 transition group">
-            <span>Start Training Free</span>
+          <button id="heroRegisterBtn" onclick="openAuthModal('signup')" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 shadow-glow-emerald flex items-center justify-center gap-2 transition group">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Register Free</span>
             <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
           </button>
           
-          <button onclick="navigateTo('learn')" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-semibold text-slate-300 bg-zenDark-850 hover:bg-zenDark-800 border border-zenDark-700 hover:border-zenDark-600 transition flex items-center justify-center gap-2">
-            <i data-lucide="compass" class="w-4 h-4 text-zenCyan-400"></i>
-            <span>Explore Learning Paths</span>
+          <button id="heroLoginBtn" onclick="openAuthModal('signin')" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-semibold text-slate-200 bg-zenDark-850 hover:bg-zenDark-800 border border-zenDark-700 hover:border-zenCyan-500/50 transition flex items-center justify-center gap-2">
+            <i data-lucide="log-in" class="w-4 h-4 text-zenCyan-400"></i>
+            <span>Login to Account</span>
+          </button>
+
+          <button onclick="navigateTo('learn')" class="w-full sm:w-auto px-5 py-3.5 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-zenDark-800 border border-zenDark-700/60 transition flex items-center justify-center gap-2 text-sm">
+            <i data-lucide="compass" class="w-4 h-4 text-slate-400"></i>
+            <span>Explore Paths</span>
           </button>
         </div>
 
@@ -365,6 +394,35 @@
             </p>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Bottom Landing CTA Banner with Login & Register -->
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 pt-4 w-full">
+        <div class="relative rounded-3xl p-8 sm:p-12 overflow-hidden zen-card border border-zenDark-700/80 bg-gradient-to-b from-zenDark-850 to-zenDark-900 text-center shadow-2xl">
+          <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-zenCyan-500/20 blur-3xl pointer-events-none rounded-full"></div>
+          <div class="relative z-10 max-w-2xl mx-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zenEmerald-500/10 text-zenEmerald-400 border border-zenEmerald-500/20 mb-4">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Begin Your Journey Today</span>
+            </span>
+            <h3 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Ready to Step Into Your Coding Flow?
+            </h3>
+            <p class="mt-3 text-slate-400 text-sm sm:text-base leading-relaxed">
+              Join thousands of serene developers mastering algorithms, earning title belts, and maintaining daily streaks without burnout.
+            </p>
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button onclick="openAuthModal('signup')" class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-zenDark-950 bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 shadow-glow-cyan transition flex items-center justify-center gap-2">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>Register for Free</span>
+              </button>
+              <button onclick="openAuthModal('signin')" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-medium text-slate-200 bg-zenDark-800 hover:bg-zenDark-700 border border-zenDark-700 hover:border-slate-500 transition flex items-center justify-center gap-2">
+                <i data-lucide="log-in" class="w-4 h-4 text-zenCyan-400"></i>
+                <span>Login to Existing Account</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1134,6 +1192,8 @@
       </div>
       <div class="flex items-center gap-6">
         <button onclick="navigateTo('landing')" class="hover:text-slate-300 transition">Landing</button>
+        <button onclick="openAuthModal('signin')" class="hover:text-slate-300 transition">Login</button>
+        <button onclick="openAuthModal('signup')" class="hover:text-slate-300 transition">Register</button>
         <button onclick="requireAuth('dashboard')" class="hover:text-slate-300 transition">Dashboard</button>
         <button onclick="requireAuth('learn')" class="hover:text-slate-300 transition">Roadmaps</button>
         <button onclick="requireAuth('profile')" class="hover:text-slate-300 transition">Leaderboards</button>
@@ -1141,16 +1201,19 @@
     </div>
   </footer>
 
+  <!-- ==============================================
+       AUTH MODAL (Sign In / Register with Supabase)
+       ============================================== -->
   <div id="authModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="zen-card w-full max-w-md rounded-2xl border border-zenDark-700 p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close button -->
-      <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white">
+      <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white" aria-label="Close authentication modal">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
 
       <!-- Modal Title -->
-      <div class="text-center mb-6">
+      <div class="text-center mb-5">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-zenEmerald-500 to-zenCyan-500 p-[1.5px] mb-3">
           <div class="w-full h-full bg-zenDark-950 rounded-[10px] flex items-center justify-center">
             <span class="text-zenCyan-400 text-xl font-bold font-mono">禅</span>
@@ -1158,6 +1221,27 @@
         </div>
         <h2 id="authModalTitle" class="text-2xl font-bold text-white">Enter the Flow State</h2>
         <p id="authModalSubtitle" class="text-xs text-slate-400 mt-1">Sign in to sync your streaks and problem solving progress.</p>
+        
+        <!-- Supabase Connection Status & Config trigger -->
+        <div class="mt-2.5 flex items-center justify-center">
+          <button type="button" onclick="openSupabaseConfigModal()" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono bg-zenDark-850 border border-zenDark-700/80 hover:border-zenCyan-500/50 text-slate-300 hover:text-white transition group" title="Configure Supabase Project">
+            <span id="sbAuthIndicatorDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="sbAuthIndicatorText">Supabase Auth</span>
+            <i data-lucide="settings" class="w-3 h-3 text-slate-400 group-hover:text-zenCyan-400 ml-0.5 transition-colors"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Segmented Tabs for Login / Register -->
+      <div class="grid grid-cols-2 p-1 bg-zenDark-900 border border-zenDark-700/80 rounded-xl mb-4">
+        <button id="modalTabSignin" onclick="openAuthModal('signin')" class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-white bg-zenDark-800 shadow-sm border border-zenDark-650">
+          <i data-lucide="log-in" class="w-3.5 h-3.5 text-zenCyan-400"></i>
+          <span>Login</span>
+        </button>
+        <button id="modalTabSignup" onclick="openAuthModal('signup')" class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+          <i data-lucide="user-plus" class="w-3.5 h-3.5 text-zenEmerald-400"></i>
+          <span>Register</span>
+        </button>
       </div>
 
       <!-- Quick Instant Demo Login Button -->
@@ -1168,8 +1252,14 @@
 
       <div class="relative flex py-2 items-center">
         <div class="flex-grow border-t border-zenDark-700"></div>
-        <span class="flex-shrink mx-4 text-[11px] text-slate-500 uppercase tracking-widest font-mono">or email</span>
+        <span class="flex-shrink mx-4 text-[11px] text-slate-500 uppercase tracking-widest font-mono">or email & password</span>
         <div class="flex-grow border-t border-zenDark-700"></div>
+      </div>
+
+      <!-- In-Modal Alert Banner -->
+      <div id="authAlertBanner" class="hidden p-3 rounded-xl text-xs mb-3 flex items-start gap-2.5 border transition-all">
+        <i id="authAlertIcon" data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+        <span id="authAlertMessage" class="flex-grow leading-relaxed"></span>
       </div>
 
       <!-- Form Inputs -->
@@ -1181,16 +1271,25 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
-          <input type="email" id="authEmail" required placeholder="zen@zenpho.dev" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" value="alex@zenpho.dev" />
+          <input type="email" id="authEmail" required placeholder="you@example.com" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
-          <input type="password" id="authPassword" required placeholder="••••••••••••" class="w-full px-3.5 py-2 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" value="harmony123" />
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300">Password</label>
+            <span class="text-[10px] text-slate-500 font-mono">Min. 6 chars</span>
+          </div>
+          <div class="relative">
+            <input type="password" id="authPassword" required placeholder="••••••••••••" class="w-full px-3.5 py-2 pr-10 rounded-xl bg-zenDark-850 border border-zenDark-700 text-sm text-white focus:outline-none focus:border-zenCyan-500 transition" />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none p-1" title="Toggle password visibility">
+              <i id="passwordToggleIcon" data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
 
-        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-xl bg-zenDark-800 hover:bg-zenDark-700 text-white font-semibold text-sm border border-zenDark-600 transition">
-          Sign In
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-zenCyan-500 to-zenEmerald-500 hover:brightness-110 text-zenDark-950 font-bold text-sm shadow-glow-cyan transition flex items-center justify-center gap-2">
+          <i id="authSubmitSpinner" data-lucide="loader-2" class="w-4 h-4 animate-spin hidden"></i>
+          <span id="authSubmitText">Login</span>
         </button>
       </form>
 
@@ -1198,10 +1297,78 @@
       <div class="mt-4 text-center text-xs text-slate-400">
         <span id="authToggleQuestion">Don't have an account?</span>
         <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-zenCyan-400 hover:underline font-semibold ml-1">
-          Create Account
+          Register
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ==============================================
+       SUPABASE CONFIGURATION MODAL
+       ============================================== -->
+  <div id="supabaseConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="zen-card w-full max-w-lg rounded-2xl border border-zenDark-700 p-6 sm:p-7 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      <button onclick="closeSupabaseConfigModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white" aria-label="Close configuration modal">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-glow-emerald">
+          <i data-lucide="database" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            Supabase Project Settings
+          </h3>
+          <p class="text-xs text-slate-400">Connect to your Supabase project for real email & password auth.</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Project URL <span class="text-zenCyan-400">*</span></label>
+          <input type="url" id="cfgSupabaseUrl" placeholder="https://your-project-id.supabase.co" class="w-full px-3.5 py-2.5 rounded-xl bg-zenDark-850 border border-zenDark-700 text-xs text-white font-mono focus:outline-none focus:border-zenCyan-500 transition" />
+          <p class="text-[11px] text-slate-500 mt-1">Supabase Dashboard → Project Settings → API → Project URL</p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Anon / Public API Key <span class="text-zenCyan-400">*</span></label>
+          <input type="password" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3.5 py-2.5 rounded-xl bg-zenDark-850 border border-zenDark-700 text-xs text-white font-mono focus:outline-none focus:border-zenCyan-500 transition" />
+          <p class="text-[11px] text-slate-500 mt-1">Supabase Dashboard → Project Settings → API → Project API Keys (anon / public)</p>
+        </div>
+
+        <div id="cfgStatusBox" class="p-3 rounded-xl bg-zenDark-850 border border-zenDark-700 text-slate-300">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold flex items-center gap-2">
+              <span id="cfgDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+              <span id="cfgStatusText" class="text-slate-400">Not configured yet</span>
+            </span>
+            <button type="button" onclick="testSupabaseConnection()" class="text-zenCyan-400 hover:text-zenCyan-300 font-mono text-[11px] font-semibold flex items-center gap-1">
+              <i data-lucide="radio" class="w-3 h-3"></i>
+              <span>Test Connection</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-zenDark-900 border border-zenDark-700/60 text-[11px] text-slate-400 leading-relaxed">
+          <strong class="text-slate-300">Tip:</strong> Credentials are saved safely in your browser's <code class="text-zenCyan-400 font-mono">localStorage</code> or can be defined directly in the JavaScript config constants.
+        </div>
+
+        <div class="flex items-center justify-between pt-2 gap-3">
+          <button type="button" onclick="resetSupabaseConfig()" class="px-3 py-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-zenDark-850 transition">
+            Clear Keys
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeSupabaseConfigModal()" class="px-4 py-2 rounded-xl text-slate-300 bg-zenDark-800 hover:bg-zenDark-700 font-medium transition">
+              Cancel
+            </button>
+            <button type="button" onclick="saveSupabaseConfig()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 text-zenDark-950 font-bold hover:brightness-110 shadow-glow-cyan transition">
+              Save & Connect
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1257,12 +1424,76 @@
   </div>
 
   <script>
+    // ==============================================
+    // SUPABASE CONFIGURATION & AUTH INTEGRATION
+    // ==============================================
+    // Define your Supabase Project URL and Public Anon Key below, or enter them via the in-app Supabase Settings modal
+    const DEFAULT_SUPABASE_URL = "https://rnpiisepocxtzlpzmajo.supabase.co";
+    const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_ptOpedwDAsQpRMOcBQ3Ckw_sS__mXXs";
+
+    const storedUrl = localStorage.getItem('zenpho_supabase_url');
+    const storedKey = localStorage.getItem('zenpho_supabase_anon_key');
+
+    let supabaseUrl = (storedUrl && !storedUrl.includes('your-project-id')) ? storedUrl : DEFAULT_SUPABASE_URL;
+    let supabaseAnonKey = (storedKey && !storedKey.includes('your-anon-public-key')) ? storedKey : DEFAULT_SUPABASE_ANON_KEY;
+    let supabaseClient = null;
+
+    function isConfigValid(url, key) {
+      return Boolean(
+        url &&
+        url.trim().length > 0 &&
+        !url.includes('your-project-id') &&
+        url.startsWith('https://') &&
+        key &&
+        key.trim().length > 20 &&
+        !key.includes('your-anon-public-key')
+      );
+    }
+
+    function initSupabase() {
+      try {
+        if (isConfigValid(supabaseUrl, supabaseAnonKey) && window.supabase && window.supabase.createClient) {
+          supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true
+            }
+          });
+          updateSupabaseStatusBadge(true, "Supabase Ready");
+          return true;
+        } else {
+          supabaseClient = null;
+          updateSupabaseStatusBadge(false, "Configure Supabase");
+          return false;
+        }
+      } catch (err) {
+        console.warn("Supabase init error:", err);
+        supabaseClient = null;
+        updateSupabaseStatusBadge(false, "Config Error");
+        return false;
+      }
+    }
+
+    function updateSupabaseStatusBadge(isConnected, label) {
+      const dot = document.getElementById('sbAuthIndicatorDot');
+      const text = document.getElementById('sbAuthIndicatorText');
+      if (dot) {
+        dot.className = `w-2 h-2 rounded-full ${isConnected ? 'bg-zenEmerald-400' : 'bg-amber-400'}`;
+      }
+      if (text) {
+        text.textContent = label;
+      }
+    }
+
     // State store
     const appState = {
-      isLoggedIn: true,
+      isLoggedIn: false, // Initialized as unauthenticated; restored automatically if active Supabase session or demo user exists
       user: {
+        id: null,
         name: "Alex Zhang",
         handle: "SereneCoder",
+        email: "alex@zenpho.dev",
         level: 14,
         xp: 3450,
         xpMax: 4000,
@@ -1274,12 +1505,112 @@
       authMode: 'signin' // 'signin' or 'signup'
     };
 
+    function persistCurrentStats() {
+      if (appState.user && appState.user.id) {
+        const stats = {
+          xp: appState.user.xp,
+          xpMax: appState.user.xpMax,
+          level: appState.user.level,
+          streak: appState.user.streak,
+          solved: appState.user.solved,
+          dailyCheckedIn: appState.user.dailyCheckedIn
+        };
+        localStorage.setItem(`zenpho_stats_${appState.user.id}`, JSON.stringify(stats));
+      }
+    }
+
+    function applyAuthUser(sbUser) {
+      if (!sbUser) return;
+      const metadata = sbUser.user_metadata || {};
+      const fallbackHandle = sbUser.email ? sbUser.email.split('@')[0] : 'ZenCoder';
+      const handle = metadata.handle || metadata.display_name || fallbackHandle;
+      
+      appState.user.id = sbUser.id;
+      appState.user.email = sbUser.email || '';
+      appState.user.handle = handle;
+      appState.user.name = metadata.name || handle;
+
+      const savedStats = localStorage.getItem(`zenpho_stats_${sbUser.id}`);
+      if (savedStats) {
+        try {
+          const stats = JSON.parse(savedStats);
+          appState.user.xp = stats.xp ?? appState.user.xp;
+          appState.user.xpMax = stats.xpMax ?? appState.user.xpMax;
+          appState.user.level = stats.level ?? appState.user.level;
+          appState.user.streak = stats.streak ?? appState.user.streak;
+          appState.user.solved = stats.solved ?? appState.user.solved;
+          appState.user.dailyCheckedIn = stats.dailyCheckedIn ?? false;
+        } catch (e) {
+          console.warn("Could not parse saved user stats:", e);
+        }
+      }
+
+      localStorage.setItem('zenpho_active_user', JSON.stringify({
+        id: sbUser.id,
+        email: sbUser.email,
+        handle: handle
+      }));
+    }
+
+    async function restoreSupabaseSession() {
+      if (!supabaseClient) {
+        const savedDemo = localStorage.getItem('zenpho_active_demo_user');
+        if (savedDemo) {
+          try {
+            const parsed = JSON.parse(savedDemo);
+            appState.isLoggedIn = true;
+            appState.user = { ...appState.user, ...parsed };
+            updateUI();
+            return;
+          } catch (e) {}
+        }
+        appState.isLoggedIn = false;
+        updateUI();
+        return;
+      }
+
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          applyAuthUser(session.user);
+          appState.isLoggedIn = true;
+          updateUI();
+        } else {
+          appState.isLoggedIn = false;
+          updateUI();
+        }
+      } catch (err) {
+        console.warn("Error restoring Supabase session:", err);
+        appState.isLoggedIn = false;
+        updateUI();
+      }
+
+      try {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.user) {
+            applyAuthUser(session.user);
+            appState.isLoggedIn = true;
+            updateUI();
+          } else if (event === 'SIGNED_OUT') {
+            appState.isLoggedIn = false;
+            updateUI();
+          }
+        });
+      } catch (err) {
+        console.warn("Error in Supabase auth listener:", err);
+      }
+    }
+
     // Initialize UI on window load
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       // Setup Lucide icons
       lucide.createIcons();
       // Render activity heatmap
       renderHeatmap();
+      // Initialize Supabase Client
+      initSupabase();
+      // Restore active Supabase session or saved profile
+      await restoreSupabaseSession();
       // Sync initial state
       updateUI();
     });
@@ -1317,7 +1648,7 @@
     function requireAuth(viewId) {
       if (!appState.isLoggedIn) {
         openAuthModal('signin');
-        showToast("Please sign in or use 1-Click Demo Login to access the student dashboard!", "info");
+        showToast("Please log in or register to access the student dashboard!", "info");
       } else {
         navigateTo(viewId);
       }
@@ -1339,15 +1670,21 @@
     function updateUI() {
       const loggedHud = document.getElementById('loggedHud');
       const unloggedHud = document.getElementById('unloggedHud');
+      const mobileUnlogged = document.getElementById('mobileUnloggedAuth');
+      const mobileLogged = document.getElementById('mobileLoggedAuth');
 
       if (appState.isLoggedIn) {
         loggedHud.classList.remove('hidden');
         loggedHud.classList.add('flex');
         unloggedHud.classList.add('hidden');
+        if (mobileUnlogged) mobileUnlogged.classList.add('hidden');
+        if (mobileLogged) mobileLogged.classList.remove('hidden');
       } else {
         loggedHud.classList.add('hidden');
         loggedHud.classList.remove('flex');
         unloggedHud.classList.remove('hidden');
+        if (mobileUnlogged) mobileUnlogged.classList.remove('hidden');
+        if (mobileLogged) mobileLogged.classList.add('hidden');
       }
 
       // Update XP & Stats across UI
@@ -1375,45 +1712,138 @@
       lucide.createIcons();
     }
 
-    function toggleMockAuth(status) {
-      appState.isLoggedIn = status;
-      updateUI();
-      if (!status) {
-        navigateTo('landing');
-        showToast("Logged out successfully.", "info");
-      } else {
-        showToast("Logged in as SereneCoder!", "success");
+    async function handleLogout() {
+      if (supabaseClient) {
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (err) {
+          console.warn("Supabase signOut error:", err);
+        }
       }
+      localStorage.removeItem('zenpho_active_user');
+      localStorage.removeItem('zenpho_active_demo_user');
+      appState.isLoggedIn = false;
+      updateUI();
+      navigateTo('landing');
+      showToast("Logged out successfully.", "info");
+    }
+
+    function toggleMockAuth(status) {
+      if (!status) {
+        handleLogout();
+      } else {
+        demoInstantLogin();
+      }
+    }
+
+    function setAuthAlert(message, type = 'error') {
+      const banner = document.getElementById('authAlertBanner');
+      const text = document.getElementById('authAlertMessage');
+      const icon = document.getElementById('authAlertIcon');
+      if (!banner || !text) return;
+
+      banner.classList.remove('hidden', 'bg-rose-500/10', 'border-rose-500/30', 'text-rose-300',
+                             'bg-amber-500/10', 'border-amber-500/30', 'text-amber-300',
+                             'bg-zenEmerald-500/10', 'border-zenEmerald-500/30', 'text-zenEmerald-300');
+
+      if (type === 'error') {
+        banner.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+        if (icon) icon.setAttribute('data-lucide', 'alert-circle');
+      } else if (type === 'warning') {
+        banner.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-300');
+        if (icon) icon.setAttribute('data-lucide', 'alert-triangle');
+      } else {
+        banner.classList.add('bg-zenEmerald-500/10', 'border-zenEmerald-500/30', 'text-zenEmerald-300');
+        if (icon) icon.setAttribute('data-lucide', 'check-circle');
+      }
+
+      text.innerHTML = message;
+      lucide.createIcons();
+    }
+
+    function clearAuthAlert() {
+      const banner = document.getElementById('authAlertBanner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function setAuthLoading(isLoading) {
+      const btn = document.getElementById('authSubmitBtn');
+      const spinner = document.getElementById('authSubmitSpinner');
+      const text = document.getElementById('authSubmitText');
+      const isSignup = appState.authMode === 'signup';
+      if (!btn) return;
+
+      if (isLoading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-wait');
+        if (spinner) spinner.classList.remove('hidden');
+        if (text) text.textContent = isSignup ? 'Creating Account...' : 'Signing In...';
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-wait');
+        if (spinner) spinner.classList.add('hidden');
+        if (text) text.textContent = isSignup ? 'Register' : 'Login';
+      }
+      lucide.createIcons();
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('authPassword');
+      const icon = document.getElementById('passwordToggleIcon');
+      if (!pwd) return;
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        pwd.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
     }
 
     function openAuthModal(mode = 'signin') {
       appState.authMode = mode;
+      clearAuthAlert();
       const modal = document.getElementById('authModal');
       const title = document.getElementById('authModalTitle');
       const subtitle = document.getElementById('authModalSubtitle');
       const submitBtn = document.getElementById('authSubmitBtn');
+      const submitText = document.getElementById('authSubmitText');
       const nameGroup = document.getElementById('nameInputGroup');
       const toggleQuestion = document.getElementById('authToggleQuestion');
       const toggleBtn = document.getElementById('authToggleBtn');
+      const tabSignin = document.getElementById('modalTabSignin');
+      const tabSignup = document.getElementById('modalTabSignup');
 
       if (mode === 'signup') {
         title.textContent = "Begin Your Zen Journey";
-        subtitle.textContent = "Start tracking daily progress and algorithmic mastery.";
-        submitBtn.textContent = "Create Free Account";
+        subtitle.textContent = "Create an account to track daily streaks and algorithmic mastery.";
+        if (submitText) submitText.textContent = "Register";
+        submitBtn.className = "w-full py-2.5 rounded-xl bg-gradient-to-r from-zenEmerald-400 to-zenCyan-400 hover:brightness-110 text-zenDark-950 font-bold text-sm shadow-glow-cyan transition flex items-center justify-center gap-2";
         nameGroup.classList.remove('hidden');
         toggleQuestion.textContent = "Already have an account?";
-        toggleBtn.textContent = "Sign In";
+        toggleBtn.textContent = "Login";
+        if (tabSignin && tabSignup) {
+          tabSignup.className = "py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-white bg-zenDark-800 shadow-sm border border-zenDark-650";
+          tabSignin.className = "py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+        }
       } else {
         title.textContent = "Enter the Flow State";
-        subtitle.textContent = "Sign in to sync your streaks and problem solving progress.";
-        submitBtn.textContent = "Sign In";
+        subtitle.textContent = "Login to sync your streaks and problem solving progress.";
+        if (submitText) submitText.textContent = "Login";
+        submitBtn.className = "w-full py-2.5 rounded-xl bg-gradient-to-r from-zenCyan-500 to-zenEmerald-500 hover:brightness-110 text-zenDark-950 font-bold text-sm shadow-glow-cyan transition flex items-center justify-center gap-2";
         nameGroup.classList.add('hidden');
         toggleQuestion.textContent = "Don't have an account?";
-        toggleBtn.textContent = "Create Account";
+        toggleBtn.textContent = "Register";
+        if (tabSignin && tabSignup) {
+          tabSignin.className = "py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-white bg-zenDark-800 shadow-sm border border-zenDark-650";
+          tabSignup.className = "py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+        }
       }
 
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      lucide.createIcons();
     }
 
     function closeAuthModal() {
@@ -1426,19 +1856,250 @@
       openAuthModal(appState.authMode === 'signin' ? 'signup' : 'signin');
     }
 
-    function handleAuthSubmit(e) {
+    async function handleAuthSubmit(e) {
       e.preventDefault();
-      closeAuthModal();
-      toggleMockAuth(true);
-      navigateTo('dashboard');
-      showToast("Authentication successful! Welcome to Zenpho.", "success");
+      clearAuthAlert();
+
+      const emailInput = document.getElementById('authEmail');
+      const passwordInput = document.getElementById('authPassword');
+      const nameInput = document.getElementById('authName');
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+      const isSignup = appState.authMode === 'signup';
+      const handle = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (email.includes('@') ? email.split('@')[0] : 'ZenCoder');
+
+      if (!email || !password) {
+        setAuthAlert("Please provide both email and password.", "error");
+        return;
+      }
+
+      if (password.length < 6) {
+        setAuthAlert("Password must be at least 6 characters long.", "error");
+        return;
+      }
+
+      // If Supabase credentials are not configured, guide the user
+      if (!supabaseClient || !isConfigValid(supabaseUrl, supabaseAnonKey)) {
+        setAuthAlert(
+          `Supabase Project URL & Anon Key required for live auth.<br/><button type="button" onclick="openSupabaseConfigModal()" class="mt-2 text-zenCyan-400 underline font-semibold hover:text-white inline-flex items-center gap-1">Configure Supabase Credentials &rarr;</button>`,
+          "warning"
+        );
+        showToast("Configure Supabase credentials or use Instant Demo Login", "info");
+        return;
+      }
+
+      setAuthLoading(true);
+
+      try {
+        if (isSignup) {
+          // SUPABASE SIGN UP (EMAIL & PASSWORD)
+          const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                handle: handle,
+                display_name: handle
+              }
+            }
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data?.user) {
+            if (!data.session) {
+              setAuthAlert(
+                `Registration confirmation sent! Please check <strong>${email}</strong> to confirm your email, then login.`,
+                "success"
+              );
+              showToast("Account created! Check email to confirm registration.", "success");
+              setAuthLoading(false);
+              setTimeout(() => {
+                openAuthModal('signin');
+                if (document.getElementById('authEmail')) {
+                  document.getElementById('authEmail').value = email;
+                }
+              }, 3000);
+              return;
+            } else {
+              applyAuthUser(data.user);
+              appState.isLoggedIn = true;
+              updateUI();
+              closeAuthModal();
+              navigateTo('dashboard');
+              showToast(`Welcome to Zenpho, ${appState.user.handle}! ✨`, "success");
+            }
+          }
+        } else {
+          // SUPABASE SIGN IN (EMAIL & PASSWORD)
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data?.user) {
+            applyAuthUser(data.user);
+            appState.isLoggedIn = true;
+            updateUI();
+            closeAuthModal();
+            navigateTo('dashboard');
+            showToast(`Welcome back, ${appState.user.handle}! Flow state restored.`, "success");
+          }
+        }
+      } catch (err) {
+        console.error("Supabase Authentication error:", err);
+        let msg = err.message || "Authentication failed.";
+        if (msg.includes("Invalid login credentials")) {
+          msg = "Invalid email or password. Please verify and try again.";
+        } else if (msg.includes("Email not confirmed")) {
+          msg = "Email address has not been confirmed yet. Please verify your inbox.";
+        } else if (msg.includes("User already registered")) {
+          msg = "An account with this email already exists. Try logging in instead.";
+        }
+        setAuthAlert(msg, "error");
+        showToast(msg, "error");
+      } finally {
+        setAuthLoading(false);
+      }
     }
 
     function demoInstantLogin() {
       closeAuthModal();
-      toggleMockAuth(true);
+      appState.isLoggedIn = true;
+      appState.user = {
+        name: "Alex Zhang",
+        handle: "SereneCoder",
+        email: "serene@zenpho.dev",
+        level: 14,
+        xp: 3450,
+        xpMax: 4000,
+        streak: 7,
+        solved: 184,
+        dailyCheckedIn: false
+      };
+      localStorage.setItem('zenpho_active_demo_user', JSON.stringify(appState.user));
+      updateUI();
       navigateTo('dashboard');
       showToast("Signed in as demo master: SereneCoder ✨", "success");
+    }
+
+    // Supabase Configuration Modal Logic
+    function openSupabaseConfigModal() {
+      const modal = document.getElementById('supabaseConfigModal');
+      const urlInput = document.getElementById('cfgSupabaseUrl');
+      const keyInput = document.getElementById('cfgSupabaseKey');
+      const statusText = document.getElementById('cfgStatusText');
+      const dot = document.getElementById('cfgDot');
+
+      if (urlInput) urlInput.value = (supabaseUrl && !supabaseUrl.includes('your-project-id')) ? supabaseUrl : '';
+      if (keyInput) keyInput.value = (supabaseAnonKey && !supabaseAnonKey.includes('your-anon-public-key')) ? supabaseAnonKey : '';
+
+      if (isConfigValid(supabaseUrl, supabaseAnonKey)) {
+        if (statusText) statusText.textContent = "Supabase Connected";
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-zenEmerald-400";
+      } else {
+        if (statusText) statusText.textContent = "Credentials required";
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400";
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      lucide.createIcons();
+    }
+
+    function closeSupabaseConfigModal() {
+      const modal = document.getElementById('supabaseConfigModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function testSupabaseConnection() {
+      const urlInput = document.getElementById('cfgSupabaseUrl');
+      const keyInput = document.getElementById('cfgSupabaseKey');
+      const statusText = document.getElementById('cfgStatusText');
+      const dot = document.getElementById('cfgDot');
+
+      const testUrl = urlInput ? urlInput.value.trim() : '';
+      const testKey = keyInput ? keyInput.value.trim() : '';
+
+      if (!isConfigValid(testUrl, testKey)) {
+        if (statusText) statusText.textContent = "Please provide valid URL and Anon Key";
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        showToast("Enter a valid URL and Anon Key first", "info");
+        return;
+      }
+
+      if (statusText) statusText.textContent = "Pinging Supabase...";
+      if (dot) dot.className = "w-2 h-2 rounded-full bg-zenCyan-400 animate-ping";
+
+      try {
+        if (!window.supabase || !window.supabase.createClient) {
+          throw new Error("Supabase library not loaded");
+        }
+        const tempClient = window.supabase.createClient(testUrl, testKey);
+        await tempClient.auth.getSession();
+        if (statusText) statusText.textContent = "Connection Successful! Ready for auth.";
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-zenEmerald-400";
+        showToast("Supabase connection verified! 🎉", "success");
+      } catch (err) {
+        if (statusText) statusText.textContent = "Connection failed: " + (err.message || "Network error");
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        showToast("Could not connect to Supabase: " + (err.message || "Check URL/Key"), "error");
+      }
+    }
+
+    function saveSupabaseConfig() {
+      const urlInput = document.getElementById('cfgSupabaseUrl');
+      const keyInput = document.getElementById('cfgSupabaseKey');
+      const newUrl = urlInput ? urlInput.value.trim() : '';
+      const newKey = keyInput ? keyInput.value.trim() : '';
+
+      if (!isConfigValid(newUrl, newKey)) {
+        showToast("Please enter a valid https:// Supabase URL and Anon Key.", "info");
+        return;
+      }
+
+      supabaseUrl = newUrl;
+      supabaseAnonKey = newKey;
+      localStorage.setItem('zenpho_supabase_url', newUrl);
+      localStorage.setItem('zenpho_supabase_anon_key', newKey);
+
+      const success = initSupabase();
+      closeSupabaseConfigModal();
+
+      if (success) {
+        showToast("Supabase connected & saved to local storage!", "success");
+        restoreSupabaseSession();
+        clearAuthAlert();
+      } else {
+        showToast("Supabase credentials saved.", "info");
+      }
+    }
+
+    function resetSupabaseConfig() {
+      localStorage.removeItem('zenpho_supabase_url');
+      localStorage.removeItem('zenpho_supabase_anon_key');
+      supabaseUrl = DEFAULT_SUPABASE_URL;
+      supabaseAnonKey = DEFAULT_SUPABASE_ANON_KEY;
+
+      const urlInput = document.getElementById('cfgSupabaseUrl');
+      const keyInput = document.getElementById('cfgSupabaseKey');
+      if (urlInput) urlInput.value = '';
+      if (keyInput) keyInput.value = '';
+
+      initSupabase();
+      showToast("Supabase config cleared.", "info");
     }
 
     function claimDailyCheckIn() {
@@ -1451,25 +2112,33 @@
       appState.user.streak += 1;
       
       const btn = document.getElementById('dailyCheckInBtn');
-      btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-slate-400"></i><span class="text-slate-400">Claimed (+50 XP)</span>`;
-      btn.classList.remove('border-zenEmerald-500/40', 'text-zenEmerald-400');
-      btn.classList.add('border-zenDark-700', 'text-slate-400', 'cursor-not-allowed');
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-slate-400"></i><span class="text-slate-400">Claimed (+50 XP)</span>`;
+        btn.classList.remove('border-zenEmerald-500/40', 'text-zenEmerald-400');
+        btn.classList.add('border-zenDark-700', 'text-slate-400', 'cursor-not-allowed');
+      }
 
+      persistCurrentStats();
       updateUI();
       showToast("🔥 Daily check-in complete! +50 XP and streak extended.", "success");
     }
 
     function solveChallengeAction() {
       const btn = document.getElementById('solveChallengeBtn');
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Verifying Harmony...</span>`;
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Verifying Harmony...</span>`;
+      }
       
       setTimeout(() => {
         appState.user.xp += 120;
         appState.user.solved += 1;
         checkLevelProgression();
+        persistCurrentStats();
         updateUI();
-        btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-zenEmerald-400"></i><span>Completed (+120 XP)</span>`;
-        btn.classList.add('bg-zenEmerald-950', 'text-zenEmerald-400', 'border', 'border-zenEmerald-500');
+        if (btn) {
+          btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-zenEmerald-400"></i><span>Completed (+120 XP)</span>`;
+          btn.classList.add('bg-zenEmerald-950', 'text-zenEmerald-400', 'border', 'border-zenEmerald-500');
+        }
         showToast("✨ Challenge Cleared: Minimum Window Substring! +120 XP gained.", "success");
       }, 1200);
     }
@@ -1478,6 +2147,7 @@
       appState.user.xp += xpGained;
       appState.user.solved += 1;
       checkLevelProgression();
+      persistCurrentStats();
       updateUI();
       showToast(`⚡ Kata solved: "${name}" (+${xpGained} XP)`, "success");
     }
@@ -1485,6 +2155,7 @@
     function triggerLevelBonus() {
       appState.user.xp += 150;
       checkLevelProgression();
+      persistCurrentStats();
       updateUI();
       showToast("🎉 Serene focus bonus claimed! +150 XP added.", "success");
     }
@@ -1498,6 +2169,7 @@
         appState.user.level += 1;
         appState.user.xp = appState.user.xp - appState.user.xpMax;
         appState.user.xpMax += 500;
+        persistCurrentStats();
         showToast(`🏆 LEVEL UP! You reached Zenith Level ${appState.user.level}!`, "success");
       }
     }
@@ -1613,9 +2285,19 @@
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       
-      const borderColor = type === 'success' ? 'border-zenEmerald-500' : 'border-zenCyan-500';
-      const icon = type === 'success' ? 'check-circle' : 'info';
-      const iconColor = type === 'success' ? 'text-zenEmerald-400' : 'text-zenCyan-400';
+      let borderColor = 'border-zenCyan-500';
+      let icon = 'info';
+      let iconColor = 'text-zenCyan-400';
+
+      if (type === 'success') {
+        borderColor = 'border-zenEmerald-500';
+        icon = 'check-circle';
+        iconColor = 'text-zenEmerald-400';
+      } else if (type === 'error') {
+        borderColor = 'border-rose-500';
+        icon = 'alert-triangle';
+        iconColor = 'text-rose-400';
+      }
 
       toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-zenDark-900 border ${borderColor} text-slate-200 text-xs shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 font-medium max-w-sm`;
       toast.innerHTML = `

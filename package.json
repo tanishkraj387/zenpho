@@ -1,0 +1,14 @@
+{
+  "name": "zenpho",
+  "version": "1.0.0",
+  "description": "Zenpho - Master Code with Serenity & Focus",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/ssr": "^0.5.2"
+  }
+}

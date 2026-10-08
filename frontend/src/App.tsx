@@ -11,6 +11,7 @@ import { Practice } from './pages/Practice'
 import { Profile } from './pages/Profile'
 import { Shop } from './pages/Shop'
 import { Signup } from './pages/Signup'
+import { SpriteTest } from './pages/SpriteTest'
 import { Starter } from './pages/Starter'
 
 const queryClient = new QueryClient()
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/sprite-test" element={<SpriteTest />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

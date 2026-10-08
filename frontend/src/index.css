@@ -5,3 +5,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+img[src*='/sprites/'],
+.sprite-image {
+  image-rendering: pixelated;
+}

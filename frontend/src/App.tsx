@@ -13,6 +13,7 @@ import { Shop } from './pages/Shop'
 import { Signup } from './pages/Signup'
 import { SpriteTest } from './pages/SpriteTest'
 import { Starter } from './pages/Starter'
+import { UiDemo } from './pages/UiDemo'
 
 const queryClient = new QueryClient()
 
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/sprite-test" element={<SpriteTest />} />
+          <Route path="/ui-demo" element={<UiDemo />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

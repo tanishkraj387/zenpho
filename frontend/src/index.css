@@ -1,12 +1,59 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-cream: #f4efe1;
+  --color-ink: #1a1c2c;
+  --color-sky: #8fd3ff;
+  --color-grass: #4aa52e;
+  --color-danger: #d62839;
+  --color-warning: #f7c948;
+  --color-hp-green: #42b883;
+  --color-hp-yellow: #f7c948;
+  --color-hp-red: #d62839;
+  --font-heading: 'Press Start 2P', system-ui, sans-serif;
+  --font-pixel: 'Pixelify Sans', system-ui, sans-serif;
+}
+
+:root {
+  color: #1a1c2c;
+  background: #8fd3ff;
+  font-family: 'Pixelify Sans', system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
 }
 
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.monaco-editor,
+.monaco-editor * {
+  font-family: Consolas, 'Courier New', monospace;
+}
+
 img[src*='/sprites/'],
 .sprite-image {
   image-rendering: pixelated;
+}
+
+.pixel-panel {
+  border: 4px solid #1a1c2c;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #1a1c2c;
+}
+
+.pixel-focus:focus-visible {
+  outline: 4px solid #f7c948;
+  outline-offset: 3px;
 }

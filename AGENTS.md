@@ -15,3 +15,11 @@ This project is a Pokemon-style coding battle game. Players progress through cod
 
 - Do not write application code unless explicitly asked.
 - Preserve shared repository files and avoid unrelated changes.
+
+## Battle Rules
+
+- One coding problem per battle; the test groups (sample tests, hidden tests, efficiency tests) are the battle checkpoints.
+- Efficiency means passing large-input tests within the time limit; never claim to measure Big-O.
+- No timers or speed bonuses.
+- Wrong submissions cost a small amount of HP; solved progress and code drafts are never lost.
+- All outcomes (damage, XP, coins, catches) are decided by the server. The UI only plays back a list of battle events.

@@ -1,0 +1,1428 @@
+[
+  {
+    "id": 1,
+    "name": "Bulbasaur",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 2,
+    "name": "Ivysaur",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 3,
+    "name": "Venusaur",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 4,
+    "name": "Charmander",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 5,
+    "name": "Charmeleon",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 6,
+    "name": "Charizard",
+    "types": [
+      "Fire",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 7,
+    "name": "Squirtle",
+    "types": [
+      "Water"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 8,
+    "name": "Wartortle",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 9,
+    "name": "Blastoise",
+    "types": [
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 10,
+    "name": "Caterpie",
+    "types": [
+      "Bug"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 11,
+    "name": "Metapod",
+    "types": [
+      "Bug"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 12,
+    "name": "Butterfree",
+    "types": [
+      "Bug",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 13,
+    "name": "Weedle",
+    "types": [
+      "Bug",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 14,
+    "name": "Kakuna",
+    "types": [
+      "Bug",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 15,
+    "name": "Beedrill",
+    "types": [
+      "Bug",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 16,
+    "name": "Pidgey",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 17,
+    "name": "Pidgeotto",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 18,
+    "name": "Pidgeot",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 19,
+    "name": "Rattata",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 20,
+    "name": "Raticate",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 21,
+    "name": "Spearow",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 22,
+    "name": "Fearow",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 23,
+    "name": "Ekans",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 24,
+    "name": "Arbok",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 25,
+    "name": "Pikachu",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 26,
+    "name": "Raichu",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 27,
+    "name": "Sandshrew",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 28,
+    "name": "Sandslash",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 29,
+    "name": "Nidoran♀",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 30,
+    "name": "Nidorina",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 31,
+    "name": "Nidoqueen",
+    "types": [
+      "Poison",
+      "Ground"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 32,
+    "name": "Nidoran♂",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 33,
+    "name": "Nidorino",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 34,
+    "name": "Nidoking",
+    "types": [
+      "Poison",
+      "Ground"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 35,
+    "name": "Clefairy",
+    "types": [
+      "Fairy"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 36,
+    "name": "Clefable",
+    "types": [
+      "Fairy"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 37,
+    "name": "Vulpix",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 38,
+    "name": "Ninetales",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 39,
+    "name": "Jigglypuff",
+    "types": [
+      "Normal",
+      "Fairy"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 40,
+    "name": "Wigglytuff",
+    "types": [
+      "Normal",
+      "Fairy"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 41,
+    "name": "Zubat",
+    "types": [
+      "Poison",
+      "Flying"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 42,
+    "name": "Golbat",
+    "types": [
+      "Poison",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 43,
+    "name": "Oddish",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 44,
+    "name": "Gloom",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 45,
+    "name": "Vileplume",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 46,
+    "name": "Paras",
+    "types": [
+      "Bug",
+      "Grass"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 47,
+    "name": "Parasect",
+    "types": [
+      "Bug",
+      "Grass"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 48,
+    "name": "Venonat",
+    "types": [
+      "Bug",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 49,
+    "name": "Venomoth",
+    "types": [
+      "Bug",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 50,
+    "name": "Diglett",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 51,
+    "name": "Dugtrio",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 52,
+    "name": "Meowth",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 53,
+    "name": "Persian",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 54,
+    "name": "Psyduck",
+    "types": [
+      "Water"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 55,
+    "name": "Golduck",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 56,
+    "name": "Mankey",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 57,
+    "name": "Primeape",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 58,
+    "name": "Growlithe",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 59,
+    "name": "Arcanine",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 60,
+    "name": "Poliwag",
+    "types": [
+      "Water"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 61,
+    "name": "Poliwhirl",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 62,
+    "name": "Poliwrath",
+    "types": [
+      "Water",
+      "Fighting"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 63,
+    "name": "Abra",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 64,
+    "name": "Kadabra",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 65,
+    "name": "Alakazam",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 66,
+    "name": "Machop",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 67,
+    "name": "Machoke",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 68,
+    "name": "Machamp",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 69,
+    "name": "Bellsprout",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 70,
+    "name": "Weepinbell",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 71,
+    "name": "Victreebel",
+    "types": [
+      "Grass",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 72,
+    "name": "Tentacool",
+    "types": [
+      "Water",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 73,
+    "name": "Tentacruel",
+    "types": [
+      "Water",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 74,
+    "name": "Geodude",
+    "types": [
+      "Rock",
+      "Ground"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 75,
+    "name": "Graveler",
+    "types": [
+      "Rock",
+      "Ground"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 76,
+    "name": "Golem",
+    "types": [
+      "Rock",
+      "Ground"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 77,
+    "name": "Ponyta",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 78,
+    "name": "Rapidash",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 79,
+    "name": "Slowpoke",
+    "types": [
+      "Water",
+      "Psychic"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 80,
+    "name": "Slowbro",
+    "types": [
+      "Water",
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 81,
+    "name": "Magnemite",
+    "types": [
+      "Electric",
+      "Steel"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 82,
+    "name": "Magneton",
+    "types": [
+      "Electric",
+      "Steel"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 83,
+    "name": "Farfetch'd",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 84,
+    "name": "Doduo",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 85,
+    "name": "Dodrio",
+    "types": [
+      "Normal",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 86,
+    "name": "Seel",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 87,
+    "name": "Dewgong",
+    "types": [
+      "Water",
+      "Ice"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 88,
+    "name": "Grimer",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 89,
+    "name": "Muk",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 90,
+    "name": "Shellder",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 91,
+    "name": "Cloyster",
+    "types": [
+      "Water",
+      "Ice"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 92,
+    "name": "Gastly",
+    "types": [
+      "Ghost",
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 93,
+    "name": "Haunter",
+    "types": [
+      "Ghost",
+      "Poison"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 94,
+    "name": "Gengar",
+    "types": [
+      "Ghost",
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 95,
+    "name": "Onix",
+    "types": [
+      "Rock",
+      "Ground"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 96,
+    "name": "Drowzee",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 97,
+    "name": "Hypno",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 98,
+    "name": "Krabby",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 99,
+    "name": "Kingler",
+    "types": [
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 100,
+    "name": "Voltorb",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 101,
+    "name": "Electrode",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 102,
+    "name": "Exeggcute",
+    "types": [
+      "Grass",
+      "Psychic"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 103,
+    "name": "Exeggutor",
+    "types": [
+      "Grass",
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 104,
+    "name": "Cubone",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 105,
+    "name": "Marowak",
+    "types": [
+      "Ground"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 106,
+    "name": "Hitmonlee",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 107,
+    "name": "Hitmonchan",
+    "types": [
+      "Fighting"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 108,
+    "name": "Lickitung",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 109,
+    "name": "Koffing",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 110,
+    "name": "Weezing",
+    "types": [
+      "Poison"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 111,
+    "name": "Rhyhorn",
+    "types": [
+      "Ground",
+      "Rock"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 112,
+    "name": "Rhydon",
+    "types": [
+      "Ground",
+      "Rock"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 113,
+    "name": "Chansey",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 114,
+    "name": "Tangela",
+    "types": [
+      "Grass"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 115,
+    "name": "Kangaskhan",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 116,
+    "name": "Horsea",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 117,
+    "name": "Seadra",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 118,
+    "name": "Goldeen",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 119,
+    "name": "Seaking",
+    "types": [
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 120,
+    "name": "Staryu",
+    "types": [
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 121,
+    "name": "Starmie",
+    "types": [
+      "Water",
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 122,
+    "name": "Mr. Mime",
+    "types": [
+      "Psychic",
+      "Fairy"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 123,
+    "name": "Scyther",
+    "types": [
+      "Bug",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 124,
+    "name": "Jynx",
+    "types": [
+      "Ice",
+      "Psychic"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 125,
+    "name": "Electabuzz",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 126,
+    "name": "Magmar",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 127,
+    "name": "Pinsir",
+    "types": [
+      "Bug"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 128,
+    "name": "Tauros",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 129,
+    "name": "Magikarp",
+    "types": [
+      "Water"
+    ],
+    "rarity": "common",
+    "isLegendary": false
+  },
+  {
+    "id": 130,
+    "name": "Gyarados",
+    "types": [
+      "Water",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 131,
+    "name": "Lapras",
+    "types": [
+      "Water",
+      "Ice"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 132,
+    "name": "Ditto",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 133,
+    "name": "Eevee",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 134,
+    "name": "Vaporeon",
+    "types": [
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 135,
+    "name": "Jolteon",
+    "types": [
+      "Electric"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 136,
+    "name": "Flareon",
+    "types": [
+      "Fire"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 137,
+    "name": "Porygon",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 138,
+    "name": "Omanyte",
+    "types": [
+      "Rock",
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 139,
+    "name": "Omastar",
+    "types": [
+      "Rock",
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 140,
+    "name": "Kabuto",
+    "types": [
+      "Rock",
+      "Water"
+    ],
+    "rarity": "uncommon",
+    "isLegendary": false
+  },
+  {
+    "id": 141,
+    "name": "Kabutops",
+    "types": [
+      "Rock",
+      "Water"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 142,
+    "name": "Aerodactyl",
+    "types": [
+      "Rock",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 143,
+    "name": "Snorlax",
+    "types": [
+      "Normal"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 144,
+    "name": "Articuno",
+    "types": [
+      "Ice",
+      "Flying"
+    ],
+    "rarity": "legendary",
+    "isLegendary": true
+  },
+  {
+    "id": 145,
+    "name": "Zapdos",
+    "types": [
+      "Electric",
+      "Flying"
+    ],
+    "rarity": "legendary",
+    "isLegendary": true
+  },
+  {
+    "id": 146,
+    "name": "Moltres",
+    "types": [
+      "Fire",
+      "Flying"
+    ],
+    "rarity": "legendary",
+    "isLegendary": true
+  },
+  {
+    "id": 147,
+    "name": "Dratini",
+    "types": [
+      "Dragon"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 148,
+    "name": "Dragonair",
+    "types": [
+      "Dragon"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 149,
+    "name": "Dragonite",
+    "types": [
+      "Dragon",
+      "Flying"
+    ],
+    "rarity": "rare",
+    "isLegendary": false
+  },
+  {
+    "id": 150,
+    "name": "Mewtwo",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "legendary",
+    "isLegendary": true
+  },
+  {
+    "id": 151,
+    "name": "Mew",
+    "types": [
+      "Psychic"
+    ],
+    "rarity": "legendary",
+    "isLegendary": true
+  }
+]

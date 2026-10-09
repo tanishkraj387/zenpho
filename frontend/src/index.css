@@ -58,6 +58,22 @@ img[src*='/sprites/'],
   outline-offset: 3px;
 }
 
+.catch-ball-throw {
+  animation: catch-ball-throw 700ms steps(7, end) forwards;
+}
+
+.catch-ball-shake {
+  animation: catch-ball-shake 1500ms steps(6, end) infinite;
+}
+
+.catch-ball-success {
+  animation: catch-ball-success 700ms steps(7, end) forwards;
+}
+
+.catch-ball-breakout {
+  animation: catch-ball-breakout 700ms steps(7, end) forwards;
+}
+
 .loading-gate {
   position: fixed;
   inset: 0;
@@ -317,6 +333,76 @@ img[src*='/sprites/'],
   100% {
     opacity: 0;
     transform: scaleX(1);
+  }
+}
+
+@keyframes catch-ball-throw {
+  0% {
+    transform: translate(-130px, 70px) rotate(-35deg) scale(0.85);
+  }
+
+  60% {
+    transform: translate(-20px, -38px) rotate(25deg) scale(1.08);
+  }
+
+  100% {
+    transform: translate(0, 4px) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes catch-ball-shake {
+  0%,
+  100% {
+    transform: translate(0, 4px) rotate(0deg);
+  }
+
+  18% {
+    transform: translate(-9px, 4px) rotate(-16deg);
+  }
+
+  36% {
+    transform: translate(9px, 4px) rotate(16deg);
+  }
+
+  54% {
+    transform: translate(-6px, 4px) rotate(-10deg);
+  }
+
+  72% {
+    transform: translate(6px, 4px) rotate(10deg);
+  }
+}
+
+@keyframes catch-ball-success {
+  0% {
+    transform: translate(0, 4px) scale(1);
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: translate(0, 4px) scale(1.18);
+    filter: brightness(1.35) drop-shadow(0 0 12px #f7c948);
+  }
+
+  100% {
+    transform: translate(0, 4px) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes catch-ball-breakout {
+  0% {
+    transform: translate(0, 4px) scale(1);
+  }
+
+  45% {
+    transform: translate(0, -22px) scale(1.18);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(90px, -36px) rotate(35deg) scale(0.72);
+    opacity: 0;
   }
 }
 

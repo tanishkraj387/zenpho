@@ -11,7 +11,7 @@ export type BattleEvent =
   | { type: 'enemy_attack'; text: string }
   | { type: 'player_hit'; text: string }
   | { type: 'player_hp'; value?: number; delta?: number; text: string }
-  | { type: 'victory'; text: string }
+  | { type: 'victory'; text: string; rewards?: { xp: number; coins: number } }
   | { type: 'defeat'; text: string }
 
 export type JudgeOutcome =
@@ -45,6 +45,7 @@ type BattleState = {
   playNextEvent: () => void
   finishCurrentEvent: () => void
   useBagItem: (item: 'potion' | 'shield' | 'revive') => void
+  resetBattle: (dialogText: string) => void
   setJudging: () => void
 }
 
@@ -95,7 +96,7 @@ function applyEvent(state: BattleState, event: BattleEvent): Partial<BattleState
       animation: 'enemy-faint',
       dialogText: event.text,
       phase: 'won',
-      victoryRewards: { xp: 120, coins: 45 },
+      victoryRewards: event.rewards ?? { xp: 120, coins: 45 },
     }
   }
 
@@ -119,6 +120,20 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   tests: initialTests,
   victoryRewards: null,
   setJudging: () => set({ phase: 'judging', dialogText: 'Checking the submission...' }),
+  resetBattle: (dialogText) =>
+    set({
+      phase: 'thinking',
+      eventQueue: [],
+      currentEvent: null,
+      dialogText,
+      playerHp: 86,
+      playerMaxHp: 100,
+      enemyHp: 100,
+      enemyMaxHp: 100,
+      animation: 'idle',
+      tests: initialTests,
+      victoryRewards: null,
+    }),
   enqueueEvents: (events, tests) => {
     set((state) => ({
       eventQueue: events,

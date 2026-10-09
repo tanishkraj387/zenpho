@@ -7,6 +7,7 @@ import {
   useDefaultLayout,
   usePanelRef,
 } from 'react-resizable-panels'
+import { AppHeader } from '../components/auth/AppHeader'
 import { DialogBox } from '../components/ui/DialogBox'
 import { HPBar } from '../components/ui/HPBar'
 import { Modal } from '../components/ui/Modal'
@@ -339,34 +340,23 @@ export function Battle() {
     </PixelCard>
   )
 
+  function showHint() {
+    enqueueEvents([
+      {
+        type: 'text',
+        text: 'Hint: track the best streak ending at each position.',
+      },
+    ])
+  }
+
   return (
     <main className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink max-[899px]:h-auto max-[899px]:overflow-auto">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b-4 border-ink bg-cream px-4">
-        <a className="pixel-focus font-heading text-[10px]" href="/hub">
-          Back to Hub
-        </a>
-        <div className="flex items-center gap-3">
-          <span className="font-heading text-[10px]">Coins 245</span>
-          <PixelButton className="px-3 py-2" onClick={() => setIsBagOpen(true)} variant="secondary">
-            Bag
-          </PixelButton>
-          <PixelButton
-            className="px-3 py-2"
-            disabled={isLocked}
-            onClick={() =>
-              enqueueEvents([
-                {
-                  type: 'text',
-                  text: 'Hint: track the best streak ending at each position.',
-                },
-              ])
-            }
-            variant="secondary"
-          >
-            Hint
-          </PixelButton>
-        </div>
-      </header>
+      <AppHeader
+        coins={245}
+        onBag={() => setIsBagOpen(true)}
+        onHint={isLocked ? undefined : showHint}
+        showBattleActions
+      />
 
       <section
         className={`shrink-0 border-b-4 border-ink bg-[#b7e37b] transition-[height] duration-300 ${

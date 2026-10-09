@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { PixelCard } from '../ui/PixelCard'
 import { useAuthStore } from '../../store/authStore'
+import { getPostLoginPath } from '../../lib/starter'
 
 type RouteWrapperProps = {
   children?: ReactNode
@@ -36,13 +38,35 @@ export function ProtectedRoute({ children }: RouteWrapperProps) {
 export function PublicOnlyRoute({ children }: RouteWrapperProps) {
   const loading = useAuthStore((state) => state.loading)
   const user = useAuthStore((state) => state.user)
+  const [redirectPath, setRedirectPath] = useState<string | null>(null)
 
-  if (loading) {
+  useEffect(() => {
+    let isMounted = true
+
+    if (!user) {
+      setRedirectPath(null)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    getPostLoginPath(user.id).then((path) => {
+      if (isMounted) {
+        setRedirectPath(path)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
+  if (loading || (user && !redirectPath)) {
     return <LoadingScreen />
   }
 
-  if (user) {
-    return <Navigate replace to="/hub" />
+  if (user && redirectPath) {
+    return <Navigate replace to={redirectPath} />
   }
 
   return children ?? <Outlet />

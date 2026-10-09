@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
-import { hasStarter } from '../lib/starter'
+import { getPostLoginPath } from '../lib/starter'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 
 type LocationState = {
@@ -29,6 +30,7 @@ export function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const signIn = useAuthStore((state) => state.signIn)
+  const signInAsDevTrainer = useAuthStore((state) => state.signInAsDevTrainer)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -49,13 +51,26 @@ export function Login() {
         return
       }
 
-      navigate((await hasStarter(user.id)) ? '/hub' : '/starter', { replace: true })
+      navigate(await getPostLoginPath(user.id), { replace: true })
     } catch (authError) {
       const message = authError instanceof Error ? authError.message : 'Login failed.'
       setError(friendlyAuthError(message))
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleDevContinue() {
+    const state = location.state as LocationState | null
+    const wantedPath = state?.from?.pathname
+    const user = signInAsDevTrainer()
+
+    navigate(
+      wantedPath && wantedPath !== '/login' && wantedPath !== '/signup'
+        ? wantedPath
+        : await getPostLoginPath(user.id),
+      { replace: true },
+    )
   }
 
   return (
@@ -98,6 +113,21 @@ export function Login() {
               Create an account
             </Link>
           </p>
+          {!isSupabaseConfigured ? (
+            <div className="space-y-3 border-4 border-ink bg-warning p-3">
+              <p>
+                Supabase is not configured locally yet. Use demo mode to review
+                the game screens without real auth.
+              </p>
+              <PixelButton
+                className="w-full justify-center"
+                onClick={handleDevContinue}
+                variant="secondary"
+              >
+                Continue demo
+              </PixelButton>
+            </div>
+          ) : null}
         </form>
       </PixelCard>
     </main>

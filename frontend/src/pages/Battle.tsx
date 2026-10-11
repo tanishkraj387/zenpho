@@ -28,6 +28,7 @@ import {
   getTopicLabel,
   type CodeLanguage,
 } from '../lib/questions'
+import { judgeCode, type JudgeResult } from '../lib/judge'
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
@@ -47,8 +48,7 @@ import {
   type BattleMove,
   type MoveVfx,
 } from '../lib/pokemonBattle'
-import { mockJudge } from '../mocks/mockJudge'
-import { type BattleEvent, type JudgeOutcome, useBattleStore } from '../store/battleStore'
+import { type BattleEvent, useBattleStore } from '../store/battleStore'
 
 type BallItem = {
   id: Extract<ItemSpriteName, 'poke-ball' | 'great-ball' | 'ultra-ball' | 'master-ball'>
@@ -75,18 +75,6 @@ const ballItems: BallItem[] = [
   { id: 'ultra-ball', label: 'Ultra Ball', count: 2, bonus: 36 },
   { id: 'master-ball', label: 'Master Ball', count: 1, bonus: 100 },
 ]
-
-function getSolveReward(difficulty: string): SolveReward {
-  if (difficulty === 'hard') {
-    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 44, maxEnergy: 54 }
-  }
-
-  if (difficulty === 'easy') {
-    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 24, maxEnergy: 34 }
-  }
-
-  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 34, maxEnergy: 44 }
-}
 
 function resultClass(state: 'pending' | 'passed' | 'failed') {
   if (state === 'passed') {
@@ -167,7 +155,6 @@ export function Battle() {
   const [isBattleCollapsed, setIsBattleCollapsed] = useState(false)
   const [activeProblemTab, setActiveProblemTab] = useState<'description' | 'hints'>('description')
   const [activeResultTab, setActiveResultTab] = useState<'results' | 'log'>('results')
-  const [isDevOpen, setIsDevOpen] = useState(false)
   const [isOutcomeModalDismissed, setIsOutcomeModalDismissed] = useState(false)
   const [catchPhase, setCatchPhase] = useState<CatchPhase>('idle')
   const [selectedBall, setSelectedBall] = useState<BallItem | null>(null)
@@ -312,12 +299,12 @@ export function Battle() {
     resultsPanelRef.current?.expand()
   }
 
-  function simulate(outcome: JudgeOutcome) {
+  async function submitToJudge(mode: 'run' | 'submit') {
     if (isLocked) {
       return
     }
 
-    if (outcome === 'all-pass' && isQuestionAlreadySolved) {
+    if (mode === 'submit' && isQuestionAlreadySolved) {
       enqueueEvents([
         {
           type: 'text',
@@ -329,17 +316,21 @@ export function Battle() {
 
     openResultsDrawer()
     setJudging()
-    window.setTimeout(() => {
-      const reward = getSolveReward(encounter.question.difficulty)
-      const result = mockJudge(outcome, {
-        difficulty: encounter.question.difficulty,
+    setBattleAttemptError('')
+
+    try {
+      const result = await judgeCode({
+        code,
+        language,
+        mode,
         pokemonName: encounter.pokemon.name,
+        question: encounter.question,
         topicLabel: getTopicLabel(encounter.question.topic),
       })
 
-      if (outcome === 'all-pass') {
-        setSolveReward(reward)
-        setEncounterEnergy(reward.energy)
+      if (mode === 'submit' && result.solved) {
+        setSolveReward(result.rewards)
+        setEncounterEnergy(result.rewards.energy)
         setHasEncounterStarted(true)
         setIsBattleScreenOpen(true)
         setIsBattleCollapsed(false)
@@ -347,8 +338,37 @@ export function Battle() {
       }
 
       enqueueEvents(result.events, result.tests)
-      recordCurrentBattleResult(result.tests, result.events.at(-1)?.type)
-    }, 350)
+      recordCurrentBattleResult(result.tests, getJudgeFinalEventType(result))
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'The local judge server could not check this submission.'
+
+      setBattleAttemptError(message)
+      enqueueEvents(
+        [
+          {
+            type: 'text',
+            text: 'The judge is not ready. Start it with npm run judge, then try again.',
+          },
+          { type: 'text', text: message },
+        ],
+        {
+          efficiency: 'pending',
+          hidden: 'pending',
+          samples: 'failed',
+        },
+      )
+    }
+  }
+
+  function getJudgeFinalEventType(result: JudgeResult) {
+    if (!result.solved) {
+      return undefined
+    }
+
+    return undefined
   }
 
   useEffect(() => {
@@ -773,7 +793,7 @@ export function Battle() {
           <PixelButton
             className="min-h-12 px-4 py-2"
             disabled={isLocked}
-            onClick={() => simulate('samples-pass')}
+            onClick={() => void submitToJudge('run')}
             variant="secondary"
           >
             Run
@@ -781,7 +801,7 @@ export function Battle() {
           <PixelButton
             className="min-h-12 px-4 py-2"
             disabled={isLocked || isSolved || isQuestionAlreadySolved || isSolvedStateLoading}
-            onClick={() => simulate('all-pass')}
+            onClick={() => void submitToJudge('submit')}
           >
             {isQuestionAlreadySolved ? 'Solved' : 'Submit'}
           </PixelButton>
@@ -1229,33 +1249,6 @@ export function Battle() {
           </Group>
         )}
       </section>
-
-      <div className="fixed bottom-4 right-4 z-40">
-        {isDevOpen ? (
-          <PixelCard className="mb-3 w-64 shadow-[4px_4px_0_#1a1c2c]" title="Dev">
-            <div className="grid gap-2">
-              <PixelButton disabled={isLocked} onClick={() => simulate('samples-pass')} variant="secondary">
-                Samples Pass
-              </PixelButton>
-              <PixelButton disabled={isLocked} onClick={() => simulate('all-pass')} variant="secondary">
-                All Pass
-              </PixelButton>
-              <PixelButton disabled={isLocked} onClick={() => simulate('hidden-fail')} variant="secondary">
-                Hidden Fail
-              </PixelButton>
-              <PixelButton disabled={isLocked} onClick={() => simulate('efficiency-fail')} variant="secondary">
-                Efficiency Fail
-              </PixelButton>
-              <PixelButton disabled={isLocked} onClick={() => simulate('wrong-answer')} variant="danger">
-                Wrong Answer
-              </PixelButton>
-            </div>
-          </PixelCard>
-        ) : null}
-        <PixelButton onClick={() => setIsDevOpen((value) => !value)} variant="danger">
-          Dev
-        </PixelButton>
-      </div>
 
       <Modal isOpen={isBagOpen} onClose={() => setIsBagOpen(false)} title="Bag">
         <div className="grid gap-3">

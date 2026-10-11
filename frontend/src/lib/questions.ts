@@ -1,6 +1,7 @@
 import questionsData from '../data/questions.json'
 import {
   getEncounterPool,
+  getPokemonById,
   getPokemonWithSprites,
   type PokemonSpecies,
   type PokemonSpeciesWithSprites,
@@ -17,6 +18,7 @@ export type CodingQuestion = {
   difficulty: QuestionDifficulty
   topic: TopicType
   description: string
+  encounterPokemonId?: number
   examples: {
     input: string
     output: string
@@ -108,6 +110,18 @@ export function getQuestionsByTopic(topic: TopicType) {
 }
 
 export function getEncounterForQuestion(question: CodingQuestion): QuestionEncounter {
+  const directPokemon = question.encounterPokemonId
+    ? getPokemonById(question.encounterPokemonId)
+    : null
+
+  if (directPokemon) {
+    return {
+      question,
+      pokemon: getPokemonWithSprites(directPokemon),
+      routeName: routeNames[question.topic],
+    }
+  }
+
   const pool = getEncounterPool(question.difficulty)
   const matchingPool = pool.filter((pokemon) => scoreTopicMatch(pokemon, question.topic) > 0)
   const candidates = matchingPool.length > 0 ? matchingPool : pool
@@ -131,7 +145,7 @@ export async function getCodingQuestions() {
 
   const { data, error } = await supabase
     .from('questions')
-    .select('id,title,difficulty,topic,description,examples,starter_code')
+    .select('id,title,difficulty,topic,description,examples,starter_code,encounter_pokemon_id')
     .eq('is_active', true)
     .order('created_at', { ascending: true })
 
@@ -145,6 +159,7 @@ export async function getCodingQuestions() {
     difficulty: question.difficulty as QuestionDifficulty,
     topic: question.topic as TopicType,
     description: question.description,
+    encounterPokemonId: question.encounter_pokemon_id as number | undefined,
     examples: question.examples as CodingQuestion['examples'],
     starterCode: question.starter_code as CodingQuestion['starterCode'],
   }))
@@ -157,7 +172,7 @@ export async function getCodingQuestionById(id: string) {
 
   const { data, error } = await supabase
     .from('questions')
-    .select('id,title,difficulty,topic,description,examples,starter_code')
+    .select('id,title,difficulty,topic,description,examples,starter_code,encounter_pokemon_id')
     .eq('id', id)
     .eq('is_active', true)
     .maybeSingle()
@@ -176,6 +191,7 @@ export async function getCodingQuestionById(id: string) {
     difficulty: data.difficulty as QuestionDifficulty,
     topic: data.topic as TopicType,
     description: data.description,
+    encounterPokemonId: data.encounter_pokemon_id as number | undefined,
     examples: data.examples as CodingQuestion['examples'],
     starterCode: data.starter_code as CodingQuestion['starterCode'],
   }

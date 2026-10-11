@@ -8,7 +8,7 @@ import {
   useDefaultLayout,
   usePanelRef,
 } from 'react-resizable-panels'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/auth/AppHeader'
 import { DialogBox } from '../components/ui/DialogBox'
 import { HPBar } from '../components/ui/HPBar'
@@ -20,7 +20,9 @@ import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/Ty
 import { XPBar } from '../components/ui/XPBar'
 import { useBattleQuestion } from '../hooks/useBattleQuestion'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
+import { usePlayerParty } from '../hooks/usePlayerParty'
 import { useShopSummary } from '../hooks/useShopSummary'
+import { useSolvedQuestions } from '../hooks/useSolvedQuestions'
 import {
   getQuestionHints,
   getTopicLabel,
@@ -29,6 +31,7 @@ import {
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
+import { markQuestionSolvedLocally } from '../lib/progress'
 import {
   recordBattleResult,
   startBattleAttempt,
@@ -36,8 +39,16 @@ import {
   type TestGroupStatus,
 } from '../lib/battleAttempts'
 import { getPokemonById } from '../lib/pokemon'
+import {
+  chooseEnemyMove,
+  getBattleMovesForPokemon,
+  getEffectiveness,
+  resolveMove,
+  type BattleMove,
+  type MoveVfx,
+} from '../lib/pokemonBattle'
 import { mockJudge } from '../mocks/mockJudge'
-import { type JudgeOutcome, useBattleStore } from '../store/battleStore'
+import { type BattleEvent, type JudgeOutcome, useBattleStore } from '../store/battleStore'
 
 type BallItem = {
   id: Extract<ItemSpriteName, 'poke-ball' | 'great-ball' | 'ultra-ball' | 'master-ball'>
@@ -48,12 +59,34 @@ type BallItem = {
 
 type CatchPhase = 'idle' | 'choosing' | 'throwing' | 'shaking' | 'success' | 'breakout'
 
+type SolveReward = {
+  coins: number
+  trainerXp: number
+  partyXp: number
+  energy: number
+  maxEnergy: number
+}
+
+type BattleCommandMenu = 'root' | 'fight' | 'pokemon'
+
 const ballItems: BallItem[] = [
   { id: 'poke-ball', label: 'Poke Ball', count: 8, bonus: 12 },
   { id: 'great-ball', label: 'Great Ball', count: 4, bonus: 24 },
   { id: 'ultra-ball', label: 'Ultra Ball', count: 2, bonus: 36 },
   { id: 'master-ball', label: 'Master Ball', count: 1, bonus: 100 },
 ]
+
+function getSolveReward(difficulty: string): SolveReward {
+  if (difficulty === 'hard') {
+    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 44, maxEnergy: 54 }
+  }
+
+  if (difficulty === 'easy') {
+    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 24, maxEnergy: 34 }
+  }
+
+  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 34, maxEnergy: 44 }
+}
 
 function resultClass(state: 'pending' | 'passed' | 'failed') {
   if (state === 'passed') {
@@ -111,13 +144,20 @@ function useNarrowLayout() {
 
 export function Battle() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const battleQuestion = useBattleQuestion(searchParams.get('question'))
   const playerSummary = usePlayerSummary()
+  const playerParty = usePlayerParty()
   const shopSummary = useShopSummary()
+  const solvedQuestions = useSolvedQuestions()
   const encounter = battleQuestion.data!
+  const partyPokemon = useMemo(() => {
+    return playerParty.data ?? []
+  }, [playerParty.data])
+  const [activePokemonId, setActivePokemonId] = useState<number | null>(null)
   const playerPokemon =
-    getPokemonById(playerSummary.data?.starterPokemonIds[0] ?? 25) ?? getPokemonById(25)!
+    getPokemonById(activePokemonId ?? partyPokemon[0]?.id ?? 25) ?? getPokemonById(25)!
   const topicBadge = getTopicLabel(encounter.question.topic) as BadgeTopicType
   const questionHints = getQuestionHints(encounter.question)
   const openingDialog = `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`
@@ -131,9 +171,17 @@ export function Battle() {
   const [isOutcomeModalDismissed, setIsOutcomeModalDismissed] = useState(false)
   const [catchPhase, setCatchPhase] = useState<CatchPhase>('idle')
   const [selectedBall, setSelectedBall] = useState<BallItem | null>(null)
+  const [solveReward, setSolveReward] = useState<SolveReward | null>(null)
+  const [encounterEnergy, setEncounterEnergy] = useState(0)
+  const [hasEncounterStarted, setHasEncounterStarted] = useState(false)
+  const [isBattleScreenOpen, setIsBattleScreenOpen] = useState(false)
+  const [battleCommandMenu, setBattleCommandMenu] = useState<BattleCommandMenu>('root')
+  const [encounterTurn, setEncounterTurn] = useState(0)
+  const [moveVfx, setMoveVfx] = useState<{ target: 'player' | 'enemy'; type: MoveVfx } | null>(null)
   const [catchError, setCatchError] = useState('')
   const [battleAttemptError, setBattleAttemptError] = useState('')
   const [battleAttemptId, setBattleAttemptId] = useState<string | null>(null)
+  const [isWinRecorded, setIsWinRecorded] = useState(false)
   const [battleLog, setBattleLog] = useState<string[]>([
     `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`,
   ])
@@ -167,6 +215,13 @@ export function Battle() {
   } = useBattleStore()
 
   const isLocked = phase === 'judging' || phase === 'animating'
+  const isSolved = Boolean(solveReward)
+  const isQuestionAlreadySolved = (solvedQuestions.data ?? []).includes(encounter.question.id)
+  const isSolvedStateLoading = solvedQuestions.isLoading
+  const encounterMaxEnergy = solveReward?.maxEnergy ?? 0
+  const canUseEncounterMove =
+    isSolved && hasEncounterStarted && isBattleScreenOpen && phase !== 'won' && phase !== 'lost' && !isLocked
+  const playerMoves = useMemo(() => getBattleMovesForPokemon(playerPokemon), [playerPokemon])
   const ownedItems = useMemo(() => {
     return new Map(shopSummary.data?.items.map((item) => [item.itemKey, item.owned]) ?? [])
   }, [shopSummary.data?.items])
@@ -206,6 +261,12 @@ export function Battle() {
   }, [phase])
 
   useEffect(() => {
+    if (!activePokemonId && partyPokemon[0]) {
+      setActivePokemonId(partyPokemon[0].id)
+    }
+  }, [activePokemonId, partyPokemon])
+
+  useEffect(() => {
     if (!currentEvent) {
       return
     }
@@ -223,6 +284,16 @@ export function Battle() {
       playSound('victory')
     }
   }, [currentEvent, playSound])
+
+  useEffect(() => {
+    if (!moveVfx) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => setMoveVfx(null), 720)
+
+    return () => window.clearTimeout(timeout)
+  }, [moveVfx])
 
   useEffect(() => {
     setBattleLog((current) => {
@@ -244,14 +315,35 @@ export function Battle() {
       return
     }
 
+    if (outcome === 'all-pass' && isQuestionAlreadySolved) {
+      enqueueEvents([
+        {
+          type: 'text',
+          text: 'This question is already solved. Pick a new route to earn more energy.',
+        },
+      ])
+      return
+    }
+
     openResultsDrawer()
     setJudging()
     window.setTimeout(() => {
+      const reward = getSolveReward(encounter.question.difficulty)
       const result = mockJudge(outcome, {
         difficulty: encounter.question.difficulty,
         pokemonName: encounter.pokemon.name,
         topicLabel: getTopicLabel(encounter.question.topic),
       })
+
+      if (outcome === 'all-pass') {
+        setSolveReward(reward)
+        setEncounterEnergy(reward.energy)
+        setHasEncounterStarted(true)
+        setIsBattleScreenOpen(true)
+        setIsBattleCollapsed(false)
+        setBattleCommandMenu('root')
+      }
+
       enqueueEvents(result.events, result.tests)
       recordCurrentBattleResult(result.tests, result.events.at(-1)?.type)
     }, 350)
@@ -264,8 +356,16 @@ export function Battle() {
     playPokemonCry(encounter.pokemon.id)
     setCatchPhase('idle')
     setSelectedBall(null)
+    setSolveReward(null)
+    setEncounterEnergy(0)
+    setHasEncounterStarted(false)
+    setIsBattleScreenOpen(false)
+    setBattleCommandMenu('root')
+    setEncounterTurn(0)
+    setMoveVfx(null)
     setBattleAttemptError('')
     setBattleAttemptId(null)
+    setIsWinRecorded(false)
 
     startBattleAttempt({
       language,
@@ -313,7 +413,7 @@ export function Battle() {
     const nextEnemyHp = battleStatus === 'won' ? 0 : enemyHp
     const nextPlayerHp = battleStatus === 'lost' ? 0 : playerHp
 
-    recordBattleResult({
+    void recordBattleResult({
       attemptId: battleAttemptId,
       codeDraft: code,
       efficiencyStatus: nextTests.efficiency,
@@ -323,12 +423,188 @@ export function Battle() {
       playerHp: nextPlayerHp,
       sampleStatus: nextTests.samples,
       status: battleStatus,
-    }).catch((error) => {
-      const message =
-        error instanceof Error ? error.message : 'Could not record battle result.'
-
-      setBattleAttemptError(message)
     })
+      .then(() => {
+        if (battleStatus === 'won') {
+          setIsWinRecorded(true)
+        }
+
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+          queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+          queryClient.invalidateQueries({ queryKey: ['profile-summary'] }),
+          queryClient.invalidateQueries({ queryKey: ['leaderboard'] }),
+          queryClient.invalidateQueries({ queryKey: ['solved-questions'] }),
+        ])
+      })
+      .catch((error) => {
+        const message =
+          error instanceof Error ? error.message : 'Could not record battle result.'
+
+        setBattleAttemptError(message)
+      })
+  }
+
+  function getEnemyTurnEvents(turn: number) {
+    const enemyMove = chooseEnemyMove(encounter.pokemon, turn)
+    const enemyOutcome = resolveMove({
+      attacker: encounter.pokemon,
+      defender: playerPokemon,
+      move: enemyMove,
+      seed: `${encounter.question.id}-enemy`,
+      turn,
+    })
+    const nextPlayerHp = Math.max(0, playerHp - Math.max(1, Math.round(enemyOutcome.damage * 0.7)))
+    const events: BattleEvent[] = [
+      {
+        type: 'enemy_attack',
+        text: `${encounter.pokemon.name} used ${enemyMove.name}!`,
+      },
+      {
+        type: enemyOutcome.hit ? 'player_hit' : 'text',
+        text: enemyOutcome.message,
+      },
+      {
+        type: 'player_hp',
+        value: nextPlayerHp,
+        text: nextPlayerHp <= 0
+          ? `${playerPokemon.name} cannot continue.`
+          : `${playerPokemon.name} is still standing.`,
+      },
+    ]
+
+    window.setTimeout(() => setMoveVfx({ target: 'player', type: enemyMove.vfx }), 820)
+
+    if (nextPlayerHp <= 0) {
+      events.push({ type: 'defeat', text: 'Your party fainted. Solve another question to recover.' })
+      recordCurrentBattleResult(
+        { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
+        'defeat',
+      )
+    }
+
+    return events
+  }
+
+  function startEncounterFight() {
+    if (!solveReward || isLocked) {
+      return
+    }
+
+    setHasEncounterStarted(true)
+    setIsBattleScreenOpen(true)
+    enqueueEvents([
+      { type: 'text', text: `${playerPokemon.name} stepped forward with ${encounterEnergy} energy.` },
+      { type: 'text', text: `${encounter.pokemon.name} is ready to battle.` },
+    ])
+  }
+
+  function useEncounterMove(move: BattleMove) {
+    if (!canUseEncounterMove || encounterEnergy < move.cost) {
+      enqueueEvents([
+        {
+          type: 'text',
+          text: encounterEnergy < move.cost
+            ? `Not enough energy for ${move.name}.`
+            : 'The encounter is not ready yet.',
+        },
+      ])
+      return
+    }
+
+    const nextEnergy = encounterEnergy - move.cost
+    const playerOutcome = resolveMove({
+      attacker: playerPokemon,
+      defender: encounter.pokemon,
+      move,
+      seed: encounter.question.id,
+      turn: encounterTurn,
+    })
+    const nextEnemyHp = Math.max(0, enemyHp - playerOutcome.damage)
+    const events: BattleEvent[] = [
+      { type: 'player_attack', text: `${playerPokemon.name} used ${move.name}!` },
+      {
+        type: playerOutcome.hit ? 'enemy_hit' : 'text',
+        text: playerOutcome.hit ? playerOutcome.message : playerOutcome.message,
+      },
+      {
+        type: 'enemy_hp',
+        value: nextEnemyHp,
+        text: `${move.cost} energy spent. ${nextEnergy} energy remains.`,
+      },
+    ]
+
+    setMoveVfx({ target: 'enemy', type: move.vfx })
+
+    if (nextEnemyHp <= 0) {
+      markQuestionSolvedLocally(encounter.question.id)
+      void queryClient.invalidateQueries({ queryKey: ['solved-questions'] })
+      events.push(
+        { type: 'enemy_faint', text: `${encounter.pokemon.name} is weak enough to catch.` },
+        {
+          type: 'victory',
+          text: `${playerPokemon.name}'s team won the encounter. Throw a ball!`,
+          rewards: { xp: solveReward?.partyXp ?? 0, coins: solveReward?.coins ?? 0 },
+        },
+      )
+      recordCurrentBattleResult(
+        { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
+        'victory',
+      )
+    } else {
+      events.push(...getEnemyTurnEvents(encounterTurn))
+    }
+
+    setEncounterEnergy(nextEnergy)
+    setEncounterTurn((turn) => turn + 1)
+    setBattleCommandMenu('root')
+    enqueueEvents(events)
+  }
+
+  function waitTurn() {
+    if (!canUseEncounterMove) {
+      return
+    }
+
+    const recoveredEnergy = Math.min(encounterMaxEnergy, encounterEnergy + 8)
+    const events: BattleEvent[] = [
+      {
+        type: 'text',
+        text: `${playerPokemon.name} is waiting. Energy recovered to ${recoveredEnergy}/${encounterMaxEnergy}.`,
+      },
+      ...getEnemyTurnEvents(encounterTurn),
+    ]
+
+    setEncounterEnergy(recoveredEnergy)
+    setEncounterTurn((turn) => turn + 1)
+    setBattleCommandMenu('root')
+    enqueueEvents(events)
+  }
+
+  function switchPokemon(nextPokemonId: number) {
+    if (!canUseEncounterMove || nextPokemonId === playerPokemon.id) {
+      setBattleCommandMenu('root')
+      return
+    }
+
+    const nextPokemon = getPokemonById(nextPokemonId)
+
+    if (!nextPokemon) {
+      return
+    }
+
+    const switchCost = 2
+    const nextEnergy = Math.max(0, encounterEnergy - switchCost)
+
+    setActivePokemonId(nextPokemon.id)
+    setEncounterEnergy(nextEnergy)
+    setEncounterTurn((turn) => turn + 1)
+    setBattleCommandMenu('root')
+    enqueueEvents([
+      { type: 'text', text: `Come back, ${playerPokemon.name}!` },
+      { type: 'text', text: `Go, ${nextPokemon.name}! Switching spent ${switchCost} energy.` },
+      ...getEnemyTurnEvents(encounterTurn),
+    ])
   }
 
   const resultRows = useMemo(
@@ -389,6 +665,12 @@ export function Battle() {
                 attempt: {battleAttemptError}
               </p>
             ) : null}
+            {isQuestionAlreadySolved ? (
+              <p className="border-4 border-ink bg-hp-green p-3 text-lg text-cream">
+                Solved route. Submit rewards are locked for this question, so
+                choose a new route to earn more energy.
+              </p>
+            ) : null}
             <p>{encounter.question.description}</p>
             <div className="grid gap-3">
               {encounter.question.examples.map((example) => (
@@ -398,6 +680,57 @@ export function Battle() {
                   <p>Output: {example.output}</p>
                 </div>
               ))}
+            </div>
+            <div className="space-y-3 border-4 border-ink bg-white p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-heading text-[10px] uppercase">Encounter Flow</p>
+                  <p>
+                    Solve first. The successful submit creates energy, then your
+                    party uses that energy to battle and catch.
+                  </p>
+                </div>
+                <span className={`border-4 border-ink px-2 py-1 font-heading text-[10px] uppercase ${
+                  isSolved ? 'bg-hp-green text-cream' : 'bg-warning text-ink'
+                }`}>
+                  {isSolved ? 'Solved' : 'Code phase'}
+                </span>
+              </div>
+
+              {solveReward ? (
+                <div className="grid gap-2 sm:grid-cols-4">
+                  <div className="border-4 border-ink bg-cream p-2">
+                    <p className="font-heading text-[9px] uppercase">Coins</p>
+                    <p className="font-heading text-lg">+{solveReward.coins}</p>
+                  </div>
+                  <div className="border-4 border-ink bg-cream p-2">
+                    <p className="font-heading text-[9px] uppercase">Trainer XP</p>
+                    <p className="font-heading text-lg">+{solveReward.trainerXp}</p>
+                  </div>
+                  <div className="border-4 border-ink bg-cream p-2">
+                    <p className="font-heading text-[9px] uppercase">Party XP</p>
+                    <p className="font-heading text-lg">+{solveReward.partyXp}</p>
+                  </div>
+                  <div className="border-4 border-ink bg-cream p-2">
+                    <p className="font-heading text-[9px] uppercase">Energy</p>
+                    <p className="font-heading text-lg">
+                      {encounterEnergy}/{encounterMaxEnergy}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {solveReward && !hasEncounterStarted ? (
+                <PixelButton disabled={isLocked} onClick={startEncounterFight}>
+                  Start Pokemon Fight
+                </PixelButton>
+              ) : null}
+
+              {hasEncounterStarted ? (
+                <PixelButton onClick={() => setIsBattleScreenOpen(true)} variant="secondary">
+                  Return to Fight
+                </PixelButton>
+              ) : null}
             </div>
           </div>
         ) : (
@@ -417,26 +750,47 @@ export function Battle() {
       className="flex h-full min-h-0 flex-col overflow-hidden shadow-none"
       title="Editor"
     >
-      <div className="relative z-10 flex h-16 shrink-0 items-center gap-3 border-b-4 border-ink px-3 pb-2">
-        <label className="font-heading text-[10px]" htmlFor="language">
-          Language
-        </label>
-        <select
-          className="pixel-focus w-36 border-4 border-ink bg-cream p-1 font-heading text-[10px]"
-          disabled={isLocked}
-          id="language"
-          onChange={(event) => updateLanguage(event.target.value as CodeLanguage)}
-          value={language}
-        >
-          <option value="python">Python</option>
-          <option value="javascript">JavaScript</option>
-        </select>
-        <PixelButton className="px-3 py-2" disabled={isLocked} onClick={() => simulate('samples-pass')}>
-          Run
-        </PixelButton>
-        <PixelButton className="px-3 py-2" disabled={isLocked} onClick={() => simulate('all-pass')}>
-          Submit
-        </PixelButton>
+      <div className="relative z-10 grid shrink-0 gap-2 border-b-4 border-ink px-3 py-2 xl:grid-cols-[auto_1fr] xl:items-center">
+        <div className="flex items-center gap-3">
+          <label className="font-heading text-[10px]" htmlFor="language">
+            Language
+          </label>
+          <select
+            className="pixel-focus w-36 border-4 border-ink bg-cream p-1 font-heading text-[10px]"
+            disabled={isLocked}
+            id="language"
+            onChange={(event) => updateLanguage(event.target.value as CodeLanguage)}
+            value={language}
+          >
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <PixelButton
+            className="min-h-12 px-4 py-2"
+            disabled={isLocked}
+            onClick={() => simulate('samples-pass')}
+            variant="secondary"
+          >
+            Run
+          </PixelButton>
+          <PixelButton
+            className="min-h-12 px-4 py-2"
+            disabled={isLocked || isSolved || isQuestionAlreadySolved || isSolvedStateLoading}
+            onClick={() => simulate('all-pass')}
+          >
+            {isQuestionAlreadySolved ? 'Solved' : 'Submit'}
+          </PixelButton>
+          <PixelButton
+            className="min-h-12 px-4 py-2"
+            disabled={isLocked}
+            onClick={showHint}
+            variant="secondary"
+          >
+            Hint
+          </PixelButton>
+        </div>
       </div>
 
       <Group
@@ -517,6 +871,188 @@ export function Battle() {
     </PixelCard>
   )
 
+  const battleMoveButtons = (
+    <>
+      {battleCommandMenu === 'root' ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            disabled={!canUseEncounterMove}
+            onClick={() => setBattleCommandMenu('fight')}
+            type="button"
+          >
+            Fight
+          </button>
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            onClick={() => setIsBagOpen(true)}
+            type="button"
+          >
+            Bag
+          </button>
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            disabled={!canUseEncounterMove}
+            onClick={() => setBattleCommandMenu('pokemon')}
+            type="button"
+          >
+            Pokemon
+          </button>
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            disabled={!canUseEncounterMove}
+            onClick={waitTurn}
+            type="button"
+          >
+            Wait
+          </button>
+        </div>
+      ) : null}
+
+      {battleCommandMenu === 'fight' ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {playerMoves.map((move) => {
+            const effectiveness = getEffectiveness(move.type, encounter.pokemon.types)
+            const effectivenessLabel =
+              effectiveness === 0
+                ? 'No effect'
+                : effectiveness > 1
+                  ? 'Super effective'
+                  : effectiveness < 1
+                    ? 'Not very effective'
+                    : 'Normal'
+
+            return (
+              <button
+                className="pixel-focus grid min-h-20 gap-1 border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-60"
+                disabled={!canUseEncounterMove || encounterEnergy < move.cost}
+                key={move.name}
+                onClick={() => useEncounterMove(move)}
+                type="button"
+              >
+                <span className="font-heading text-[10px]">{move.name}</span>
+                <span className="text-lg">
+                  {move.type} / Pow {move.power} / Energy {move.cost}
+                </span>
+                <span className="text-base">{effectivenessLabel}</span>
+              </button>
+            )
+          })}
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-3 text-left font-heading text-[10px] hover:bg-warning"
+            onClick={() => setBattleCommandMenu('root')}
+            type="button"
+          >
+            Back
+          </button>
+        </div>
+      ) : null}
+
+      {battleCommandMenu === 'pokemon' ? (
+        <div className="grid gap-2">
+          {partyPokemon.map((pokemon) => (
+            <button
+              className="pixel-focus grid grid-cols-[44px_1fr] items-center gap-3 border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-60"
+              disabled={!canUseEncounterMove}
+              key={pokemon.id}
+              onClick={() => switchPokemon(pokemon.id)}
+              type="button"
+            >
+              <Sprite
+                alt={`${pokemon.name} icon`}
+                className="h-8 w-8 object-contain"
+                id={pokemon.id}
+                type="icon"
+              />
+              <span>
+                <span className="block font-heading text-[10px]">{pokemon.name}</span>
+                <span className="text-lg">
+                  {pokemon.id === playerPokemon.id ? 'Active' : 'Switch: 2 energy'}
+                </span>
+              </span>
+            </button>
+          ))}
+          <button
+            className="pixel-focus border-4 border-ink bg-cream p-3 text-left font-heading text-[10px] hover:bg-warning"
+            onClick={() => setBattleCommandMenu('root')}
+            type="button"
+          >
+            Back
+          </button>
+        </div>
+      ) : null}
+    </>
+  )
+
+  const classicBattleScreen = (
+    <section className="grid h-full min-h-0 grid-rows-[1fr_auto] gap-3 p-3">
+      <div className="relative min-h-0 overflow-hidden border-4 border-ink bg-[#b7e37b]">
+        <div className="absolute left-4 top-4 w-[min(44vw,420px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
+          <div className="mb-2 flex items-center gap-2">
+            <TypeBadge type={topicBadge} />
+            <span className="font-heading text-[10px]">Lv 14</span>
+          </div>
+          <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
+        </div>
+
+        <div className="absolute right-[10%] top-[10%]">
+          <div className="relative">
+            <Sprite
+              className={`h-32 w-32 object-contain transition-all duration-500 sm:h-40 sm:w-40 ${animationClass(
+                'enemy',
+                animation,
+              )}`}
+              id={encounter.pokemon.id}
+              type="front"
+            />
+            {moveVfx?.target === 'enemy' ? (
+              <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="absolute bottom-[4%] left-[8%]">
+          <div className="relative">
+            <Sprite
+              className={`h-36 w-36 object-contain transition-all duration-500 sm:h-48 sm:w-48 ${animationClass(
+                'player',
+                animation,
+              )}`}
+              id={playerPokemon.id}
+              type="back"
+            />
+            {moveVfx?.target === 'player' ? (
+              <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="absolute bottom-4 right-4 w-[min(46vw,440px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
+          <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
+          <XPBar current={42} max={100} label="Next" />
+          <p className="mt-2 font-heading text-[10px]">
+            Energy {encounterEnergy}/{encounterMaxEnergy}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid min-h-0 gap-3 lg:grid-cols-[1fr_1.35fr]">
+        <DialogBox
+          className="min-h-32 p-4 text-xs leading-6 shadow-[4px_4px_0_#1a1c2c]"
+          text={dialogText}
+        />
+        <PixelCard bodyClassName="grid gap-3 p-3" title={`What will ${playerPokemon.name} do?`}>
+          {battleMoveButtons}
+          <div className="flex flex-wrap justify-center gap-3">
+            <PixelButton onClick={() => setIsBattleScreenOpen(false)} variant="secondary">
+              Code
+            </PixelButton>
+          </div>
+        </PixelCard>
+      </div>
+    </section>
+  )
+
   function showHint() {
     enqueueEvents([
       {
@@ -548,6 +1084,8 @@ export function Battle() {
         queryClient.invalidateQueries({ queryKey: ['shop-summary'] }),
         queryClient.invalidateQueries({ queryKey: ['collection-entries'] }),
         queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+        queryClient.invalidateQueries({ queryKey: ['solved-questions'] }),
       ])
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Catch failed.'
@@ -583,34 +1121,40 @@ export function Battle() {
         showBattleActions
       />
 
-      <section
-        className={`shrink-0 border-b-4 border-ink bg-[#b7e37b] transition-[height] duration-300 ${
-          isBattleCollapsed ? 'h-14' : 'h-[clamp(140px,20dvh,200px)]'
-        }`}
-      >
-        {isBattleCollapsed ? (
-          <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
-            <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
-            <button
-              className="pixel-focus border-4 border-ink bg-cream px-3 py-1 font-heading text-[10px]"
-              onClick={() => setIsBattleCollapsed(false)}
-              type="button"
-            >
-              ▲
-            </button>
-            <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
-          </div>
-        ) : (
-          <div className="grid h-full grid-cols-[minmax(220px,1fr)_minmax(260px,1.2fr)_minmax(220px,1fr)] items-center gap-4 p-3">
+      {!isBattleScreenOpen ? (
+        <section
+          className={`shrink-0 border-b-4 border-ink bg-[#b7e37b] transition-[height] duration-300 ${
+            isBattleCollapsed ? 'h-14' : 'h-[clamp(140px,20dvh,200px)]'
+          }`}
+        >
+          {isBattleCollapsed ? (
+            <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
+              <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
+              <button
+                className="pixel-focus border-4 border-ink bg-cream px-3 py-1 font-heading text-[10px]"
+                onClick={() => setIsBattleCollapsed(false)}
+                type="button"
+              >
+                ▲
+              </button>
+              <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
+            </div>
+          ) : (
+            <div className="grid h-full grid-cols-[minmax(220px,1fr)_minmax(260px,1.2fr)_minmax(220px,1fr)] items-center gap-4 p-3">
             <div className="grid h-full grid-cols-[96px_1fr] items-center gap-3">
-              <Sprite
-                className={`max-h-[120px] w-full object-contain transition-all duration-500 ${animationClass(
-                  'player',
-                  animation,
-                )}`}
-                id={playerPokemon.id}
-                type="back"
-              />
+              <div className="relative">
+                <Sprite
+                  className={`max-h-[120px] w-full object-contain transition-all duration-500 ${animationClass(
+                    'player',
+                    animation,
+                  )}`}
+                  id={playerPokemon.id}
+                  type="back"
+                />
+                {moveVfx?.target === 'player' ? (
+                  <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
+                ) : null}
+              </div>
               <div className="min-w-0">
                 <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
                 <XPBar current={42} max={100} label="Next" />
@@ -632,14 +1176,19 @@ export function Battle() {
                 </div>
                 <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
               </div>
-              <Sprite
-                className={`max-h-[120px] w-full object-contain transition-all duration-500 ${animationClass(
-                  'enemy',
-                  animation,
-                )}`}
-                id={encounter.pokemon.id}
-                type="front"
-              />
+              <div className="relative">
+                <Sprite
+                  className={`max-h-[120px] w-full object-contain transition-all duration-500 ${animationClass(
+                    'enemy',
+                    animation,
+                  )}`}
+                  id={encounter.pokemon.id}
+                  type="front"
+                />
+                {moveVfx?.target === 'enemy' ? (
+                  <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
+                ) : null}
+              </div>
             </div>
 
             <button
@@ -649,12 +1198,15 @@ export function Battle() {
             >
               ▼
             </button>
-          </div>
-        )}
-      </section>
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="min-h-0 flex-1 p-3 max-[899px]:min-h-[900px]">
-        {isNarrow ? (
+        {isBattleScreenOpen ? (
+          classicBattleScreen
+        ) : isNarrow ? (
           <div className="grid gap-3">
             <div className="h-[440px]">{problemPane}</div>
             <div className="h-[720px]">{editorPane}</div>
@@ -740,13 +1292,25 @@ export function Battle() {
           </p>
           <div className="flex justify-center">
             <PixelButton
+              disabled={!isWinRecorded}
               onClick={() => {
+                if (!isWinRecorded) {
+                  return
+                }
+
                 setIsOutcomeModalDismissed(true)
                 setCatchPhase('choosing')
                 setCatchError('')
               }}
             >
-              Throw a Ball
+              {isWinRecorded ? 'Throw a Ball' : 'Saving Win...'}
+            </PixelButton>
+            <PixelButton
+              className="ml-3"
+              onClick={() => navigate('/practice')}
+              variant="secondary"
+            >
+              Back to Problems
             </PixelButton>
           </div>
         </div>
@@ -755,7 +1319,9 @@ export function Battle() {
       <Modal
         isOpen={catchPhase !== 'idle'}
         onClose={() => {
-          if (catchPhase === 'choosing' || catchPhase === 'success' || catchPhase === 'breakout') {
+          if (catchPhase === 'success' || catchPhase === 'breakout') {
+            navigate('/practice')
+          } else if (catchPhase === 'choosing') {
             setCatchPhase('idle')
           }
         }}
@@ -837,8 +1403,8 @@ export function Battle() {
             </p>
             {catchPhase === 'success' || catchPhase === 'breakout' ? (
               <div className="flex justify-center">
-                <PixelButton onClick={() => setCatchPhase('idle')} variant="secondary">
-                  Close
+                <PixelButton onClick={() => navigate('/practice')} variant="secondary">
+                  Back to Problems
                 </PixelButton>
               </div>
             ) : null}
@@ -848,10 +1414,17 @@ export function Battle() {
 
       <Modal
         isOpen={phase === 'lost' && !isOutcomeModalDismissed}
-        onClose={() => setIsOutcomeModalDismissed(true)}
+        onClose={() => navigate('/practice')}
         title="Defeat"
       >
-        <p className="text-xl">The battle ended, but your draft is still safe.</p>
+        <div className="space-y-4">
+          <p className="text-xl">The battle ended, but your draft is still safe.</p>
+          <div className="flex justify-center">
+            <PixelButton onClick={() => navigate('/practice')} variant="secondary">
+              Back to Problems
+            </PixelButton>
+          </div>
+        </div>
       </Modal>
     </main>
   )

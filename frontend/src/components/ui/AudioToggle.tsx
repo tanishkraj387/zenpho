@@ -3,11 +3,16 @@ import { useAudioStore } from '../../lib/audio'
 export function AudioToggle() {
   const enabled = useAudioStore((state) => state.enabled)
   const bgmStatus = useAudioStore((state) => state.bgmStatus)
+  const cryStatus = useAudioStore((state) => state.cryStatus)
   const toggleAudio = useAudioStore((state) => state.toggleAudio)
   const label = enabled
-    ? bgmStatus === 'available'
-      ? 'ROM Music'
-      : 'Sound On'
+    ? bgmStatus === 'available' && cryStatus === 'available'
+      ? 'ROM + Cries'
+      : bgmStatus === 'available'
+        ? 'ROM Music'
+        : cryStatus === 'available'
+          ? 'Cries On'
+          : 'Sound On'
     : 'Sound Off'
 
   return (

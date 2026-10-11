@@ -39,10 +39,8 @@ export function mockJudge(outcome: JudgeOutcome, context: MockJudgeContext = {})
         efficiency: 'pending',
       },
       events: [
-        { type: 'text', text: 'Sample tests passed. The encounter braces itself!' },
-        { type: 'player_attack', text: `${topicLabel} Strike lands a clean hit.` },
-        { type: 'enemy_hit', text: `${pokemonName} wobbles.` },
-        { type: 'enemy_hp', value: 72, text: `${pokemonName}'s HP dropped.` },
+        { type: 'text', text: 'Sample tests passed. Keep going for the full solve.' },
+        { type: 'text', text: `${pokemonName} is watching your solution carefully.` },
       ],
     }
   }
@@ -55,16 +53,11 @@ export function mockJudge(outcome: JudgeOutcome, context: MockJudgeContext = {})
         efficiency: 'passed',
       },
       events: [
-        { type: 'text', text: 'All checkpoints passed.' },
-        { type: 'player_attack', text: 'Your final answer surges forward!' },
-        { type: 'enemy_hit', text: `It is super effective against ${pokemonName}.` },
-        { type: 'enemy_hp', value: 0, text: `${pokemonName}'s HP fell to zero.` },
-        { type: 'enemy_faint', text: `${pokemonName} is weak enough to catch.` },
         {
-          type: 'victory',
-          text: `Victory! Server playback awarded ${rewards.xp} XP and ${rewards.coins} coins.`,
-          rewards,
+          type: 'text',
+          text: `Solved! Server playback awarded ${rewards.xp} XP and ${rewards.coins} coins.`,
         },
+        { type: 'text', text: `${topicLabel} energy is ready for the encounter.` },
       ],
     }
   }
@@ -78,9 +71,7 @@ export function mockJudge(outcome: JudgeOutcome, context: MockJudgeContext = {})
       },
       events: [
         { type: 'text', text: 'Samples passed, but a hidden checkpoint failed.' },
-        { type: 'enemy_attack', text: `${pokemonName} counters with an edge case.` },
-        { type: 'player_hit', text: 'Your player takes a small hit.' },
-        { type: 'player_hp', delta: -12, text: encouragingText },
+        { type: 'text', text: encouragingText },
       ],
     }
   }
@@ -94,9 +85,7 @@ export function mockJudge(outcome: JudgeOutcome, context: MockJudgeContext = {})
       },
       events: [
         { type: 'text', text: 'Large-input tests did not finish within the limit.' },
-        { type: 'enemy_attack', text: `${pokemonName} pressures your approach.` },
-        { type: 'player_hit', text: 'Your player loses some HP.' },
-        { type: 'player_hp', delta: -10, text: 'Refine the approach and run it again.' },
+        { type: 'text', text: 'Refine the approach and run it again.' },
       ],
     }
   }
@@ -109,9 +98,7 @@ export function mockJudge(outcome: JudgeOutcome, context: MockJudgeContext = {})
     },
     events: [
       { type: 'text', text: 'The answer missed the sample checkpoint.' },
-      { type: 'enemy_attack', text: `${pokemonName} tosses a failing test case.` },
-      { type: 'player_hit', text: 'Your player takes a small hit.' },
-      { type: 'player_hp', delta: -10, text: encouragingText },
+      { type: 'text', text: encouragingText },
     ],
   }
 }

@@ -16,9 +16,11 @@ type SoundName =
 type AudioState = {
   enabled: boolean
   bgmStatus: 'unknown' | 'loading' | 'available' | 'missing'
+  cryStatus: 'unknown' | 'loading' | 'available' | 'missing'
   toggleAudio: () => void
   playSound: (sound: SoundName) => void
   playPokemonCry: (id: number) => void
+  loadCries: () => Promise<void>
   startBgm: () => Promise<void>
   stopBgm: () => void
 }
@@ -27,6 +29,7 @@ let audioContext: AudioContext | null = null
 let bgmAudio: HTMLAudioElement | null = null
 let cryAudio: HTMLAudioElement | null = null
 let bgmLoadPromise: Promise<string | null> | null = null
+let cryLoadPromise: Promise<Set<number> | null> | null = null
 
 function getAudioContext() {
   audioContext ??= new AudioContext()
@@ -120,9 +123,29 @@ async function getLocalRomTrack() {
   return bgmLoadPromise
 }
 
+async function getLocalCries() {
+  cryLoadPromise ??= fetch('/user-assets/audio/cries/manifest.json')
+    .then((response) => {
+      if (!response.ok) {
+        return null
+      }
+
+      return response.json() as Promise<{ cries?: { id: number }[] }>
+    })
+    .then((manifest) => {
+      const ids = manifest?.cries?.map((cry) => cry.id) ?? []
+
+      return ids.length > 0 ? new Set(ids) : null
+    })
+    .catch(() => null)
+
+  return cryLoadPromise
+}
+
 export const useAudioStore = create<AudioState>((set, get) => ({
   enabled: localStorage.getItem('zenpho-audio-enabled') === 'true',
   bgmStatus: 'unknown',
+  cryStatus: 'unknown',
   toggleAudio: () => {
     const nextEnabled = !get().enabled
 
@@ -133,6 +156,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       void getAudioContext().resume()
       playGeneratedSound('boot')
       void get().startBgm()
+      void get().loadCries()
     } else {
       get().stopBgm()
     }
@@ -150,12 +174,23 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       return
     }
 
+    if (get().cryStatus === 'unknown') {
+      void get().loadCries()
+    }
+
     cryAudio?.pause()
     cryAudio = new Audio(getPokemonCry(id))
     cryAudio.volume = 0.55
     void cryAudio.play().catch(() => {
+      set({ cryStatus: 'missing' })
       playGeneratedSound('click')
     })
+  },
+  loadCries: async () => {
+    set({ cryStatus: 'loading' })
+    const cries = await getLocalCries()
+
+    set({ cryStatus: cries ? 'available' : 'missing' })
   },
   startBgm: async () => {
     if (!get().enabled) {

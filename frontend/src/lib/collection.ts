@@ -82,18 +82,38 @@ export async function getCollectionEntries(userId: string): Promise<Record<numbe
     return previewSeenCollection
   }
 
-  const { data, error } = await supabase
-    .from('player_creatures')
-    .select('pokemon_id,affinity,source,is_starter,caught_at')
-    .eq('user_id', userId)
+  const [creaturesResult, seenResult] = await Promise.all([
+    supabase
+      .from('player_creatures')
+      .select('pokemon_id,affinity,source,is_starter,caught_at')
+      .eq('user_id', userId),
+    supabase
+      .from('battle_attempts')
+      .select('pokemon_id,question_id,created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }),
+  ])
 
-  if (error) {
-    throw error
+  if (creaturesResult.error) {
+    throw creaturesResult.error
+  }
+
+  if (seenResult.error) {
+    throw seenResult.error
   }
 
   const entries: Record<number, CollectionEntry> = { ...previewSeenCollection }
 
-  for (const creature of data ?? []) {
+  for (const attempt of seenResult.data ?? []) {
+    if (!entries[attempt.pokemon_id] || entries[attempt.pokemon_id].status === 'unknown') {
+      entries[attempt.pokemon_id] = {
+        source: attempt.question_id,
+        status: 'seen',
+      }
+    }
+  }
+
+  for (const creature of creaturesResult.data ?? []) {
     entries[creature.pokemon_id] = {
       affinity: formatAffinity(creature.affinity),
       caughtAt: formatCaughtAt(creature.caught_at),

@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthBootstrap } from './components/auth/AuthBootstrap'
 import { ProtectedRoute, PublicOnlyRoute } from './components/auth/ProtectedRoute'
 import { LoadingGate } from './components/ui/LoadingGate'
+import { AuthCallback } from './pages/AuthCallback'
 import { Battle } from './pages/Battle'
 import { Collection } from './pages/Collection'
 import { Gyms } from './pages/Gyms'
@@ -28,6 +29,7 @@ export default function App() {
           <LoadingGate>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route element={<PublicOnlyRoute />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />

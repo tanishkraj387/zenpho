@@ -5,8 +5,10 @@ import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { TypeBadge, type TopicType } from '../components/ui/TypeBadge'
 import { XPBar } from '../components/ui/XPBar'
+import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import {
   getEncounterPool,
+  getPokemonById,
   getPokemonWithSprites,
   getRarityLabel,
   pokemonSpecies,
@@ -81,14 +83,27 @@ function StatTile({
 
 export function Hub() {
   const user = useAuthStore((state) => state.user)
-  const username = getUsername(user)
+  const playerSummary = usePlayerSummary()
+  const summary = playerSummary.data
+  const username = summary?.username ?? getUsername(user)
+  const coins = summary?.coins ?? trainerStats.coins
+  const energy = {
+    current: summary?.energy ?? trainerStats.energy.current,
+    max: summary?.maxEnergy ?? trainerStats.energy.max,
+  }
+  const caughtCount = summary?.caughtCount ?? trainerStats.pokedex.caught
+  const livePartyPokemon =
+    summary?.starterPokemonIds
+      .map((id) => getPokemonById(id))
+      .filter((pokemon): pokemon is NonNullable<typeof pokemon> => Boolean(pokemon))
+      .map(getPokemonWithSprites) ?? partyPokemon
   const pokedexPercent = Math.round(
-    (trainerStats.pokedex.caught / trainerStats.pokedex.total) * 100,
+    (caughtCount / trainerStats.pokedex.total) * 100,
   )
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
-      <AppHeader coins={trainerStats.coins} />
+      <AppHeader coins={coins} />
       <section className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <PixelCard bodyClassName="p-4 sm:p-5" title="Trainer Hub">
@@ -106,6 +121,12 @@ export function Hub() {
                   Solve coding questions to weaken wild Pokemon, catch them with
                   balls from the shop, and fill your Pokedex one route at a time.
                 </p>
+                {playerSummary.isError ? (
+                  <p className="border-4 border-ink bg-warning p-3 text-lg">
+                    Trainer data is using fallback values until Supabase player
+                    tables are reachable.
+                  </p>
+                ) : null}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {navActions.map((action) => (
                     <Link className="min-w-0" key={action.to} to={action.to}>
@@ -151,15 +172,15 @@ export function Hub() {
               <StatTile
                 detail="Spend on balls, potions, and revives."
                 label="Coins"
-                value={String(trainerStats.coins)}
+                value={String(coins)}
               />
               <StatTile
                 detail="Drains from runs, submits, and hard encounters."
                 label="Energy"
-                value={`${trainerStats.energy.current}/${trainerStats.energy.max}`}
+                value={`${energy.current}/${energy.max}`}
               />
               <StatTile
-                detail={`${trainerStats.pokedex.seen} seen across the current roster.`}
+                detail={`${caughtCount} caught in your account.`}
                 label="Pokedex"
                 value={`${pokedexPercent}%`}
               />
@@ -170,26 +191,24 @@ export function Hub() {
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <PixelCard bodyClassName="p-4 sm:p-5" title="Current Party">
             <div className="grid gap-4 lg:grid-cols-3">
-              {partyPokemon.map((pokemon, index) => (
+              {livePartyPokemon.map((pokemon, index) => (
                 <article
                   className="flex min-h-[220px] min-w-0 flex-col border-4 border-ink bg-white p-4 shadow-[4px_4px_0_#1a1c2c]"
                   key={pokemon.id}
                 >
-                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_80px] items-center gap-3">
-                    <div className="min-w-0">
-                      <p className="font-heading text-[9px] uppercase">Slot {index + 1}</p>
-                      <h2 className="mt-2 font-heading text-[11px] leading-relaxed">
-                        {pokemon.name}
-                      </h2>
-                    </div>
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center border-4 border-ink bg-cream">
-                      <Sprite
-                        alt={`${pokemon.name} icon`}
-                        className="h-16 w-16 object-contain"
-                        id={pokemon.id}
-                        type="icon"
-                      />
-                    </div>
+                  <div className="flex h-24 items-center justify-center border-4 border-ink bg-cream">
+                    <Sprite
+                      alt={`${pokemon.name} icon`}
+                      className="h-16 w-16 object-contain"
+                      id={pokemon.id}
+                      type="icon"
+                    />
+                  </div>
+                  <div className="mt-3 min-w-0">
+                    <p className="font-heading text-[9px] uppercase">Slot {index + 1}</p>
+                    <h2 className="mt-2 break-words font-heading text-[11px] leading-relaxed">
+                      {pokemon.name}
+                    </h2>
                   </div>
                   <p className="mt-3 text-lg">{pokemon.types.join(' / ')}</p>
                   <div className="mt-auto pt-4">

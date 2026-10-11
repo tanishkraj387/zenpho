@@ -5,6 +5,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Return the indices of two numbers that add up to the target.",
+    "encounterPokemonId": 54,
     "examples": [
       { "input": "nums = [2,7,11,15], target = 9", "output": "[0,1]" },
       { "input": "nums = [3,2,4], target = 6", "output": "[1,2]" }
@@ -20,6 +21,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Return true if the lowercase alphanumeric characters form a palindrome.",
+    "encounterPokemonId": 25,
     "examples": [
       { "input": "s = \"Race car!\"", "output": "true" },
       { "input": "s = \"debug\"", "output": "false" }
@@ -35,6 +37,7 @@
     "difficulty": "easy",
     "topic": "math",
     "description": "Return how many numbers from 1 to n are divisible by 3 or 5.",
+    "encounterPokemonId": 74,
     "examples": [
       { "input": "n = 10", "output": "4" },
       { "input": "n = 15", "output": "7" }
@@ -50,6 +53,7 @@
     "difficulty": "medium",
     "topic": "arrays",
     "description": "Given daily score changes, return the maximum total score from one contiguous streak.",
+    "encounterPokemonId": 66,
     "examples": [
       { "input": "nums = [1,2,3,4]", "output": "10" },
       { "input": "nums = [2,-1,2,3]", "output": "6" }
@@ -65,6 +69,7 @@
     "difficulty": "medium",
     "topic": "strings",
     "description": "Group words that contain the same letters and return the number of groups.",
+    "encounterPokemonId": 63,
     "examples": [
       { "input": "words = [\"eat\",\"tea\",\"tan\",\"ate\"]", "output": "2" },
       { "input": "words = [\"abc\",\"bca\",\"cab\",\"dog\"]", "output": "2" }
@@ -80,6 +85,7 @@
     "difficulty": "medium",
     "topic": "trees",
     "description": "Given level-order tree values with null gaps, return the level with the largest sum.",
+    "encounterPokemonId": 133,
     "examples": [
       { "input": "root = [1,7,0,7,-8,null,null]", "output": "2" },
       { "input": "root = [5,3,8]", "output": "2" }
@@ -95,6 +101,7 @@
     "difficulty": "medium",
     "topic": "graphs",
     "description": "Return the number of connected land groups in a grid.",
+    "encounterPokemonId": 92,
     "examples": [
       { "input": "grid = [[1,1,0],[0,1,0],[1,0,1]]", "output": "3" },
       { "input": "grid = [[1,1],[1,1]]", "output": "1" }
@@ -110,6 +117,7 @@
     "difficulty": "hard",
     "topic": "dp",
     "description": "Return the number of ways to reach the target using the given coin values.",
+    "encounterPokemonId": 147,
     "examples": [
       { "input": "coins = [1,2,5], target = 5", "output": "4" },
       { "input": "coins = [2], target = 3", "output": "0" }
@@ -125,6 +133,7 @@
     "difficulty": "hard",
     "topic": "graphs",
     "description": "Given weighted directed edges, return the time for a signal to reach every node.",
+    "encounterPokemonId": 94,
     "examples": [
       { "input": "n = 4, edges = [[2,1,1],[2,3,1],[3,4,1]], start = 2", "output": "2" },
       { "input": "n = 2, edges = [[1,2,1]], start = 2", "output": "-1" }
@@ -140,6 +149,7 @@
     "difficulty": "hard",
     "topic": "math",
     "description": "Return how many prime numbers appear in every inclusive range query.",
+    "encounterPokemonId": 150,
     "examples": [
       { "input": "n = 10, queries = [[1,10],[4,8]]", "output": "[4,2]" },
       { "input": "n = 20, queries = [[10,20]]", "output": "[4]" }
@@ -147,6 +157,166 @@
     "starterCode": {
       "python": "def solve(n, queries):\n    return []\n",
       "javascript": "export function solve(n, queries) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-merge-tracks",
+    "title": "Merge Tracks",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Merge two sorted score lists into one sorted list.",
+    "encounterPokemonId": 1,
+    "examples": [
+      { "input": "a = [1,3], b = [2,4]", "output": "[1,2,3,4]" },
+      { "input": "a = [], b = [5]", "output": "[5]" }
+    ],
+    "starterCode": {
+      "python": "def solve(a, b):\n    return []\n",
+      "javascript": "export function solve(a, b) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-first-unique",
+    "title": "First Unique Rune",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Return the index of the first character that appears exactly once, or -1.",
+    "encounterPokemonId": 39,
+    "examples": [
+      { "input": "s = \"leetcode\"", "output": "0" },
+      { "input": "s = \"aabb\"", "output": "-1" }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return -1\n",
+      "javascript": "export function solve(s) {\n  return -1\n}\n"
+    }
+  },
+  {
+    "id": "easy-trees-max-depth",
+    "title": "Tiny Tree Depth",
+    "difficulty": "easy",
+    "topic": "trees",
+    "description": "Given a level-order tree array, return the maximum depth.",
+    "encounterPokemonId": 10,
+    "examples": [
+      { "input": "root = [3,9,20,null,null,15,7]", "output": "3" },
+      { "input": "root = []", "output": "0" }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "medium-arrays-product-signal",
+    "title": "Product Signal",
+    "difficulty": "medium",
+    "topic": "arrays",
+    "description": "Return an array where each position is the product of all other values.",
+    "encounterPokemonId": 67,
+    "examples": [
+      { "input": "nums = [1,2,3,4]", "output": "[24,12,8,6]" },
+      { "input": "nums = [2,3]", "output": "[3,2]" }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return []\n",
+      "javascript": "export function solve(nums) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "medium-graphs-course-order",
+    "title": "Course Order",
+    "difficulty": "medium",
+    "topic": "graphs",
+    "description": "Return true if all courses can be finished with the given prerequisite pairs.",
+    "encounterPokemonId": 93,
+    "examples": [
+      { "input": "n = 2, prerequisites = [[1,0]]", "output": "true" },
+      { "input": "n = 2, prerequisites = [[1,0],[0,1]]", "output": "false" }
+    ],
+    "starterCode": {
+      "python": "def solve(n, prerequisites):\n    return False\n",
+      "javascript": "export function solve(n, prerequisites) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "medium-dp-climb-routes",
+    "title": "Climb Routes",
+    "difficulty": "medium",
+    "topic": "dp",
+    "description": "Return how many ways there are to climb n steps using 1 or 2 steps at a time.",
+    "encounterPokemonId": 64,
+    "examples": [
+      { "input": "n = 3", "output": "3" },
+      { "input": "n = 5", "output": "8" }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return 0\n",
+      "javascript": "export function solve(n) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "medium-math-subarray-divisible",
+    "title": "Divisible Signals",
+    "difficulty": "medium",
+    "topic": "math",
+    "description": "Return the count of contiguous subarrays whose sum is divisible by k.",
+    "encounterPokemonId": 75,
+    "examples": [
+      { "input": "nums = [4,5,0,-2,-3,1], k = 5", "output": "7" },
+      { "input": "nums = [5], k = 9", "output": "0" }
+    ],
+    "starterCode": {
+      "python": "def solve(nums, k):\n    return 0\n",
+      "javascript": "export function solve(nums, k) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "hard-trees-path-sum",
+    "title": "Path Sum Storm",
+    "difficulty": "hard",
+    "topic": "trees",
+    "description": "Return the maximum path sum in a binary tree represented in level order.",
+    "encounterPokemonId": 143,
+    "examples": [
+      { "input": "root = [1,2,3]", "output": "6" },
+      { "input": "root = [-10,9,20,null,null,15,7]", "output": "42" }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "hard-dp-edit-distance",
+    "title": "Edit Distance Gate",
+    "difficulty": "hard",
+    "topic": "dp",
+    "description": "Return the minimum number of edits needed to transform word1 into word2.",
+    "encounterPokemonId": 149,
+    "examples": [
+      { "input": "word1 = \"horse\", word2 = \"ros\"", "output": "3" },
+      { "input": "word1 = \"intention\", word2 = \"execution\"", "output": "5" }
+    ],
+    "starterCode": {
+      "python": "def solve(word1, word2):\n    return 0\n",
+      "javascript": "export function solve(word1, word2) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "hard-strings-min-window",
+    "title": "Minimum Window",
+    "difficulty": "hard",
+    "topic": "strings",
+    "description": "Return the shortest substring of s that contains every character from t.",
+    "encounterPokemonId": 65,
+    "examples": [
+      { "input": "s = \"ADOBECODEBANC\", t = \"ABC\"", "output": "\"BANC\"" },
+      { "input": "s = \"a\", t = \"aa\"", "output": "\"\"" }
+    ],
+    "starterCode": {
+      "python": "def solve(s, t):\n    return \"\"\n",
+      "javascript": "export function solve(s, t) {\n  return \"\"\n}\n"
     }
   }
 ]

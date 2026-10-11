@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { useAudioStore } from '../../lib/audio'
 
 type PixelButtonVariant = 'primary' | 'secondary' | 'danger'
 
@@ -17,9 +18,12 @@ export function PixelButton({
   children,
   className = '',
   disabled,
+  onClick,
   variant = 'primary',
   ...props
 }: PixelButtonProps) {
+  const playSound = useAudioStore((state) => state.playSound)
+
   return (
     <button
       className={[
@@ -30,6 +34,13 @@ export function PixelButton({
         className,
       ].join(' ')}
       disabled={disabled}
+      onClick={(event) => {
+        if (!disabled) {
+          playSound('click')
+        }
+
+        onClick?.(event)
+      }}
       type="button"
       {...props}
     >

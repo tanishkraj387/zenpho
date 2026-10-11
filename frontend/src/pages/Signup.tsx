@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
-import { hasStarter } from '../lib/starter'
+import { getPostLoginPath } from '../lib/starter'
 import { useAuthStore } from '../store/authStore'
 
 function validateSignup(username: string, email: string, password: string, confirmPassword: string) {
@@ -59,7 +59,7 @@ export function Signup() {
       }
 
       const currentUser = useAuthStore.getState().user
-      navigate(currentUser && (await hasStarter(currentUser.id)) ? '/hub' : '/starter', {
+      navigate(currentUser ? await getPostLoginPath(currentUser.id) : '/starter', {
         replace: true,
       })
     } catch (authError) {
@@ -129,7 +129,7 @@ export function Signup() {
                 ))}
               </div>
             ) : null}
-            <PixelButton className="w-full justify-center" disabled={isSubmitting}>
+            <PixelButton className="w-full justify-center" disabled={isSubmitting} type="submit">
               {isSubmitting ? 'Creating...' : 'Create Account'}
             </PixelButton>
             <p>

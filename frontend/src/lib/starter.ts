@@ -1,7 +1,23 @@
+import { isSupabaseConfigured, supabase } from './supabase'
+
 const localStarterStorageKey = 'zenpho-local-starter-id'
 
-export async function hasStarter(_userId: string) {
-  // TODO: Replace with a Supabase query once the starter creature table is confirmed.
+export async function hasStarter(userId: string) {
+  if (isSupabaseConfigured) {
+    const { data, error } = await supabase
+      .from('player_creatures')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_starter', true)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    return Boolean(data)
+  }
+
   return localStorage.getItem(localStarterStorageKey) !== null
 }
 
@@ -16,7 +32,18 @@ export function getLocalStarterId() {
   return Number.isInteger(id) ? id : null
 }
 
-export function saveLocalStarterId(id: number) {
-  // TODO: Replace with a Supabase insert once the starter creature table is confirmed.
+export async function chooseStarter(id: number) {
+  if (isSupabaseConfigured) {
+    const { error } = await supabase.rpc('choose_starter', {
+      selected_pokemon_id: id,
+    })
+
+    if (error) {
+      throw error
+    }
+
+    return
+  }
+
   localStorage.setItem(localStarterStorageKey, String(id))
 }

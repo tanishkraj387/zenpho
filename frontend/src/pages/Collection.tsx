@@ -5,6 +5,9 @@ import { Modal } from '../components/ui/Modal'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
+import { useCollectionEntries } from '../hooks/useCollectionEntries'
+import { useAudioStore } from '../lib/audio'
+import type { CollectionStatus } from '../lib/collection'
 import {
   getPokemonWithSprites,
   getRarityLabel,
@@ -12,84 +15,7 @@ import {
   pokemonSpecies,
 } from '../lib/pokemon'
 
-type CollectionStatus = 'caught' | 'seen' | 'unknown'
 type CollectionFilter = 'all' | CollectionStatus
-
-type CollectionEntry = {
-  affinity?: string
-  caughtAt?: string
-  source?: string
-  status: CollectionStatus
-}
-
-const mockCollection: Record<number, CollectionEntry> = {
-  1: {
-    affinity: 'Arrays',
-    caughtAt: 'Today',
-    source: 'Starter choice',
-    status: 'caught',
-  },
-  4: {
-    affinity: 'Strings',
-    caughtAt: 'Route: Easy Arrays',
-    source: 'Milestone reward',
-    status: 'caught',
-  },
-  7: {
-    affinity: 'Math',
-    caughtAt: 'Practice route',
-    source: 'Starter preview',
-    status: 'caught',
-  },
-  25: {
-    affinity: 'Strings',
-    caughtAt: 'Route: Strings 01',
-    source: 'Question encounter',
-    status: 'caught',
-  },
-  54: {
-    affinity: 'Arrays',
-    caughtAt: 'Route: Arrays 02',
-    source: 'Question encounter',
-    status: 'caught',
-  },
-  63: {
-    affinity: 'Graphs',
-    caughtAt: 'Route: Graphs 01',
-    source: 'Question encounter',
-    status: 'caught',
-  },
-  92: {
-    affinity: 'Graphs',
-    source: 'Wild encounter',
-    status: 'seen',
-  },
-  129: {
-    affinity: 'Practice',
-    source: 'Practice encounter',
-    status: 'seen',
-  },
-  133: {
-    affinity: 'DP',
-    source: 'Milestone preview',
-    status: 'seen',
-  },
-  143: {
-    affinity: 'Trees',
-    source: 'Gym preview',
-    status: 'seen',
-  },
-  147: {
-    affinity: 'DP',
-    source: 'Hard DP preview',
-    status: 'seen',
-  },
-  150: {
-    affinity: 'Hard DP',
-    source: 'Legendary milestone',
-    status: 'seen',
-  },
-}
 
 const filterOptions: { label: string; value: CollectionFilter }[] = [
   { label: 'All', value: 'all' },
@@ -109,10 +35,6 @@ const statusClasses: Record<CollectionStatus, string> = {
   caught: 'bg-grass text-cream',
   seen: 'bg-warning text-ink',
   unknown: 'bg-ink text-cream',
-}
-
-function getCollectionEntry(id: number): CollectionEntry {
-  return mockCollection[id] ?? { status: 'unknown' }
 }
 
 function getDisplayStats(id: number) {
@@ -137,14 +59,17 @@ export function Collection() {
   const [filter, setFilter] = useState<CollectionFilter>('all')
   const [search, setSearch] = useState('')
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null)
+  const collectionEntries = useCollectionEntries()
+  const playPokemonCry = useAudioStore((state) => state.playPokemonCry)
+  const entries = collectionEntries.data ?? {}
 
   const collection = useMemo(
     () =>
       pokemonSpecies.map((pokemon) => ({
         ...getPokemonWithSprites(pokemon),
-        collection: getCollectionEntry(pokemon.id),
+        collection: entries[pokemon.id] ?? { status: 'unknown' as const },
       })),
-    [],
+    [entries],
   )
 
   const caughtCount = collection.filter((pokemon) => pokemon.collection.status === 'caught').length
@@ -181,6 +106,12 @@ export function Collection() {
                 name and source. Unknown Pokemon stay shadowed until the player
                 meets them in battle.
               </p>
+              {collectionEntries.isError ? (
+                <p className="border-4 border-ink bg-warning p-3 text-lg">
+                  Pokedex is using preview seen data until Supabase collection
+                  rows are reachable.
+                </p>
+              ) : null}
             </div>
             <Link to="/hub">
               <PixelButton className="w-full sm:w-auto" variant="secondary">
@@ -252,7 +183,10 @@ export function Collection() {
                 ].join(' ')}
                 disabled={!canOpenDetails}
                 key={pokemon.id}
-                onClick={() => setSelectedPokemonId(pokemon.id)}
+                onClick={() => {
+                  setSelectedPokemonId(pokemon.id)
+                  playPokemonCry(pokemon.id)
+                }}
                 type="button"
               >
                 <div className="flex w-full items-center justify-between gap-2">

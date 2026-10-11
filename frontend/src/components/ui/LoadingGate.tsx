@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useAudioStore } from '../../lib/audio'
 
 type LoadingGateProps = {
   children: ReactNode
@@ -14,6 +15,7 @@ export function LoadingGate({ children }: LoadingGateProps) {
   const [isReducedMotion] = useState(() =>
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
+  const playSound = useAudioStore((state) => state.playSound)
 
   useEffect(() => {
     if (isReducedMotion) {
@@ -46,20 +48,22 @@ export function LoadingGate({ children }: LoadingGateProps) {
       return
     }
 
+    playSound('boot')
     const unlockTimer = window.setTimeout(() => setPhase('unlocking'), 260)
 
     return () => window.clearTimeout(unlockTimer)
-  }, [phase])
+  }, [phase, playSound])
 
   useEffect(() => {
     if (phase !== 'unlocking') {
       return
     }
 
+    playSound('unlock')
     const openTimer = window.setTimeout(() => setPhase('opening'), 620)
 
     return () => window.clearTimeout(openTimer)
-  }, [phase])
+  }, [phase, playSound])
 
   function handleBallAnimationEnd() {
     setIsBallAligned(true)

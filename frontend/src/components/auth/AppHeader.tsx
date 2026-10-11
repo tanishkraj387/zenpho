@@ -1,4 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { AudioToggle } from '../ui/AudioToggle'
 import { PixelButton } from '../ui/PixelButton'
 import { getUsername, useAuthStore } from '../../store/authStore'
 
@@ -10,14 +11,7 @@ type AppHeaderProps = {
 }
 
 export function AppHeader({ coins, onBag, onHint, showBattleActions = false }: AppHeaderProps) {
-  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
-  const signOut = useAuthStore((state) => state.signOut)
-
-  async function handleLogout() {
-    await signOut()
-    navigate('/login', { replace: true })
-  }
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b-4 border-ink bg-cream px-4">
@@ -29,6 +23,13 @@ export function AppHeader({ coins, onBag, onHint, showBattleActions = false }: A
         {typeof coins === 'number' ? (
           <span className="font-heading text-[10px]">Coins {coins}</span>
         ) : null}
+        <Link
+          className="pixel-focus border-4 border-ink bg-cream px-3 py-2 font-heading text-[10px] shadow-[3px_3px_0_#1a1c2c]"
+          to="/profile"
+        >
+          Profile
+        </Link>
+        <AudioToggle />
         {showBattleActions ? (
           <>
             <PixelButton className="px-3 py-2" onClick={onBag} variant="secondary">
@@ -39,9 +40,6 @@ export function AppHeader({ coins, onBag, onHint, showBattleActions = false }: A
             </PixelButton>
           </>
         ) : null}
-        <PixelButton className="px-3 py-2" onClick={handleLogout} variant="danger">
-          Logout
-        </PixelButton>
       </div>
     </header>
   )

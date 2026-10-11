@@ -7,6 +7,7 @@ import {
   type QuestionDifficulty,
   type TopicType,
 } from './pokemon'
+import { isSupabaseConfigured, supabase } from './supabase'
 
 export type CodeLanguage = 'python' | 'javascript'
 
@@ -121,6 +122,67 @@ export function getEncounterForQuestion(question: CodingQuestion): QuestionEncou
 
 export function getQuestionEncounters() {
   return codingQuestions.map(getEncounterForQuestion)
+}
+
+export async function getCodingQuestions() {
+  if (!isSupabaseConfigured) {
+    return codingQuestions
+  }
+
+  const { data, error } = await supabase
+    .from('questions')
+    .select('id,title,difficulty,topic,description,examples,starter_code')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((question) => ({
+    id: question.id,
+    title: question.title,
+    difficulty: question.difficulty as QuestionDifficulty,
+    topic: question.topic as TopicType,
+    description: question.description,
+    examples: question.examples as CodingQuestion['examples'],
+    starterCode: question.starter_code as CodingQuestion['starterCode'],
+  }))
+}
+
+export async function getCodingQuestionById(id: string) {
+  if (!id || !isSupabaseConfigured) {
+    return getQuestionById(id)
+  }
+
+  const { data, error } = await supabase
+    .from('questions')
+    .select('id,title,difficulty,topic,description,examples,starter_code')
+    .eq('id', id)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return getQuestionById(id)
+  }
+
+  return {
+    id: data.id,
+    title: data.title,
+    difficulty: data.difficulty as QuestionDifficulty,
+    topic: data.topic as TopicType,
+    description: data.description,
+    examples: data.examples as CodingQuestion['examples'],
+    starterCode: data.starter_code as CodingQuestion['starterCode'],
+  }
+}
+
+export async function getCodingQuestionEncounters() {
+  return (await getCodingQuestions()).map(getEncounterForQuestion)
 }
 
 export function getTopicLabel(topic: TopicType) {

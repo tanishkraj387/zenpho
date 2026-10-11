@@ -29,3 +29,7 @@ export function getSprite(id: number, type: SpriteType) {
 export function getItemSprite(name: ItemSpriteName) {
   return `/sprites/items/${name}.png`
 }
+
+export function getPokemonCry(id: number) {
+  return `/user-assets/audio/cries/${id}.ogg`
+}

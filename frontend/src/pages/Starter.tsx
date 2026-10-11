@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { AppHeader } from '../components/auth/AppHeader'
 import { DialogBox } from '../components/ui/DialogBox'
@@ -8,7 +9,7 @@ import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { XPBar } from '../components/ui/XPBar'
 import { getStarterPokemon } from '../lib/pokemon'
-import { saveLocalStarterId } from '../lib/starter'
+import { chooseStarter } from '../lib/starter'
 
 const starterProfiles: Record<
   number,
@@ -41,14 +42,44 @@ const starterProfiles: Record<
 
 export function Starter() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const starters = useMemo(() => getStarterPokemon(), [])
   const [selectedId, setSelectedId] = useState(starters[0]?.id ?? 1)
+  const [error, setError] = useState('')
+  const [isChoosing, setIsChoosing] = useState(false)
   const selectedStarter = starters.find((starter) => starter.id === selectedId) ?? starters[0]
   const selectedProfile = starterProfiles[selectedStarter.id]
 
-  function chooseStarter() {
-    saveLocalStarterId(selectedStarter.id)
-    navigate('/hub', { replace: true })
+  async function handleChooseStarter() {
+    setError('')
+    setIsChoosing(true)
+
+    try {
+      await chooseStarter(selectedStarter.id)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-entries'] }),
+      ])
+      navigate('/hub', { replace: true })
+    } catch (starterError) {
+      const message =
+        starterError instanceof Error
+          ? starterError.message
+          : 'Could not choose starter right now.'
+
+      if (message.toLowerCase().includes('starter already selected')) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+          queryClient.invalidateQueries({ queryKey: ['collection-entries'] }),
+        ])
+        navigate('/hub', { replace: true })
+        return
+      }
+
+      setError(message)
+    } finally {
+      setIsChoosing(false)
+    }
   }
 
   return (
@@ -65,8 +96,8 @@ export function Starter() {
                 Choose your first coding partner
               </h1>
               <p className="max-w-3xl text-xl leading-relaxed">
-                This is still a local prototype choice. Later, the server will
-                create the real starter creature and own the permanent record.
+                Your starter is created by Supabase and becomes the first
+                permanent creature in your collection.
               </p>
             </div>
             <DialogBox
@@ -148,11 +179,20 @@ export function Starter() {
               </p>
               <p className="mt-2 text-2xl">
                 {selectedStarter.name} will join your party as your first
-                prototype partner.
+                coding partner.
               </p>
+              {error ? (
+                <div className="mt-4 border-4 border-ink bg-danger p-3 text-cream" role="alert">
+                  {error}
+                </div>
+              ) : null}
             </div>
-            <PixelButton className="w-full lg:w-auto" onClick={chooseStarter}>
-              Choose {selectedStarter.name}
+            <PixelButton
+              className="w-full lg:w-auto"
+              disabled={isChoosing}
+              onClick={handleChooseStarter}
+            >
+              {isChoosing ? 'Choosing...' : `Choose ${selectedStarter.name}`}
             </PixelButton>
           </div>
         </PixelCard>

@@ -4,8 +4,9 @@ import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/TypeBadge'
+import { usePlayerSummary } from '../hooks/usePlayerSummary'
+import { useQuestionEncounters } from '../hooks/useQuestionEncounters'
 import {
-  getQuestionEncounters,
   getTopicLabel,
   type CodingQuestion,
 } from '../lib/questions'
@@ -36,11 +37,14 @@ function getEnergyCost(question: CodingQuestion) {
 }
 
 export function Practice() {
-  const encounters = getQuestionEncounters()
+  const questionEncounters = useQuestionEncounters()
+  const playerSummary = usePlayerSummary()
+  const encounters = questionEncounters.data ?? []
+  const coins = playerSummary.data?.coins ?? 0
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
-      <AppHeader coins={245} />
+      <AppHeader coins={coins} />
       <section className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
         <PixelCard bodyClassName="p-4 sm:p-5" title="Practice Routes">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -52,10 +56,16 @@ export function Practice() {
                 Pick a route, meet a Pokemon
               </h1>
               <p className="max-w-3xl text-xl leading-relaxed">
-                These are the first local seed questions. Each one maps to a
+                These are the first seeded coding questions. Each one maps to a
                 deterministic wild Pokemon using difficulty, topic, and rarity
                 rules.
               </p>
+              {questionEncounters.isError ? (
+                <p className="border-4 border-ink bg-warning p-3 text-lg">
+                  Practice is using local fallback questions until Supabase
+                  questions are reachable.
+                </p>
+              ) : null}
             </div>
             <Link to="/battle">
               <PixelButton className="w-full sm:w-auto">Battle Prototype</PixelButton>

@@ -29,9 +29,15 @@ function createDevUser(): User {
     created_at: new Date().toISOString(),
     email: 'dev-trainer@zenpho.local',
     user_metadata: {
-      username: 'Dev Trainer',
+      username: 'Fermisloth',
     },
   } as User
+}
+
+function requireSupabase() {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart the dev server.')
+  }
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -83,10 +89,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   signUp: async (email, password, username) => {
+    requireSupabase()
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           username,
         },
@@ -106,6 +115,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     return { needsConfirmation: !data.session }
   },
   signIn: async (email, password) => {
+    requireSupabase()
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

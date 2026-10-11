@@ -50,11 +50,19 @@ export function PublicOnlyRoute({ children }: RouteWrapperProps) {
       }
     }
 
-    getPostLoginPath(user.id).then((path) => {
-      if (isMounted) {
-        setRedirectPath(path)
-      }
-    })
+    getPostLoginPath(user.id)
+      .then((path) => {
+        if (isMounted) {
+          setRedirectPath(path)
+        }
+      })
+      .catch((error) => {
+        console.error('Unable to check starter status after login.', error)
+
+        if (isMounted) {
+          setRedirectPath('/starter')
+        }
+      })
 
     return () => {
       isMounted = false

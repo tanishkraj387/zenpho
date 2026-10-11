@@ -1,5 +1,6 @@
 import Editor from '@monaco-editor/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Group,
   Panel,
@@ -17,14 +18,24 @@ import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/TypeBadge'
 import { XPBar } from '../components/ui/XPBar'
+import { useBattleQuestion } from '../hooks/useBattleQuestion'
+import { usePlayerSummary } from '../hooks/usePlayerSummary'
+import { useShopSummary } from '../hooks/useShopSummary'
 import {
-  getEncounterForQuestion,
   getQuestionHints,
-  getQuestionById,
   getTopicLabel,
   type CodeLanguage,
 } from '../lib/questions'
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
+import { useAudioStore } from '../lib/audio'
+import { catchPokemon } from '../lib/collection'
+import {
+  recordBattleResult,
+  startBattleAttempt,
+  type BattleAttemptStatus,
+  type TestGroupStatus,
+} from '../lib/battleAttempts'
+import { getPokemonById } from '../lib/pokemon'
 import { mockJudge } from '../mocks/mockJudge'
 import { type JudgeOutcome, useBattleStore } from '../store/battleStore'
 
@@ -99,11 +110,14 @@ function useNarrowLayout() {
 }
 
 export function Battle() {
+  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
-  const selectedQuestion = getQuestionById(searchParams.get('question') ?? '')
-  const encounter = getEncounterForQuestion(
-    selectedQuestion ?? getQuestionById('medium-arrays-longest-streak')!,
-  )
+  const battleQuestion = useBattleQuestion(searchParams.get('question'))
+  const playerSummary = usePlayerSummary()
+  const shopSummary = useShopSummary()
+  const encounter = battleQuestion.data!
+  const playerPokemon =
+    getPokemonById(playerSummary.data?.starterPokemonIds[0] ?? 25) ?? getPokemonById(25)!
   const topicBadge = getTopicLabel(encounter.question.topic) as BadgeTopicType
   const questionHints = getQuestionHints(encounter.question)
   const openingDialog = `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`
@@ -117,9 +131,14 @@ export function Battle() {
   const [isOutcomeModalDismissed, setIsOutcomeModalDismissed] = useState(false)
   const [catchPhase, setCatchPhase] = useState<CatchPhase>('idle')
   const [selectedBall, setSelectedBall] = useState<BallItem | null>(null)
+  const [catchError, setCatchError] = useState('')
+  const [battleAttemptError, setBattleAttemptError] = useState('')
+  const [battleAttemptId, setBattleAttemptId] = useState<string | null>(null)
   const [battleLog, setBattleLog] = useState<string[]>([
     `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`,
   ])
+  const playSound = useAudioStore((state) => state.playSound)
+  const playPokemonCry = useAudioStore((state) => state.playPokemonCry)
   const isNarrow = useNarrowLayout()
   const resultsPanelRef = usePanelRef()
   const mainLayout = useDefaultLayout({
@@ -132,6 +151,7 @@ export function Battle() {
   })
   const {
     animation,
+    currentEvent,
     dialogText,
     enemyHp,
     enemyMaxHp,
@@ -147,12 +167,62 @@ export function Battle() {
   } = useBattleStore()
 
   const isLocked = phase === 'judging' || phase === 'animating'
+  const ownedItems = useMemo(() => {
+    return new Map(shopSummary.data?.items.map((item) => [item.itemKey, item.owned]) ?? [])
+  }, [shopSummary.data?.items])
+  const ownedBallItems = useMemo(
+    () =>
+      ballItems.map((ball) => ({
+        ...ball,
+        count: ownedItems.get(ball.id) ?? 0,
+      })),
+    [ownedItems],
+  )
+  const bagItems = useMemo(
+    () => [
+      {
+        id: 'potion' as const,
+        label: `Potion x${ownedItems.get('potion') ?? 0}`,
+        note: 'Restore 25 HP.',
+      },
+      {
+        id: 'shield' as const,
+        label: 'Shield x1',
+        note: 'Fake shield effect.',
+      },
+      {
+        id: 'revive' as const,
+        label: `Revive x${ownedItems.get('revive') ?? 0}`,
+        note: 'Works only at 0 HP.',
+      },
+    ],
+    [ownedItems],
+  )
 
   useEffect(() => {
     if (phase === 'judging' || phase === 'animating' || phase === 'thinking') {
       setIsOutcomeModalDismissed(false)
     }
   }, [phase])
+
+  useEffect(() => {
+    if (!currentEvent) {
+      return
+    }
+
+    if (currentEvent.type === 'player_attack' || currentEvent.type === 'enemy_attack') {
+      playSound('hit')
+    } else if (
+      currentEvent.type === 'enemy_hit' ||
+      currentEvent.type === 'player_hit' ||
+      currentEvent.type === 'enemy_hp' ||
+      currentEvent.type === 'player_hp'
+    ) {
+      playSound('damage')
+    } else if (currentEvent.type === 'victory') {
+      playSound('victory')
+    }
+  }, [currentEvent, playSound])
 
   useEffect(() => {
     setBattleLog((current) => {
@@ -183,6 +253,7 @@ export function Battle() {
         topicLabel: getTopicLabel(encounter.question.topic),
       })
       enqueueEvents(result.events, result.tests)
+      recordCurrentBattleResult(result.tests, result.events.at(-1)?.type)
     }, 350)
   }
 
@@ -190,19 +261,74 @@ export function Battle() {
     resetBattle(openingDialog)
     setCode(encounter.question.starterCode[language])
     setBattleLog([openingDialog])
+    playPokemonCry(encounter.pokemon.id)
     setCatchPhase('idle')
     setSelectedBall(null)
+    setBattleAttemptError('')
+    setBattleAttemptId(null)
+
+    startBattleAttempt({
+      language,
+      pokemonId: encounter.pokemon.id,
+      questionId: encounter.question.id,
+    })
+      .then((attempt) => {
+        setBattleAttemptId(attempt?.id ?? null)
+      })
+      .catch((error) => {
+        const message =
+          error instanceof Error ? error.message : 'Could not create battle attempt.'
+
+        setBattleAttemptError(message)
+      })
   }, [
     encounter.question.id,
     encounter.question.starterCode,
+    encounter.pokemon.id,
     language,
     openingDialog,
+    playPokemonCry,
     resetBattle,
   ])
 
   function updateLanguage(nextLanguage: CodeLanguage) {
     setLanguage(nextLanguage)
     setCode(encounter.question.starterCode[nextLanguage])
+  }
+
+  function recordCurrentBattleResult(
+    nextTests: Record<'samples' | 'hidden' | 'efficiency', TestGroupStatus>,
+    finalEventType?: string,
+  ) {
+    if (!battleAttemptId) {
+      return
+    }
+
+    const battleStatus: BattleAttemptStatus =
+      finalEventType === 'victory'
+        ? 'won'
+        : finalEventType === 'defeat'
+          ? 'lost'
+          : 'submitted'
+    const nextEnemyHp = battleStatus === 'won' ? 0 : enemyHp
+    const nextPlayerHp = battleStatus === 'lost' ? 0 : playerHp
+
+    recordBattleResult({
+      attemptId: battleAttemptId,
+      codeDraft: code,
+      efficiencyStatus: nextTests.efficiency,
+      enemyHp: nextEnemyHp,
+      hiddenStatus: nextTests.hidden,
+      language,
+      playerHp: nextPlayerHp,
+      sampleStatus: nextTests.samples,
+      status: battleStatus,
+    }).catch((error) => {
+      const message =
+        error instanceof Error ? error.message : 'Could not record battle result.'
+
+      setBattleAttemptError(message)
+    })
   }
 
   const resultRows = useMemo(
@@ -257,6 +383,12 @@ export function Battle() {
               </span>
               <TypeBadge type={topicBadge} />
             </div>
+            {battleAttemptError ? (
+              <p className="border-4 border-ink bg-warning p-3 text-lg">
+                Battle is running in UI preview mode until Supabase creates the
+                attempt: {battleAttemptError}
+              </p>
+            ) : null}
             <p>{encounter.question.description}</p>
             <div className="grid gap-3">
               {encounter.question.examples.map((example) => (
@@ -394,51 +526,45 @@ export function Battle() {
     ])
   }
 
-  function getCatchThreshold(ball: BallItem) {
-    if (ball.id === 'master-ball') {
-      return 100
-    }
-
-    const rarityPenalty = encounter.pokemon.rarity === 'legendary'
-      ? 45
-      : encounter.pokemon.rarity === 'rare'
-        ? 24
-        : encounter.pokemon.rarity === 'uncommon'
-          ? 12
-          : 0
-    const difficultyPenalty = encounter.question.difficulty === 'hard'
-      ? 12
-      : encounter.question.difficulty === 'medium'
-        ? 6
-        : 0
-
-    return Math.max(18, 68 + ball.bonus - rarityPenalty - difficultyPenalty)
-  }
-
-  function getCatchRoll(ball: BallItem) {
-    const seed = `${encounter.question.id}-${encounter.pokemon.id}-${ball.id}`
-
-    return seed.split('').reduce((total, character) => {
-      return (total * 33 + character.charCodeAt(0)) % 100
-    }, 23)
-  }
-
-  function startCatch(ball: BallItem) {
-    const threshold = getCatchThreshold(ball)
-    const roll = getCatchRoll(ball)
-    const caught = roll < threshold
-
+  async function startCatch(ball: BallItem) {
     setSelectedBall(ball)
+    setCatchError('')
     setIsOutcomeModalDismissed(true)
     setCatchPhase('throwing')
+    playSound('catchThrow')
     setBattleLog((current) => [...current.slice(-24), `You threw a ${ball.label}!`])
+
+    let caught = false
+
+    try {
+      const result = await catchPokemon({
+        ballItemKey: ball.id,
+        pokemonId: encounter.pokemon.id,
+        questionId: encounter.question.id,
+      })
+
+      caught = result.caught
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shop-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-entries'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+      ])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Catch failed.'
+      setCatchError(message)
+      setCatchPhase('choosing')
+      setBattleLog((current) => [...current.slice(-24), message])
+      return
+    }
 
     window.setTimeout(() => {
       setCatchPhase('shaking')
+      playSound('catchShake')
     }, 700)
 
     window.setTimeout(() => {
       setCatchPhase(caught ? 'success' : 'breakout')
+      playSound(caught ? 'catchSuccess' : 'catchBreakout')
       setBattleLog((current) => [
         ...current.slice(-24),
         caught
@@ -451,7 +577,7 @@ export function Battle() {
   return (
     <main className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink max-[899px]:h-auto max-[899px]:overflow-auto">
       <AppHeader
-        coins={245}
+        coins={playerSummary.data?.coins ?? 0}
         onBag={() => setIsBagOpen(true)}
         onHint={isLocked ? undefined : showHint}
         showBattleActions
@@ -464,7 +590,7 @@ export function Battle() {
       >
         {isBattleCollapsed ? (
           <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
-            <HPBar current={playerHp} label="PikaCoder" level={12} max={playerMaxHp} />
+            <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
             <button
               className="pixel-focus border-4 border-ink bg-cream px-3 py-1 font-heading text-[10px]"
               onClick={() => setIsBattleCollapsed(false)}
@@ -482,11 +608,11 @@ export function Battle() {
                   'player',
                   animation,
                 )}`}
-                id={25}
+                id={playerPokemon.id}
                 type="back"
               />
               <div className="min-w-0">
-                <HPBar current={playerHp} label="PikaCoder" level={12} max={playerMaxHp} />
+                <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
                 <XPBar current={42} max={100} label="Next" />
               </div>
             </div>
@@ -576,13 +702,14 @@ export function Battle() {
 
       <Modal isOpen={isBagOpen} onClose={() => setIsBagOpen(false)} title="Bag">
         <div className="grid gap-3">
-          {[
-            { id: 'potion', label: 'Potion x3', note: 'Restore 25 HP.' },
-            { id: 'shield', label: 'Shield x1', note: 'Fake shield effect.' },
-            { id: 'revive', label: 'Revive x1', note: 'Works only at 0 HP.' },
-          ].map((item) => (
+          {bagItems.map((item) => {
+            const count =
+              item.id === 'shield' ? 1 : ownedItems.get(item.id) ?? 0
+
+            return (
             <button
               className="pixel-focus border-4 border-ink bg-cream p-3 text-left hover:bg-warning"
+              disabled={count <= 0}
               key={item.id}
               onClick={() => {
                 useBagItem(item.id as 'potion' | 'shield' | 'revive')
@@ -593,7 +720,8 @@ export function Battle() {
               <span className="block font-heading text-[10px]">{item.label}</span>
               <span className="text-xl">{item.note}</span>
             </button>
-          ))}
+            )
+          })}
         </div>
       </Modal>
 
@@ -615,6 +743,7 @@ export function Battle() {
               onClick={() => {
                 setIsOutcomeModalDismissed(true)
                 setCatchPhase('choosing')
+                setCatchError('')
               }}
             >
               Throw a Ball
@@ -647,9 +776,10 @@ export function Battle() {
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {ballItems.map((ball) => (
+              {ownedBallItems.map((ball) => (
                 <button
                   className="pixel-focus grid grid-cols-[48px_1fr] items-center gap-3 border-4 border-ink bg-cream p-3 text-left hover:bg-warning"
+                  disabled={ball.count <= 0}
                   key={ball.id}
                   onClick={() => startCatch(ball)}
                   type="button"
@@ -666,6 +796,11 @@ export function Battle() {
                 </button>
               ))}
             </div>
+            {catchError ? (
+              <p className="border-4 border-ink bg-danger p-3 text-cream" role="alert">
+                {catchError}
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="space-y-4 text-center">

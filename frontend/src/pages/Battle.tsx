@@ -187,6 +187,7 @@ export function Battle() {
   ])
   const playSound = useAudioStore((state) => state.playSound)
   const playPokemonCry = useAudioStore((state) => state.playPokemonCry)
+  const setBgmScene = useAudioStore((state) => state.setBgmScene)
   const isNarrow = useNarrowLayout()
   const resultsPanelRef = usePanelRef()
   const mainLayout = useDefaultLayout({
@@ -282,8 +283,9 @@ export function Battle() {
       playSound('damage')
     } else if (currentEvent.type === 'victory') {
       playSound('victory')
+      setBgmScene('victory')
     }
-  }, [currentEvent, playSound])
+  }, [currentEvent, playSound, setBgmScene])
 
   useEffect(() => {
     if (!moveVfx) {
@@ -493,6 +495,7 @@ export function Battle() {
 
     setHasEncounterStarted(true)
     setIsBattleScreenOpen(true)
+    setBgmScene('battle')
     enqueueEvents([
       { type: 'text', text: `${playerPokemon.name} stepped forward with ${encounterEnergy} energy.` },
       { type: 'text', text: `${encounter.pokemon.name} is ready to battle.` },
@@ -1068,6 +1071,7 @@ export function Battle() {
     setIsOutcomeModalDismissed(true)
     setCatchPhase('throwing')
     playSound('catchThrow')
+    setBgmScene('catch')
     setBattleLog((current) => [...current.slice(-24), `You threw a ${ball.label}!`])
 
     let caught = false
@@ -1103,6 +1107,7 @@ export function Battle() {
     window.setTimeout(() => {
       setCatchPhase(caught ? 'success' : 'breakout')
       playSound(caught ? 'catchSuccess' : 'catchBreakout')
+      setBgmScene(caught ? 'victory' : 'battle')
       setBattleLog((current) => [
         ...current.slice(-24),
         caught

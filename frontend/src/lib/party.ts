@@ -27,6 +27,42 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
   }
 
   const { data, error } = await supabase
+    .from('party_slots')
+    .select('slot,player_creatures(id,pokemon_id,level,xp,is_starter)')
+    .eq('user_id', userId)
+    .order('slot', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  const slottedParty =
+    data
+      ?.map((slot) => {
+        const creature = Array.isArray(slot.player_creatures)
+          ? slot.player_creatures[0]
+          : slot.player_creatures
+        const pokemon = creature ? getPokemonById(creature.pokemon_id) : null
+
+        if (!pokemon || !creature) {
+          return null
+        }
+
+        return {
+          ...pokemon,
+          creatureId: creature.id,
+          isStarter: creature.is_starter,
+          level: creature.level,
+          xp: creature.xp,
+        }
+      })
+      .filter((pokemon): pokemon is PlayerPartyMember => Boolean(pokemon)) ?? []
+
+  if (slottedParty.length > 0) {
+    return slottedParty
+  }
+
+  const fallbackResult = await supabase
     .from('player_creatures')
     .select('id,pokemon_id,level,xp,is_starter,caught_at')
     .eq('user_id', userId)
@@ -34,12 +70,12 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
     .order('caught_at', { ascending: true })
     .limit(6)
 
-  if (error) {
-    throw error
+  if (fallbackResult.error) {
+    throw fallbackResult.error
   }
 
   const party =
-    data
+    fallbackResult.data
       ?.map((creature) => {
         const pokemon = getPokemonById(creature.pokemon_id)
 

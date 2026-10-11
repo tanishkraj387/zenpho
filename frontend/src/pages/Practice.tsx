@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/auth/AppHeader'
 import { PixelButton } from '../components/ui/PixelButton'
@@ -19,6 +20,10 @@ const difficultyClasses: Record<QuestionDifficulty, string> = {
   hard: 'bg-danger text-cream',
 }
 
+const difficultyOptions = ['all', 'easy', 'medium', 'hard'] as const
+const topicOptions = ['all', 'arrays', 'strings', 'graphs', 'trees', 'dp', 'math'] as const
+const statusOptions = ['all', 'unsolved', 'solved'] as const
+
 function getBadgeTopic(topic: TopicType): BadgeTopicType {
   const label = getTopicLabel(topic)
 
@@ -38,12 +43,37 @@ function getEnergyCost(question: CodingQuestion) {
 }
 
 export function Practice() {
+  const [difficultyFilter, setDifficultyFilter] = useState<(typeof difficultyOptions)[number]>('all')
+  const [topicFilter, setTopicFilter] = useState<(typeof topicOptions)[number]>('all')
+  const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('all')
+  const [search, setSearch] = useState('')
   const questionEncounters = useQuestionEncounters()
   const playerSummary = usePlayerSummary()
   const solvedQuestions = useSolvedQuestions()
   const encounters = questionEncounters.data ?? []
   const coins = playerSummary.data?.coins ?? 0
   const solvedQuestionIds = new Set(solvedQuestions.data ?? [])
+  const filteredEncounters = useMemo(() => {
+    const searchValue = search.trim().toLowerCase()
+
+    return encounters.filter(({ pokemon, question, routeName }) => {
+      const isSolved = solvedQuestionIds.has(question.id)
+      const matchesDifficulty =
+        difficultyFilter === 'all' || question.difficulty === difficultyFilter
+      const matchesTopic = topicFilter === 'all' || question.topic === topicFilter
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'solved' ? isSolved : !isSolved)
+      const matchesSearch =
+        !searchValue ||
+        question.title.toLowerCase().includes(searchValue) ||
+        question.description.toLowerCase().includes(searchValue) ||
+        pokemon.name.toLowerCase().includes(searchValue) ||
+        routeName.toLowerCase().includes(searchValue)
+
+      return matchesDifficulty && matchesTopic && matchesStatus && matchesSearch
+    })
+  }, [difficultyFilter, encounters, search, solvedQuestionIds, statusFilter, topicFilter])
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
@@ -76,8 +106,62 @@ export function Practice() {
           </div>
         </PixelCard>
 
+        <PixelCard bodyClassName="space-y-4 p-4 sm:p-5" title="Filters">
+          <label className="block">
+            <span className="font-heading text-[10px] uppercase">Search</span>
+            <input
+              className="pixel-focus mt-2 w-full border-4 border-ink bg-white p-3 text-xl"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Question, route, or Pokemon"
+              type="search"
+              value={search}
+            />
+          </label>
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="flex flex-wrap gap-2">
+              {difficultyOptions.map((difficulty) => (
+                <PixelButton
+                  className="min-h-11 px-3 py-2"
+                  key={difficulty}
+                  onClick={() => setDifficultyFilter(difficulty)}
+                  variant={difficultyFilter === difficulty ? 'primary' : 'secondary'}
+                >
+                  {difficulty}
+                </PixelButton>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {topicOptions.map((topic) => (
+                <PixelButton
+                  className="min-h-11 px-3 py-2"
+                  key={topic}
+                  onClick={() => setTopicFilter(topic)}
+                  variant={topicFilter === topic ? 'primary' : 'secondary'}
+                >
+                  {topic === 'dp' ? 'DP' : topic}
+                </PixelButton>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {statusOptions.map((status) => (
+                <PixelButton
+                  className="min-h-11 px-3 py-2"
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  variant={statusFilter === status ? 'primary' : 'secondary'}
+                >
+                  {status}
+                </PixelButton>
+              ))}
+            </div>
+          </div>
+          <p className="text-lg">
+            Showing {filteredEncounters.length} of {encounters.length} routes.
+          </p>
+        </PixelCard>
+
         <div className="grid gap-4 xl:grid-cols-2">
-          {encounters.map(({ pokemon, question, routeName }) => {
+          {filteredEncounters.map(({ pokemon, question, routeName }) => {
             const isSolved = solvedQuestionIds.has(question.id)
 
             return (
@@ -140,6 +224,11 @@ export function Practice() {
             )
           })}
         </div>
+        {filteredEncounters.length === 0 ? (
+          <PixelCard bodyClassName="p-4 text-xl" title="No Routes">
+            No question encounters match those filters.
+          </PixelCard>
+        ) : null}
       </section>
     </main>
   )

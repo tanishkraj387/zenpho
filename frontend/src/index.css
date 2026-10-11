@@ -24,9 +24,24 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
   min-height: 100vh;
 }
 
@@ -45,6 +60,7 @@ select {
 img[src*='/sprites/'],
 .sprite-image {
   image-rendering: pixelated;
+  max-width: 100%;
 }
 
 .pixel-panel {
@@ -644,5 +660,14 @@ img[src*='/sprites/'],
 @media (prefers-reduced-motion: reduce) {
   .loading-gate {
     display: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

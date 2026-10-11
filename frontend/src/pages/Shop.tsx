@@ -62,6 +62,7 @@ export function Shop() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['shop-summary'] }),
         queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['milestones'] }),
       ])
       setPurchaseMessage(`Bought 1 ${item.name}.`)
     } catch (error) {

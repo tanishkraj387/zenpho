@@ -14,13 +14,6 @@ export type BattleEvent =
   | { type: 'victory'; text: string; rewards?: { xp: number; coins: number } }
   | { type: 'defeat'; text: string }
 
-export type JudgeOutcome =
-  | 'samples-pass'
-  | 'all-pass'
-  | 'hidden-fail'
-  | 'efficiency-fail'
-  | 'wrong-answer'
-
 export type TestGroupState = {
   id: 'samples' | 'hidden' | 'efficiency'
   label: string

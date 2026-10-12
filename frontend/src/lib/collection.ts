@@ -82,10 +82,14 @@ export async function getCollectionEntries(userId: string): Promise<Record<numbe
     return previewSeenCollection
   }
 
-  const [creaturesResult, seenResult] = await Promise.all([
+  const [creaturesResult, pokedexResult, seenResult] = await Promise.all([
     supabase
       .from('player_creatures')
       .select('pokemon_id,affinity,source,is_starter,caught_at')
+      .eq('user_id', userId),
+    supabase
+      .from('player_pokedex')
+      .select('pokemon_id,status,source_question_id,caught_at,first_seen_at')
       .eq('user_id', userId),
     supabase
       .from('battle_attempts')
@@ -98,11 +102,23 @@ export async function getCollectionEntries(userId: string): Promise<Record<numbe
     throw creaturesResult.error
   }
 
+  if (pokedexResult.error) {
+    throw pokedexResult.error
+  }
+
   if (seenResult.error) {
     throw seenResult.error
   }
 
   const entries: Record<number, CollectionEntry> = { ...previewSeenCollection }
+
+  for (const pokedexEntry of pokedexResult.data ?? []) {
+    entries[pokedexEntry.pokemon_id] = {
+      caughtAt: formatCaughtAt(pokedexEntry.caught_at ?? pokedexEntry.first_seen_at),
+      source: pokedexEntry.source_question_id ?? 'Pokedex record',
+      status: pokedexEntry.status as CollectionStatus,
+    }
+  }
 
   for (const attempt of seenResult.data ?? []) {
     if (!entries[attempt.pokemon_id] || entries[attempt.pokemon_id].status === 'unknown') {

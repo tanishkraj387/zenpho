@@ -3,6 +3,8 @@ import { AppHeader } from '../components/auth/AppHeader'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { XPBar } from '../components/ui/XPBar'
+import { useGyms } from '../hooks/useGyms'
+import { useMilestones } from '../hooks/useMilestones'
 import { useProfileSummary } from '../hooks/useProfileSummary'
 import { getUsername, useAuthStore } from '../store/authStore'
 
@@ -18,8 +20,12 @@ export function Profile() {
   const user = useAuthStore((state) => state.user)
   const signOut = useAuthStore((state) => state.signOut)
   const profileSummary = useProfileSummary()
+  const milestones = useMilestones()
+  const gyms = useGyms()
   const summary = profileSummary.data
   const username = summary?.username ?? getUsername(user)
+  const nextMilestone = milestones.data?.find((milestone) => !milestone.isRewardClaimed)
+  const badgeCount = gyms.data?.filter((gym) => gym.isClaimed || gym.badgeWonAt).length ?? 0
 
   async function handleLogout() {
     await signOut()
@@ -95,6 +101,29 @@ export function Profile() {
             </p>
           </PixelCard>
 
+          <PixelCard bodyClassName="p-4 sm:p-5" title="Progress">
+            <div className="grid gap-4 md:grid-cols-2">
+              <article className="border-4 border-ink bg-white p-3">
+                <p className="font-heading text-[10px] uppercase">Next Milestone</p>
+                <p className="mt-2 text-xl">{nextMilestone?.title ?? 'All caught up'}</p>
+                {nextMilestone ? (
+                  <XPBar
+                    current={nextMilestone.progress}
+                    label="Progress"
+                    max={nextMilestone.target}
+                  />
+                ) : null}
+              </article>
+              <article className="border-4 border-ink bg-white p-3">
+                <p className="font-heading text-[10px] uppercase">Gym Badges</p>
+                <p className="mt-2 font-heading text-2xl">{badgeCount}</p>
+                <p className="mt-2 text-lg">Topic badges unlocked.</p>
+              </article>
+            </div>
+          </PixelCard>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <PixelCard bodyClassName="p-4 sm:p-5" title="Recent Battles">
             {summary?.recentBattles.length ? (
               <div className="grid gap-3">

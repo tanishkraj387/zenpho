@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/auth/AppHeader'
 import { PixelButton } from '../components/ui/PixelButton'
@@ -5,10 +7,13 @@ import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { TypeBadge, type TopicType } from '../components/ui/TypeBadge'
 import { XPBar } from '../components/ui/XPBar'
+import { useCollectionEntries } from '../hooks/useCollectionEntries'
+import { useMilestones } from '../hooks/useMilestones'
+import { usePlayerParty } from '../hooks/usePlayerParty'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
+import { claimMilestoneReward } from '../lib/milestones'
 import {
   getEncounterPool,
-  getPokemonById,
   getPokemonWithSprites,
   getRarityLabel,
   pokemonSpecies,
@@ -50,7 +55,7 @@ const navActions: NavAction[] = [
   { label: 'Leaderboard', to: '/leaderboard', variant: 'secondary' },
 ]
 
-const partyPokemon = [1, 4, 7]
+const fallbackPartyPokemon = [1, 4, 7]
   .map((id) => pokemonSpecies.find((pokemon) => pokemon.id === id))
   .filter((pokemon): pokemon is NonNullable<typeof pokemon> => Boolean(pokemon))
   .map(getPokemonWithSprites)
@@ -82,9 +87,20 @@ function StatTile({
 }
 
 export function Hub() {
+  const queryClient = useQueryClient()
+  const [pendingMilestoneKey, setPendingMilestoneKey] = useState<string | null>(null)
+  const [milestoneMessage, setMilestoneMessage] = useState('')
   const user = useAuthStore((state) => state.user)
   const playerSummary = usePlayerSummary()
+  const playerParty = usePlayerParty()
+  const collectionEntries = useCollectionEntries()
+  const milestones = useMilestones()
   const summary = playerSummary.data
+  const entries = collectionEntries.data ?? {}
+  const nextMilestone =
+    milestones.data?.find((milestone) => !milestone.isComplete) ??
+    milestones.data?.find((milestone) => !milestone.isRewardClaimed) ??
+    milestones.data?.[0]
   const username = summary?.username ?? getUsername(user)
   const coins = summary?.coins ?? trainerStats.coins
   const energy = {
@@ -92,14 +108,45 @@ export function Hub() {
     max: summary?.maxEnergy ?? trainerStats.energy.max,
   }
   const caughtCount = summary?.caughtCount ?? trainerStats.pokedex.caught
+  const seenCount = summary?.seenCount ?? trainerStats.pokedex.seen
   const livePartyPokemon =
-    summary?.starterPokemonIds
-      .map((id) => getPokemonById(id))
-      .filter((pokemon): pokemon is NonNullable<typeof pokemon> => Boolean(pokemon))
-      .map(getPokemonWithSprites) ?? partyPokemon
+    playerParty.data?.length
+      ? playerParty.data.map(getPokemonWithSprites)
+      : fallbackPartyPokemon
+  const livePokedexPreview = pokemonSpecies
+    .filter((pokemon) => entries[pokemon.id]?.status && entries[pokemon.id].status !== 'unknown')
+    .slice(0, 6)
+    .map(getPokemonWithSprites)
+  const visiblePokedexPreview = livePokedexPreview.length ? livePokedexPreview : pokedexPreview
   const pokedexPercent = Math.round(
     (caughtCount / trainerStats.pokedex.total) * 100,
   )
+  const canClaimMilestone =
+    Boolean(nextMilestone?.isComplete) && !nextMilestone?.isRewardClaimed
+
+  async function claimNextMilestone() {
+    if (!nextMilestone || !canClaimMilestone) {
+      return
+    }
+
+    setMilestoneMessage('')
+    setPendingMilestoneKey(nextMilestone.key)
+
+    try {
+      await claimMilestoneReward(nextMilestone.key)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['milestones'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-entries'] }),
+      ])
+      setMilestoneMessage(`${nextMilestone.title} reward claimed.`)
+    } catch (error) {
+      setMilestoneMessage(error instanceof Error ? error.message : 'Could not claim milestone.')
+    } finally {
+      setPendingMilestoneKey(null)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
@@ -226,14 +273,32 @@ export function Hub() {
                   {trainerStats.milestone.label}
                 </p>
                 <h2 className="font-heading text-xl leading-relaxed">
-                  {trainerStats.milestone.title}
+                  {nextMilestone?.title ?? trainerStats.milestone.title}
                 </h2>
-                <p className="text-xl leading-relaxed">{trainerStats.milestone.reward}</p>
+                <p className="text-xl leading-relaxed">
+                  {nextMilestone?.reward ?? trainerStats.milestone.reward}
+                </p>
                 <XPBar
-                  current={trainerStats.milestone.progress}
+                  current={nextMilestone?.progress ?? trainerStats.milestone.progress}
                   label="Progress"
-                  max={trainerStats.milestone.max}
+                  max={nextMilestone?.target ?? trainerStats.milestone.max}
                 />
+                {milestoneMessage ? (
+                  <p className="border-4 border-ink bg-warning p-3 text-lg" role="status">
+                    {milestoneMessage}
+                  </p>
+                ) : null}
+                <PixelButton
+                  disabled={!canClaimMilestone || pendingMilestoneKey === nextMilestone?.key}
+                  onClick={claimNextMilestone}
+                  variant={canClaimMilestone ? 'primary' : 'secondary'}
+                >
+                  {nextMilestone?.isRewardClaimed
+                    ? 'Claimed'
+                    : pendingMilestoneKey === nextMilestone?.key
+                      ? 'Claiming...'
+                      : 'Claim Reward'}
+                </PixelButton>
               </div>
               <div className="border-4 border-ink bg-white p-3 text-center">
                 <Sprite
@@ -242,8 +307,12 @@ export function Hub() {
                   id={133}
                   type="front"
                 />
-                <p className="mt-2 font-heading text-[10px] uppercase">Reward Preview</p>
-                <p className="mt-1 text-lg">Catch chance unlock</p>
+                <p className="mt-2 font-heading text-[10px] uppercase">
+                  {nextMilestone?.title ?? 'Reward Preview'}
+                </p>
+                <p className="mt-1 text-lg">
+                  {nextMilestone?.isRewardClaimed ? 'Claimed' : 'Milestone reward'}
+                </p>
               </div>
             </div>
           </PixelCard>
@@ -252,7 +321,7 @@ export function Hub() {
         <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <PixelCard bodyClassName="p-4 sm:p-5" title="Pokedex Preview">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {pokedexPreview.map((pokemon, index) => (
+              {visiblePokedexPreview.map((pokemon) => (
                 <article
                   className="border-4 border-ink bg-white p-3 text-center"
                   key={pokemon.id}
@@ -267,11 +336,14 @@ export function Hub() {
                     {pokemon.name}
                   </h2>
                   <p className="mt-1 text-base">
-                    {index < 3 ? 'Caught' : 'Seen'}
+                    {entries[pokemon.id]?.status ?? 'Seen'}
                   </p>
                 </article>
               ))}
             </div>
+            <p className="mt-4 text-lg">
+              Seen {seenCount} / Caught {caughtCount}
+            </p>
           </PixelCard>
 
           <PixelCard bodyClassName="p-4 sm:p-5" title="Hard Encounter Watch">

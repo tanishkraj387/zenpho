@@ -6,6 +6,7 @@ import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
 import { useCollectionEntries } from '../hooks/useCollectionEntries'
+import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import { useAudioStore } from '../lib/audio'
 import type { CollectionStatus } from '../lib/collection'
 import {
@@ -60,6 +61,7 @@ export function Collection() {
   const [search, setSearch] = useState('')
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null)
   const collectionEntries = useCollectionEntries()
+  const playerSummary = usePlayerSummary()
   const playPokemonCry = useAudioStore((state) => state.playPokemonCry)
   const entries = collectionEntries.data ?? {}
 
@@ -90,7 +92,7 @@ export function Collection() {
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
-      <AppHeader coins={245} />
+      <AppHeader coins={playerSummary.data?.coins ?? 0} />
       <section className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
         <PixelCard bodyClassName="p-4 sm:p-5" title="Pokedex">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">

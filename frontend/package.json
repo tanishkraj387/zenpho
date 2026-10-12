@@ -14,7 +14,8 @@
     "rom-rip": "node scripts/rip-rom-music.mjs",
     "firered-music": "node scripts/rip-firered-music.mjs",
     "pokemon-cries": "node scripts/download-pokemon-cries.mjs",
-    "supabase:apply": "node scripts/apply-supabase-migrations.mjs"
+    "supabase:apply": "node scripts/apply-supabase-migrations.mjs",
+    "judge": "node scripts/judge-server.mjs"
   },
   "dependencies": {
     "@fontsource/pixelify-sans": "^5.3.0",

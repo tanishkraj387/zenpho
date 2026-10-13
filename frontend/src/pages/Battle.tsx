@@ -28,7 +28,7 @@ import {
   getTopicLabel,
   type CodeLanguage,
 } from '../lib/questions'
-import { judgeCode, type JudgeResult } from '../lib/judge'
+import { judgeCode, type JudgeDiagnostic, type JudgeResult } from '../lib/judge'
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
@@ -167,6 +167,8 @@ export function Battle() {
   const [moveVfx, setMoveVfx] = useState<{ target: 'player' | 'enemy'; type: MoveVfx } | null>(null)
   const [catchError, setCatchError] = useState('')
   const [battleAttemptError, setBattleAttemptError] = useState('')
+  const [judgeError, setJudgeError] = useState('')
+  const [judgeDiagnostics, setJudgeDiagnostics] = useState<JudgeDiagnostic[]>([])
   const [battleAttemptId, setBattleAttemptId] = useState<string | null>(null)
   const [isWinRecorded, setIsWinRecorded] = useState(false)
   const [battleLog, setBattleLog] = useState<string[]>([
@@ -316,7 +318,8 @@ export function Battle() {
 
     openResultsDrawer()
     setJudging()
-    setBattleAttemptError('')
+    setJudgeError('')
+    setJudgeDiagnostics([])
 
     try {
       const result = await judgeCode({
@@ -327,6 +330,7 @@ export function Battle() {
         question: encounter.question,
         topicLabel: getTopicLabel(encounter.question.topic),
       })
+      setJudgeDiagnostics(result.diagnostics)
 
       if (mode === 'submit' && result.solved) {
         setSolveReward(result.rewards)
@@ -345,7 +349,8 @@ export function Battle() {
           ? error.message
           : 'The local judge server could not check this submission.'
 
-      setBattleAttemptError(message)
+      setJudgeError(message)
+      setJudgeDiagnostics([])
       enqueueEvents(
         [
           {
@@ -386,6 +391,8 @@ export function Battle() {
     setEncounterTurn(0)
     setMoveVfx(null)
     setBattleAttemptError('')
+    setJudgeError('')
+    setJudgeDiagnostics([])
     setBattleAttemptId(null)
     setIsWinRecorded(false)
 
@@ -634,20 +641,27 @@ export function Battle() {
     () =>
       tests.map((test) => (
         <div
-          className="flex items-center justify-between border-4 border-ink bg-white p-2"
+          className="grid gap-2 border-4 border-ink bg-white p-2"
           key={test.id}
         >
-          <span className="font-heading text-[10px]">{test.label}</span>
-          <span
-            className={`border-4 border-ink px-2 py-1 font-heading text-[10px] ${resultClass(
-              test.state,
-            )}`}
-          >
-            {test.state}
-          </span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-heading text-[10px]">{test.label}</span>
+            <span
+              className={`border-4 border-ink px-2 py-1 font-heading text-[10px] ${resultClass(
+                test.state,
+              )}`}
+            >
+              {test.state}
+            </span>
+          </div>
+          {judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id) ? (
+            <p className="text-base">
+              {judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.message}
+            </p>
+          ) : null}
         </div>
       )),
-    [tests],
+    [judgeDiagnostics, tests],
   )
 
   const problemPane = (
@@ -686,6 +700,11 @@ export function Battle() {
               <p className="border-4 border-ink bg-warning p-3 text-lg">
                 Battle is running in UI preview mode until Supabase creates the
                 attempt: {battleAttemptError}
+              </p>
+            ) : null}
+            {judgeError ? (
+              <p className="border-4 border-ink bg-danger p-3 text-lg text-cream">
+                Docker judge is not ready: {judgeError}
               </p>
             ) : null}
             {isQuestionAlreadySolved ? (

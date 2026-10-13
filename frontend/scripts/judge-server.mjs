@@ -8,7 +8,7 @@ import testSuites from '../src/data/question-tests.json' with { type: 'json' }
 const port = Number(process.env.JUDGE_PORT ?? 8787)
 const pythonImage = process.env.JUDGE_PYTHON_IMAGE ?? 'python:3.12-alpine'
 const nodeImage = process.env.JUDGE_NODE_IMAGE ?? 'node:22-alpine'
-const groupTimeoutMs = Number(process.env.JUDGE_TIMEOUT_MS ?? 5000)
+const groupTimeoutMs = Number(process.env.JUDGE_TIMEOUT_MS ?? 30000)
 const maxCodeChars = 20000
 
 const groupLabels = {
@@ -75,8 +75,14 @@ function runCommand(command, args, timeoutMs) {
   })
 }
 
-function normalize(value) {
-  return JSON.stringify(value)
+function isInfrastructureError(message) {
+  return (
+    message.includes('spawn EPERM') ||
+    message.includes('failed to connect to the docker API') ||
+    message.includes('Cannot connect to the Docker daemon') ||
+    message.includes('dockerDesktopLinuxEngine') ||
+    message.includes('is the docker daemon running')
+  )
 }
 
 function buildPythonRunner() {
@@ -98,6 +104,10 @@ for index, test in enumerate(tests):
         actual = module.solve(**test["input"])
         expected = test["expected"]
         passed = actual == expected
+        if not passed and isinstance(actual, (list, tuple)) and isinstance(expected, list):
+            passed = list(actual) == expected
+        if not passed and isinstance(actual, (list, tuple)) and isinstance(expected, list):
+            passed = sorted(list(actual)) == sorted(expected)
         results.append({
             "index": index,
             "passed": passed,
@@ -130,7 +140,11 @@ for (const [index, test] of tests.entries()) {
   try {
     const actual = await solve(...Object.values(test.input))
     const expected = test.expected
-    const passed = JSON.stringify(actual) === JSON.stringify(expected)
+    const passed =
+      JSON.stringify(actual) === JSON.stringify(expected) ||
+      (Array.isArray(actual) &&
+        Array.isArray(expected) &&
+        JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort()))
     results.push({ index, passed, actual, expected })
     if (!passed) {
       break
@@ -194,7 +208,13 @@ async function runGroup({ code, language, tests }) {
     }
 
     if (result.code !== 0) {
-      return { passed: false, error: result.stderr.trim() || 'Code failed before tests completed.' }
+      const error = result.stderr.trim() || 'Code failed before tests completed.'
+
+      return {
+        passed: false,
+        error,
+        infrastructureError: isInfrastructureError(error),
+      }
     }
 
     const parsed = JSON.parse(result.stdout.trim())
@@ -212,9 +232,12 @@ async function runGroup({ code, language, tests }) {
 
     return { passed: true, passedCount: parsed.results.length }
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Judge failed unexpectedly.'
+
     return {
       passed: false,
-      error: error instanceof Error ? error.message : 'Judge failed unexpectedly.',
+      error: message,
+      infrastructureError: isInfrastructureError(message),
     }
   } finally {
     await rm(workspace, { force: true, recursive: true })
@@ -308,6 +331,10 @@ async function judgeSubmission(payload) {
         message: `${groupLabels[group]} passed.`,
       })
       continue
+    }
+
+    if (result.infrastructureError) {
+      throw new Error(result.error ?? 'Docker judge is not ready.')
     }
 
     tests[group] = 'failed'

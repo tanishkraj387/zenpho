@@ -32,6 +32,8 @@ try {
       applied_at timestamptz not null default now()
     )
   `
+  await sql`alter table public.schema_migrations enable row level security`
+  await sql`revoke all on public.schema_migrations from anon, authenticated`
 
   const migrationFiles = (await readdir(migrationsRoot))
     .filter((file) => file.endsWith('.sql'))

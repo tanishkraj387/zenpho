@@ -34,6 +34,19 @@ export async function startBattleAttempt({
   return data as BattleAttemptRecord | null
 }
 
+export async function spendBattleEnergy(attemptId: string) {
+  if (!isSupabaseConfigured) {
+    return null
+  }
+
+  const { data, error } = await supabase.rpc('spend_battle_energy', {
+    p_battle_attempt_id: attemptId,
+  })
+
+  if (error) throw error
+  return data as number
+}
+
 export async function recordBattleResult({
   attemptId,
   codeDraft,

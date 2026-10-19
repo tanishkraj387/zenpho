@@ -6,6 +6,7 @@ import { ProtectedRoute, PublicOnlyRoute } from './components/auth/ProtectedRout
 import { AppErrorBoundary } from './components/ui/AppErrorBoundary'
 import { AudioSceneController } from './components/ui/AudioSceneController'
 import { LoadingGate } from './components/ui/LoadingGate'
+import { useGateLocation } from './components/ui/gateTransition'
 import { RouteFallback } from './components/ui/RouteFallback'
 
 const AuthCallback = lazy(() => import('./pages/AuthCallback').then((page) => ({ default: page.AuthCallback })))
@@ -21,9 +22,7 @@ const Practice = lazy(() => import('./pages/Practice').then((page) => ({ default
 const Profile = lazy(() => import('./pages/Profile').then((page) => ({ default: page.Profile })))
 const Shop = lazy(() => import('./pages/Shop').then((page) => ({ default: page.Shop })))
 const Signup = lazy(() => import('./pages/Signup').then((page) => ({ default: page.Signup })))
-const SpriteTest = lazy(() => import('./pages/SpriteTest').then((page) => ({ default: page.SpriteTest })))
 const Starter = lazy(() => import('./pages/Starter').then((page) => ({ default: page.Starter })))
-const UiDemo = lazy(() => import('./pages/UiDemo').then((page) => ({ default: page.UiDemo })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,35 +39,40 @@ export default function App() {
         <BrowserRouter>
           <AudioSceneController />
           <LoadingGate>
-            <AppErrorBoundary>
-              <Suspense fallback={<RouteFallback />}>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route element={<PublicOnlyRoute />}>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                  </Route>
-                  <Route path="/sprite-test" element={<SpriteTest />} />
-                  <Route path="/ui-demo" element={<UiDemo />} />
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/starter" element={<Starter />} />
-                    <Route path="/hub" element={<Hub />} />
-                    <Route path="/battle" element={<Battle />} />
-                    <Route path="/collection" element={<Collection />} />
-                    <Route path="/gyms" element={<Gyms />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/leaderboard" element={<Leaderboard />} />
-                    <Route path="/practice" element={<Practice />} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </AppErrorBoundary>
+            <AppRoutes />
           </LoadingGate>
         </BrowserRouter>
       </AuthBootstrap>
     </QueryClientProvider>
+  )
+}
+
+function AppRoutes() {
+  const location = useGateLocation()
+  return (
+    <AppErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes location={location ?? undefined}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route element={<PublicOnlyRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+          </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/starter" element={<Starter />} />
+            <Route path="/hub" element={<Hub />} />
+            <Route path="/battle" element={<Battle />} />
+            <Route path="/collection" element={<Collection />} />
+            <Route path="/gyms" element={<Gyms />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/practice" element={<Practice />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </AppErrorBoundary>
   )
 }

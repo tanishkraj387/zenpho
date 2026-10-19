@@ -19,11 +19,7 @@ export const itemSpriteNames = [
 export type ItemSpriteName = (typeof itemSpriteNames)[number]
 
 export function getSprite(id: number, type: SpriteType) {
-  if (type === 'icon') {
-    return `/sprites/icons/${id}.png`
-  }
-
-  return `/sprites/battle/${type}/${id}.gif`
+  return `/pokerogue/pokemon/${id}.png#${type}`
 }
 
 export function getItemSprite(name: ItemSpriteName) {
@@ -31,5 +27,5 @@ export function getItemSprite(name: ItemSpriteName) {
 }
 
 export function getPokemonCry(id: number) {
-  return `/user-assets/audio/cries/${id}.ogg`
+  return `/pokerogue/audio/cry/${id}.m4a`
 }

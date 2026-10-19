@@ -2,7 +2,7 @@ type HPBarProps = {
   current: number
   max: number
   label: string
-  level: number
+  level?: number
 }
 
 function clampPercent(current: number, max: number) {
@@ -29,10 +29,10 @@ export function HPBar({ current, label, level, max }: HPBarProps) {
   const percent = clampPercent(current, max)
 
   return (
-    <div aria-label={`${label} level ${level} HP ${current} of ${max}`} className="w-full">
+    <div aria-label={`${label}${level === undefined ? "" : ` level ${level}`} HP ${current} of ${max}`} className="w-full">
       <div className="mb-2 flex items-center justify-between gap-3 font-heading text-[10px] uppercase">
         <span>{label}</span>
-        <span>Lv {level}</span>
+        {level !== undefined ? <span>Lv {level}</span> : null}
       </div>
       <div className="border-4 border-ink bg-cream p-1">
         <div className="h-4 bg-ink">

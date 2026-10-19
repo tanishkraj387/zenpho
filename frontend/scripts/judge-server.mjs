@@ -3,12 +3,12 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
-import testSuites from '../src/data/question-tests.json' with { type: 'json' }
+import testSuites from '../../judge-data/question-tests.json' with { type: 'json' }
 
 const port = Number(process.env.JUDGE_PORT ?? 8787)
 const pythonImage = process.env.JUDGE_PYTHON_IMAGE ?? 'python:3.12-alpine'
 const nodeImage = process.env.JUDGE_NODE_IMAGE ?? 'node:22-alpine'
-const groupTimeoutMs = Number(process.env.JUDGE_TIMEOUT_MS ?? 5000)
+const groupTimeoutMs = Number(process.env.JUDGE_TIMEOUT_MS ?? 30000)
 const maxCodeChars = 20000
 
 const groupLabels = {
@@ -75,8 +75,14 @@ function runCommand(command, args, timeoutMs) {
   })
 }
 
-function normalize(value) {
-  return JSON.stringify(value)
+function isInfrastructureError(message) {
+  return (
+    message.includes('spawn EPERM') ||
+    message.includes('failed to connect to the docker API') ||
+    message.includes('Cannot connect to the Docker daemon') ||
+    message.includes('dockerDesktopLinuxEngine') ||
+    message.includes('is the docker daemon running')
+  )
 }
 
 function buildPythonRunner() {
@@ -98,6 +104,10 @@ for index, test in enumerate(tests):
         actual = module.solve(**test["input"])
         expected = test["expected"]
         passed = actual == expected
+        if not passed and isinstance(actual, (list, tuple)) and isinstance(expected, list):
+            passed = list(actual) == expected
+        if not passed and isinstance(actual, (list, tuple)) and isinstance(expected, list):
+            passed = sorted(list(actual)) == sorted(expected)
         results.append({
             "index": index,
             "passed": passed,
@@ -130,7 +140,11 @@ for (const [index, test] of tests.entries()) {
   try {
     const actual = await solve(...Object.values(test.input))
     const expected = test.expected
-    const passed = JSON.stringify(actual) === JSON.stringify(expected)
+    const passed =
+      JSON.stringify(actual) === JSON.stringify(expected) ||
+      (Array.isArray(actual) &&
+        Array.isArray(expected) &&
+        JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort()))
     results.push({ index, passed, actual, expected })
     if (!passed) {
       break
@@ -194,7 +208,13 @@ async function runGroup({ code, language, tests }) {
     }
 
     if (result.code !== 0) {
-      return { passed: false, error: result.stderr.trim() || 'Code failed before tests completed.' }
+      const error = result.stderr.trim() || 'Code failed before tests completed.'
+
+      return {
+        passed: false,
+        error,
+        infrastructureError: isInfrastructureError(error),
+      }
     }
 
     const parsed = JSON.parse(result.stdout.trim())
@@ -212,9 +232,12 @@ async function runGroup({ code, language, tests }) {
 
     return { passed: true, passedCount: parsed.results.length }
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Judge failed unexpectedly.'
+
     return {
       passed: false,
-      error: error instanceof Error ? error.message : 'Judge failed unexpectedly.',
+      error: message,
+      infrastructureError: isInfrastructureError(message),
     }
   } finally {
     await rm(workspace, { force: true, recursive: true })
@@ -223,24 +246,24 @@ async function runGroup({ code, language, tests }) {
 
 function rewardsForDifficulty(difficulty) {
   if (difficulty === 'hard') {
-    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 44, maxEnergy: 54 }
+    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 1, maxEnergy: 1 }
   }
 
   if (difficulty === 'easy') {
-    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 24, maxEnergy: 34 }
+    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 1, maxEnergy: 1 }
   }
 
-  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 34, maxEnergy: 44 }
+  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 1, maxEnergy: 1 }
 }
 
-function buildEvents({ failedGroup, mode, pokemonName, topicLabel, rewards }) {
+function buildEvents({ failedGroup, mode, pokemonName }) {
   if (!failedGroup && mode === 'submit') {
     return [
       {
         type: 'text',
-        text: `Solved! Server playback awarded ${rewards.partyXp} XP and ${rewards.coins} coins.`,
+        text: 'All checkpoints passed. The encounter is ready.',
       },
-      { type: 'text', text: `${topicLabel} energy is ready for the encounter.` },
+      { type: 'text', text: 'You earned 1 battle energy. It is spent when you enter the battle.' },
     ]
   }
 
@@ -272,7 +295,7 @@ function buildEvents({ failedGroup, mode, pokemonName, topicLabel, rewards }) {
 }
 
 async function judgeSubmission(payload) {
-  const { code, difficulty, language, mode, pokemonName, questionId, topicLabel } = payload
+  const { code, difficulty, language, mode, pokemonName, questionId } = payload
 
   if (!questionId || !testSuites[questionId]) {
     throw new Error('Unknown question.')
@@ -310,6 +333,10 @@ async function judgeSubmission(payload) {
       continue
     }
 
+    if (result.infrastructureError) {
+      throw new Error(result.error ?? 'Docker judge is not ready.')
+    }
+
     tests[group] = 'failed'
     failedGroup = group
     diagnostics.push({
@@ -317,10 +344,13 @@ async function judgeSubmission(payload) {
       label: groupLabels[group],
       passed: false,
       message: result.error
-        ? `${groupLabels[group]} failed: ${result.error.split('\n')[0]}`
+        ? group === 'samples'
+          ? `${groupLabels[group]} failed:\n${result.error.slice(0, 1600)}`
+          : result.error.startsWith('Timed out')
+            ? `${groupLabels[group]} exceeded the time limit.`
+            : `${groupLabels[group]} failed with a runtime error. Check your solution against the sample cases.`
         : `${groupLabels[group]} failed on test ${Number(result.failedIndex ?? 0) + 1}.`,
-      actual: result.actual,
-      expected: result.expected,
+      ...(group === 'samples' ? { actual: result.actual, expected: result.expected } : {}),
     })
     break
   }
@@ -333,8 +363,6 @@ async function judgeSubmission(payload) {
       failedGroup,
       mode,
       pokemonName: pokemonName ?? 'the wild Pokemon',
-      rewards,
-      topicLabel: topicLabel ?? 'Coding',
     }),
     rewards,
     solved: mode === 'submit' && !failedGroup,

@@ -1,0 +1,36 @@
+version = 1
+
+[[annotations]]
+path = ["battle-anims/*.json"]
+SPDX-FileCopyrightText = "2024-2026 Pagefault Games"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = ["pokemon/*.json", "pokemon/back/*.json"]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["images/battle_anims/*.png"]
+SPDX-FileCopyrightText = "PokéRogue contributors; see the upstream asset repository"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = ["images/arenas/*.png"]
+SPDX-FileCopyrightText = "2026 Pagefault Games"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = ["audio/cry/*.m4a", "audio/se/*.wav"]
+SPDX-FileCopyrightText = "Nintendo, Creatures Inc., GAME FREAK inc."
+SPDX-License-Identifier = "LicenseRef-FAIR-USE"
+
+[[annotations]]
+path = ["audio/bgm/battle_wild.mp3", "audio/bgm/bw/victory_trainer.mp3"]
+SPDX-FileCopyrightText = "Nintendo, Creatures Inc., GAME FREAK inc."
+SPDX-License-Identifier = "LicenseRef-FAIR-USE"
+
+[[annotations]]
+path = ["audio/battle_anims/PRSFX-*.wav"]
+SPDX-FileCopyrightText = "The Pokemon Reborn Team https://www.rebornevo.com/pr/index.html/"
+SPDX-License-Identifier = "LicenseRef-POKEMON-REBORN"

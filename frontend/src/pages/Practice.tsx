@@ -10,7 +10,6 @@ import { useQuestionEncounters } from '../hooks/useQuestionEncounters'
 import { useSolvedQuestions } from '../hooks/useSolvedQuestions'
 import {
   getTopicLabel,
-  type CodingQuestion,
 } from '../lib/questions'
 import { getRarityLabel, type QuestionDifficulty, type TopicType } from '../lib/pokemon'
 
@@ -28,18 +27,6 @@ function getBadgeTopic(topic: TopicType): BadgeTopicType {
   const label = getTopicLabel(topic)
 
   return label as BadgeTopicType
-}
-
-function getEnergyCost(question: CodingQuestion) {
-  if (question.difficulty === 'hard') {
-    return 8
-  }
-
-  if (question.difficulty === 'medium') {
-    return 5
-  }
-
-  return 3
 }
 
 export function Practice() {
@@ -80,7 +67,7 @@ export function Practice() {
       <AppHeader coins={coins} />
       <section className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
         <PixelCard bodyClassName="p-4 sm:p-5" title="Practice Routes">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="grid gap-5">
             <div className="space-y-3">
               <p className="font-heading text-[10px] uppercase leading-relaxed">
                 Question encounters
@@ -89,9 +76,8 @@ export function Practice() {
                 Pick a route, meet a Pokemon
               </h1>
               <p className="max-w-3xl text-xl leading-relaxed">
-                These are the first seeded coding questions. Each one maps to a
-                deterministic wild Pokemon using difficulty, topic, and rarity
-                rules.
+                Choose a coding challenge, clear its checkpoints, and power up
+                your team for a wild encounter. Your next catch starts here.
               </p>
               {questionEncounters.isError ? (
                 <p className="border-4 border-ink bg-warning p-3 text-lg">
@@ -100,9 +86,6 @@ export function Practice() {
                 </p>
               ) : null}
             </div>
-            <Link to="/battle">
-              <PixelButton className="w-full sm:w-auto">Battle Prototype</PixelButton>
-            </Link>
           </div>
         </PixelCard>
 
@@ -198,7 +181,7 @@ export function Practice() {
 
                 <div>
                   <h2 className="font-heading text-sm leading-relaxed">{question.title}</h2>
-                  <p className="mt-2 text-xl leading-relaxed">{question.description}</p>
+                  <p className="mt-2 line-clamp-2 text-xl leading-relaxed">{question.description}</p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -208,14 +191,13 @@ export function Practice() {
                       <span className="font-heading text-[10px]">{pokemon.name}</span>
                     </p>
                     <p>
-                      Rarity: {getRarityLabel(pokemon.rarity)} / Energy cost:{' '}
-                      {getEnergyCost(question)}
+                      Rarity: {getRarityLabel(pokemon.rarity)} / Battle entry: 1 energy
                     </p>
                     <p>Checkpoint groups: samples, hidden, efficiency</p>
                   </div>
                   <Link to={`/battle?question=${question.id}`}>
                     <PixelButton className="w-full sm:w-auto" variant="secondary">
-                      {isSolved ? 'Review' : 'Select'}
+                      {isSolved ? 'Rematch' : 'Solve'}
                     </PixelButton>
                   </Link>
                 </div>

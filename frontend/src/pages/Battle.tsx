@@ -12,29 +12,35 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/auth/AppHeader'
 import { DialogBox } from '../components/ui/DialogBox'
 import { HPBar } from '../components/ui/HPBar'
+import { useGateTransition } from '../components/ui/gateTransition'
 import { Modal } from '../components/ui/Modal'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
+import { BattleStage } from '../components/ui/BattleStage'
+import { BattleStatus } from '../components/ui/BattleStatus'
+import { loadMoveAnimation, prepareBattleScene } from '../lib/pokerogueAnimation'
+import { loadPokemonSprite } from '../lib/pokeroguePokemonSprites'
 import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/TypeBadge'
-import { XPBar } from '../components/ui/XPBar'
 import { useBattleQuestion } from '../hooks/useBattleQuestion'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import { usePlayerParty } from '../hooks/usePlayerParty'
 import { useShopSummary } from '../hooks/useShopSummary'
 import { useSolvedQuestions } from '../hooks/useSolvedQuestions'
 import {
+  codingQuestions,
   getQuestionHints,
   getTopicLabel,
   type CodeLanguage,
 } from '../lib/questions'
-import { judgeCode, type JudgeResult } from '../lib/judge'
+import { judgeCode, type JudgeDiagnostic, type JudgeResult } from '../lib/judge'
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
 import { markQuestionSolvedLocally } from '../lib/progress'
 import {
   recordBattleResult,
+  spendBattleEnergy,
   startBattleAttempt,
   type BattleAttemptStatus,
   type TestGroupStatus,
@@ -46,7 +52,6 @@ import {
   getEffectiveness,
   resolveMove,
   type BattleMove,
-  type MoveVfx,
 } from '../lib/pokemonBattle'
 import { type BattleEvent, useBattleStore } from '../store/battleStore'
 
@@ -88,27 +93,34 @@ function resultClass(state: 'pending' | 'passed' | 'failed') {
   return 'bg-warning text-ink'
 }
 
+function moveAnimationId(name: string) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+}
+
+function battleErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = error.message
+    if (typeof message === 'string' && message.trim()) return message
+  }
+
+  return fallback
+}
+
 function animationClass(target: 'player' | 'enemy', animation: string) {
   if (target === 'player') {
-    if (animation === 'player-lunge') {
-      return 'translate-x-6 -translate-y-2'
+    if (animation === 'switch-out') {
+      return 'battle-sprite--switch-out'
     }
 
-    if (animation === 'player-hit') {
-      return 'animate-pulse'
+    if (animation === 'switch-in') {
+      return 'battle-sprite--switch-in'
     }
-  }
 
-  if (animation === 'enemy-lunge') {
-    return '-translate-x-6 translate-y-2'
-  }
-
-  if (animation === 'enemy-hit') {
-    return 'animate-pulse'
+    return ''
   }
 
   if (animation === 'enemy-faint') {
-    return 'translate-y-16 opacity-0'
+    return 'battle-sprite--faint'
   }
 
   return ''
@@ -131,6 +143,7 @@ function useNarrowLayout() {
 }
 
 export function Battle() {
+  const transition = useGateTransition()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -144,11 +157,23 @@ export function Battle() {
     return playerParty.data ?? []
   }, [playerParty.data])
   const [activePokemonId, setActivePokemonId] = useState<number | null>(null)
+  useEffect(() => {
+    for (const pokemon of partyPokemon) void loadPokemonSprite(pokemon.id, true).catch(() => undefined)
+  }, [partyPokemon])
+  const [pendingSwitchPokemonId, setPendingSwitchPokemonId] = useState<number | null>(null)
   const playerPokemon =
     getPokemonById(activePokemonId ?? partyPokemon[0]?.id ?? 25) ?? getPokemonById(25)!
   const topicBadge = getTopicLabel(encounter.question.topic) as BadgeTopicType
   const questionHints = getQuestionHints(encounter.question)
+  const questionNumber = codingQuestions.findIndex((question) => question.id === encounter.question.id) + 1
   const openingDialog = `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`
+  useEffect(() => {
+    for (const pokemon of [playerPokemon, encounter.pokemon]) {
+      for (const move of getBattleMovesForPokemon(pokemon)) {
+        void loadMoveAnimation(moveAnimationId(move.name), pokemon === playerPokemon ? 'player' : 'enemy').catch(() => undefined)
+      }
+    }
+  }, [playerPokemon, encounter.pokemon])
   const [language, setLanguage] = useState<CodeLanguage>('python')
   const [code, setCode] = useState(encounter.question.starterCode.python)
   const [isBagOpen, setIsBagOpen] = useState(false)
@@ -159,20 +184,23 @@ export function Battle() {
   const [catchPhase, setCatchPhase] = useState<CatchPhase>('idle')
   const [selectedBall, setSelectedBall] = useState<BallItem | null>(null)
   const [solveReward, setSolveReward] = useState<SolveReward | null>(null)
-  const [encounterEnergy, setEncounterEnergy] = useState(0)
+  const [isRematch, setIsRematch] = useState(false)
   const [hasEncounterStarted, setHasEncounterStarted] = useState(false)
+  const [isStartingFight, setIsStartingFight] = useState(false)
+  const [isSolveRecording, setIsSolveRecording] = useState(false)
   const [isBattleScreenOpen, setIsBattleScreenOpen] = useState(false)
   const [battleCommandMenu, setBattleCommandMenu] = useState<BattleCommandMenu>('root')
   const [encounterTurn, setEncounterTurn] = useState(0)
-  const [moveVfx, setMoveVfx] = useState<{ target: 'player' | 'enemy'; type: MoveVfx } | null>(null)
   const [catchError, setCatchError] = useState('')
   const [battleAttemptError, setBattleAttemptError] = useState('')
+  const [judgeError, setJudgeError] = useState('')
+  const [judgeDiagnostics, setJudgeDiagnostics] = useState<JudgeDiagnostic[]>([])
   const [battleAttemptId, setBattleAttemptId] = useState<string | null>(null)
   const [isWinRecorded, setIsWinRecorded] = useState(false)
   const [battleLog, setBattleLog] = useState<string[]>([
     `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`,
   ])
-  const playSound = useAudioStore((state) => state.playSound)
+  const playBattleSe = useAudioStore((state) => state.playBattleSe)
   const playPokemonCry = useAudioStore((state) => state.playPokemonCry)
   const setBgmScene = useAudioStore((state) => state.setBgmScene)
   const isNarrow = useNarrowLayout()
@@ -192,13 +220,14 @@ export function Battle() {
     enemyHp,
     enemyMaxHp,
     enqueueEvents,
+    finishCurrentEvent,
     phase,
     playerHp,
     playerMaxHp,
     resetBattle,
     setJudging,
     tests,
-    useBagItem,
+    useBagItem: applyBagItem,
     victoryRewards,
   } = useBattleStore()
 
@@ -206,7 +235,6 @@ export function Battle() {
   const isSolved = Boolean(solveReward)
   const isQuestionAlreadySolved = (solvedQuestions.data ?? []).includes(encounter.question.id)
   const isSolvedStateLoading = solvedQuestions.isLoading
-  const encounterMaxEnergy = solveReward?.maxEnergy ?? 0
   const canUseEncounterMove =
     isSolved && hasEncounterStarted && isBattleScreenOpen && phase !== 'won' && phase !== 'lost' && !isLocked
   const playerMoves = useMemo(() => getBattleMovesForPokemon(playerPokemon), [playerPokemon])
@@ -227,11 +255,6 @@ export function Battle() {
         id: 'potion' as const,
         label: `Potion x${ownedItems.get('potion') ?? 0}`,
         note: 'Restore 25 HP.',
-      },
-      {
-        id: 'shield' as const,
-        label: 'Shield x1',
-        note: 'Fake shield effect.',
       },
       {
         id: 'revive' as const,
@@ -259,30 +282,24 @@ export function Battle() {
       return
     }
 
-    if (currentEvent.type === 'player_attack' || currentEvent.type === 'enemy_attack') {
-      playSound('hit')
-    } else if (
-      currentEvent.type === 'enemy_hit' ||
-      currentEvent.type === 'player_hit' ||
-      currentEvent.type === 'enemy_hp' ||
-      currentEvent.type === 'player_hp'
-    ) {
-      playSound('damage')
+    if (currentEvent.type === 'enemy_hit' || currentEvent.type === 'player_hit') {
+      playBattleSe(currentEvent.critical || currentEvent.effectiveness > 1 ? 'hit_strong' : 'hit')
+    } else if (currentEvent.type === 'switch_out') {
+      playBattleSe('pb_rel')
+    } else if (currentEvent.type === 'enemy_faint') {
+      playBattleSe('faint')
+      playPokemonCry(encounter.pokemon.id)
     } else if (currentEvent.type === 'victory') {
-      playSound('victory')
       setBgmScene('victory')
     }
-  }, [currentEvent, playSound, setBgmScene])
+  }, [currentEvent, encounter.pokemon.id, playBattleSe, playPokemonCry, setBgmScene])
 
   useEffect(() => {
-    if (!moveVfx) {
-      return
-    }
-
-    const timeout = window.setTimeout(() => setMoveVfx(null), 720)
-
-    return () => window.clearTimeout(timeout)
-  }, [moveVfx])
+    if (currentEvent?.type !== 'switch_in' || pendingSwitchPokemonId === null) return
+    setActivePokemonId(pendingSwitchPokemonId)
+    playPokemonCry(pendingSwitchPokemonId)
+    setPendingSwitchPokemonId(null)
+  }, [currentEvent, pendingSwitchPokemonId, playPokemonCry])
 
   useEffect(() => {
     setBattleLog((current) => {
@@ -304,21 +321,17 @@ export function Battle() {
       return
     }
 
-    if (mode === 'submit' && isQuestionAlreadySolved) {
-      enqueueEvents([
-        {
-          type: 'text',
-          text: 'This question is already solved. Pick a new route to earn more energy.',
-        },
-      ])
-      return
-    }
-
     openResultsDrawer()
     setJudging()
-    setBattleAttemptError('')
+    setJudgeError('')
+    setJudgeDiagnostics([])
 
     try {
+      const solvedBeforeSubmit = mode === 'submit' ? await solvedQuestions.refetch() : null
+      if (solvedBeforeSubmit?.isError) {
+        throw new Error('Could not check previous solves. Please try submitting again.')
+      }
+      const rematch = solvedBeforeSubmit?.data?.includes(encounter.question.id) ?? false
       const result = await judgeCode({
         code,
         language,
@@ -327,30 +340,63 @@ export function Battle() {
         question: encounter.question,
         topicLabel: getTopicLabel(encounter.question.topic),
       })
+      setJudgeDiagnostics(result.diagnostics)
 
       if (mode === 'submit' && result.solved) {
-        setSolveReward(result.rewards)
-        setEncounterEnergy(result.rewards.energy)
-        setHasEncounterStarted(true)
-        setIsBattleScreenOpen(true)
+        setIsSolveRecording(true)
+        if (rematch) {
+          const rematchAttempt = await startBattleAttempt({
+            language,
+            pokemonId: encounter.pokemon.id,
+            questionId: encounter.question.id,
+          })
+          if (!rematchAttempt?.id) {
+            throw new Error('Could not prepare the rematch. Please submit again.')
+          }
+          await recordBattleResult({
+            attemptId: rematchAttempt.id,
+            codeDraft: code,
+            efficiencyStatus: result.tests.efficiency,
+            enemyHp,
+            hiddenStatus: result.tests.hidden,
+            language,
+            playerHp,
+            sampleStatus: result.tests.samples,
+            status: 'submitted',
+          })
+          setBattleAttemptId(rematchAttempt.id)
+          await queryClient.invalidateQueries({ queryKey: ['solved-questions'] })
+        } else {
+          await recordCurrentBattleResult(result.tests)
+        }
+        setIsSolveRecording(false)
+        setIsRematch(rematch)
+        setSolveReward(rematch ? { ...result.rewards, coins: 0, trainerXp: 0, partyXp: 0, energy: 0 } : result.rewards)
+        setHasEncounterStarted(false)
+        transition(() => setIsBattleScreenOpen(false), 'Question solved!')
         setIsBattleCollapsed(false)
         setBattleCommandMenu('root')
       }
 
       enqueueEvents(result.events, result.tests)
-      recordCurrentBattleResult(result.tests, getJudgeFinalEventType(result))
+      if (!(mode === 'submit' && result.solved)) {
+        void recordCurrentBattleResult(result.tests, getJudgeFinalEventType(result))
+      }
     } catch (error) {
+      setIsSolveRecording(false)
       const message =
         error instanceof Error
           ? error.message
           : 'The local judge server could not check this submission.'
 
-      setBattleAttemptError(message)
+      setJudgeError(message)
+      setJudgeDiagnostics([])
+      setActiveResultTab('results')
       enqueueEvents(
         [
           {
             type: 'text',
-            text: 'The judge is not ready. Start it with npm run judge, then try again.',
+            text: 'The submission could not be checked. See Results for the error.',
           },
           { type: 'text', text: message },
         ],
@@ -379,13 +425,14 @@ export function Battle() {
     setCatchPhase('idle')
     setSelectedBall(null)
     setSolveReward(null)
-    setEncounterEnergy(0)
+    setIsRematch(false)
     setHasEncounterStarted(false)
     setIsBattleScreenOpen(false)
     setBattleCommandMenu('root')
     setEncounterTurn(0)
-    setMoveVfx(null)
     setBattleAttemptError('')
+    setJudgeError('')
+    setJudgeDiagnostics([])
     setBattleAttemptId(null)
     setIsWinRecorded(false)
 
@@ -398,10 +445,7 @@ export function Battle() {
         setBattleAttemptId(attempt?.id ?? null)
       })
       .catch((error) => {
-        const message =
-          error instanceof Error ? error.message : 'Could not create battle attempt.'
-
-        setBattleAttemptError(message)
+        setBattleAttemptError(battleErrorMessage(error, 'Could not create battle attempt.'))
       })
   }, [
     encounter.question.id,
@@ -418,7 +462,7 @@ export function Battle() {
     setCode(encounter.question.starterCode[nextLanguage])
   }
 
-  function recordCurrentBattleResult(
+  async function recordCurrentBattleResult(
     nextTests: Record<'samples' | 'hidden' | 'efficiency', TestGroupStatus>,
     finalEventType?: string,
   ) {
@@ -435,40 +479,37 @@ export function Battle() {
     const nextEnemyHp = battleStatus === 'won' ? 0 : enemyHp
     const nextPlayerHp = battleStatus === 'lost' ? 0 : playerHp
 
-    void recordBattleResult({
-      attemptId: battleAttemptId,
-      codeDraft: code,
-      efficiencyStatus: nextTests.efficiency,
-      enemyHp: nextEnemyHp,
-      hiddenStatus: nextTests.hidden,
-      language,
-      playerHp: nextPlayerHp,
-      sampleStatus: nextTests.samples,
-      status: battleStatus,
-    })
-      .then(() => {
-        if (battleStatus === 'won') {
-          setIsWinRecorded(true)
-        }
-
-        void Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
-          queryClient.invalidateQueries({ queryKey: ['player-party'] }),
-          queryClient.invalidateQueries({ queryKey: ['profile-summary'] }),
-          queryClient.invalidateQueries({ queryKey: ['leaderboard'] }),
-          queryClient.invalidateQueries({ queryKey: ['solved-questions'] }),
-        ])
+    try {
+      await recordBattleResult({
+        attemptId: battleAttemptId,
+        codeDraft: code,
+        efficiencyStatus: nextTests.efficiency,
+        enemyHp: nextEnemyHp,
+        hiddenStatus: nextTests.hidden,
+        language,
+        playerHp: nextPlayerHp,
+        sampleStatus: nextTests.samples,
+        status: battleStatus,
       })
-      .catch((error) => {
-        const message =
-          error instanceof Error ? error.message : 'Could not record battle result.'
+      if (battleStatus === 'won') {
+        if (!isRematch) markQuestionSolvedLocally(encounter.question.id)
+        setIsWinRecorded(true)
+      }
 
-        setBattleAttemptError(message)
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['player-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['solved-questions'] }),
+      ])
+    } catch (error) {
+      setBattleAttemptError(battleErrorMessage(error, 'Could not record battle result.'))
+    }
   }
 
   function getEnemyTurnEvents(turn: number) {
-    const enemyMove = chooseEnemyMove(encounter.pokemon, turn)
+    const enemyMove = chooseEnemyMove(encounter.pokemon, playerPokemon, turn)
     const enemyOutcome = resolveMove({
       attacker: encounter.pokemon,
       defender: playerPokemon,
@@ -476,30 +517,39 @@ export function Battle() {
       seed: `${encounter.question.id}-enemy`,
       turn,
     })
-    const nextPlayerHp = Math.max(0, playerHp - Math.max(1, Math.round(enemyOutcome.damage * 0.7)))
+    const dealtDamage = enemyOutcome.hit
+      ? Math.max(0, Math.round(enemyOutcome.damage * 0.7))
+      : 0
+    const nextPlayerHp = Math.max(0, playerHp - dealtDamage)
     const events: BattleEvent[] = [
       {
         type: 'enemy_attack',
         text: `${encounter.pokemon.name} used ${enemyMove.name}!`,
+        animationId: moveAnimationId(enemyMove.name),
       },
-      {
-        type: enemyOutcome.hit ? 'player_hit' : 'text',
+    ]
+    if (dealtDamage > 0) {
+      events.push({
+        type: 'player_hit',
         text: enemyOutcome.message,
-      },
-      {
+        damage: dealtDamage,
+        critical: enemyOutcome.critical,
+        effectiveness: enemyOutcome.effectiveness,
+      })
+      events.push({
         type: 'player_hp',
         value: nextPlayerHp,
         text: nextPlayerHp <= 0
           ? `${playerPokemon.name} cannot continue.`
-          : `${playerPokemon.name} is still standing.`,
-      },
-    ]
-
-    window.setTimeout(() => setMoveVfx({ target: 'player', type: enemyMove.vfx }), 820)
+          : `${playerPokemon.name} took ${dealtDamage} damage.`,
+      })
+    } else {
+      events.push({ type: 'text', text: enemyOutcome.message })
+    }
 
     if (nextPlayerHp <= 0) {
       events.push({ type: 'defeat', text: 'Your party fainted. Solve another question to recover.' })
-      recordCurrentBattleResult(
+      void recordCurrentBattleResult(
         { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
         'defeat',
       )
@@ -509,33 +559,48 @@ export function Battle() {
   }
 
   function startEncounterFight() {
-    if (!solveReward || isLocked) {
+    if (!solveReward || isLocked || isStartingFight) {
       return
     }
 
-    setHasEncounterStarted(true)
-    setIsBattleScreenOpen(true)
-    setBgmScene('battle')
-    enqueueEvents([
-      { type: 'text', text: `${playerPokemon.name} stepped forward with ${encounterEnergy} energy.` },
-      { type: 'text', text: `${encounter.pokemon.name} is ready to battle.` },
-    ])
+    setBattleAttemptError('')
+    setIsStartingFight(true)
+    void (async () => {
+      try {
+        if (!battleAttemptId) throw new Error('The battle attempt is still being prepared. Try again in a moment.')
+        await prepareBattleScene(playerPokemon.id, encounter.pokemon.id)
+        const remainingEnergy = await spendBattleEnergy(battleAttemptId)
+        if (remainingEnergy === null) {
+          throw new Error('Sign in to spend energy and start this battle.')
+        }
+        setHasEncounterStarted(true)
+        transition(() => setIsBattleScreenOpen(true), 'Entering the arena')
+        playPokemonCry(playerPokemon.id)
+        setBgmScene('battle')
+        enqueueEvents([
+          { type: 'text', text: `${playerPokemon.name} stepped forward. 1 energy was spent to enter this battle; ${remainingEnergy} remains.` },
+          { type: 'text', text: `${encounter.pokemon.name} is ready to battle.` },
+        ])
+        void queryClient.invalidateQueries({ queryKey: ['player-summary'] })
+      } catch (error) {
+        setBattleAttemptError(battleErrorMessage(error, 'Could not start the battle.'))
+      } finally {
+        setIsStartingFight(false)
+      }
+    })()
   }
 
-  function useEncounterMove(move: BattleMove) {
-    if (!canUseEncounterMove || encounterEnergy < move.cost) {
+  function performEncounterMove(move: BattleMove) {
+    if (!canUseEncounterMove) {
       enqueueEvents([
         {
           type: 'text',
-          text: encounterEnergy < move.cost
-            ? `Not enough energy for ${move.name}.`
-            : 'The encounter is not ready yet.',
+          text: 'The encounter is not ready yet.',
         },
       ])
       return
     }
 
-    const nextEnergy = encounterEnergy - move.cost
     const playerOutcome = resolveMove({
       attacker: playerPokemon,
       defender: encounter.pokemon,
@@ -545,23 +610,26 @@ export function Battle() {
     })
     const nextEnemyHp = Math.max(0, enemyHp - playerOutcome.damage)
     const events: BattleEvent[] = [
-      { type: 'player_attack', text: `${playerPokemon.name} used ${move.name}!` },
-      {
-        type: playerOutcome.hit ? 'enemy_hit' : 'text',
-        text: playerOutcome.hit ? playerOutcome.message : playerOutcome.message,
-      },
-      {
-        type: 'enemy_hp',
-        value: nextEnemyHp,
-        text: `${move.cost} energy spent. ${nextEnergy} energy remains.`,
-      },
+      { type: 'player_attack', text: `${playerPokemon.name} used ${move.name}!`, animationId: moveAnimationId(move.name) },
     ]
-
-    setMoveVfx({ target: 'enemy', type: move.vfx })
+    if (playerOutcome.hit && playerOutcome.damage > 0) {
+      events.push({
+        type: 'enemy_hit',
+        text: playerOutcome.message,
+        damage: playerOutcome.damage,
+        critical: playerOutcome.critical,
+        effectiveness: playerOutcome.effectiveness,
+      })
+    } else {
+      events.push({ type: 'text', text: playerOutcome.message })
+    }
+    events.push({
+      type: 'enemy_hp',
+      value: nextEnemyHp,
+      text: `${encounter.pokemon.name} has ${nextEnemyHp} HP remaining.`,
+    })
 
     if (nextEnemyHp <= 0) {
-      markQuestionSolvedLocally(encounter.question.id)
-      void queryClient.invalidateQueries({ queryKey: ['solved-questions'] })
       events.push(
         { type: 'enemy_faint', text: `${encounter.pokemon.name} is weak enough to catch.` },
         {
@@ -570,7 +638,7 @@ export function Battle() {
           rewards: { xp: solveReward?.partyXp ?? 0, coins: solveReward?.coins ?? 0 },
         },
       )
-      recordCurrentBattleResult(
+      void recordCurrentBattleResult(
         { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
         'victory',
       )
@@ -578,27 +646,6 @@ export function Battle() {
       events.push(...getEnemyTurnEvents(encounterTurn))
     }
 
-    setEncounterEnergy(nextEnergy)
-    setEncounterTurn((turn) => turn + 1)
-    setBattleCommandMenu('root')
-    enqueueEvents(events)
-  }
-
-  function waitTurn() {
-    if (!canUseEncounterMove) {
-      return
-    }
-
-    const recoveredEnergy = Math.min(encounterMaxEnergy, encounterEnergy + 8)
-    const events: BattleEvent[] = [
-      {
-        type: 'text',
-        text: `${playerPokemon.name} is waiting. Energy recovered to ${recoveredEnergy}/${encounterMaxEnergy}.`,
-      },
-      ...getEnemyTurnEvents(encounterTurn),
-    ]
-
-    setEncounterEnergy(recoveredEnergy)
     setEncounterTurn((turn) => turn + 1)
     setBattleCommandMenu('root')
     enqueueEvents(events)
@@ -616,16 +663,12 @@ export function Battle() {
       return
     }
 
-    const switchCost = 2
-    const nextEnergy = Math.max(0, encounterEnergy - switchCost)
-
-    setActivePokemonId(nextPokemon.id)
-    setEncounterEnergy(nextEnergy)
+    setPendingSwitchPokemonId(nextPokemon.id)
     setEncounterTurn((turn) => turn + 1)
     setBattleCommandMenu('root')
     enqueueEvents([
-      { type: 'text', text: `Come back, ${playerPokemon.name}!` },
-      { type: 'text', text: `Go, ${nextPokemon.name}! Switching spent ${switchCost} energy.` },
+      { type: 'switch_out', text: `Come back, ${playerPokemon.name}!` },
+      { type: 'switch_in', text: `Go, ${nextPokemon.name}!` },
       ...getEnemyTurnEvents(encounterTurn),
     ])
   }
@@ -634,27 +677,42 @@ export function Battle() {
     () =>
       tests.map((test) => (
         <div
-          className="flex items-center justify-between border-4 border-ink bg-white p-2"
+          className="grid gap-2 border-4 border-ink bg-white p-2"
           key={test.id}
         >
-          <span className="font-heading text-[10px]">{test.label}</span>
-          <span
-            className={`border-4 border-ink px-2 py-1 font-heading text-[10px] ${resultClass(
-              test.state,
-            )}`}
-          >
-            {test.state}
-          </span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-heading text-[10px]">{test.label}</span>
+            <span
+              className={`border-4 border-ink px-2 py-1 font-heading text-[10px] ${resultClass(
+                test.state,
+              )}`}
+            >
+              {test.state}
+            </span>
+          </div>
+          {judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id) ? (
+            <div className="space-y-2 text-base">
+              <pre className="whitespace-pre-wrap break-words font-pixel text-lg">{judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.message}</pre>
+              {test.id === 'samples' && test.state === 'failed' &&
+              (judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.expected !== undefined ||
+                judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.actual !== undefined) ? (
+                <div className="grid gap-1 bg-cream p-2">
+                  <span>Expected: {JSON.stringify(judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.expected) ?? 'No output'}</span>
+                  <span>Received: {JSON.stringify(judgeDiagnostics.find((diagnostic) => diagnostic.group === test.id)?.actual) ?? 'No output'}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       )),
-    [tests],
+    [judgeDiagnostics, tests],
   )
 
   const problemPane = (
     <PixelCard
       bodyClassName="flex min-h-0 flex-1 flex-col"
       className="flex h-full min-h-0 flex-col shadow-none"
-      title="Problem"
+      title="Description"
     >
       <div className="flex border-b-4 border-ink font-heading text-[10px]">
         {(['description', 'hints'] as const).map((tab) => (
@@ -675,7 +733,7 @@ export function Battle() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-heading text-sm leading-relaxed">
-                {encounter.question.title}
+                {questionNumber > 0 ? `${questionNumber}. ` : ''}{encounter.question.title}
               </h1>
               <span className="border-4 border-ink bg-warning px-2 py-1 font-heading text-[10px] uppercase">
                 {encounter.question.difficulty}
@@ -683,34 +741,46 @@ export function Battle() {
               <TypeBadge type={topicBadge} />
             </div>
             {battleAttemptError ? (
-              <p className="border-4 border-ink bg-warning p-3 text-lg">
-                Battle is running in UI preview mode until Supabase creates the
-                attempt: {battleAttemptError}
+              <p role="alert" className="border-4 border-ink bg-warning p-3 text-lg">
+                Battle error: {battleAttemptError}
+              </p>
+            ) : null}
+            {judgeError ? (
+              <p className="border-4 border-ink bg-danger p-3 text-lg text-cream">
+                Submission error: {judgeError}
               </p>
             ) : null}
             {isQuestionAlreadySolved ? (
               <p className="border-4 border-ink bg-hp-green p-3 text-lg text-cream">
-                Solved route. Submit rewards are locked for this question, so
-                choose a new route to earn more energy.
+                Solved. Submit again to rematch this Pokemon. Rematches give no coins, XP, or catch.
               </p>
             ) : null}
-            <p>{encounter.question.description}</p>
-            <div className="grid gap-3">
-              {encounter.question.examples.map((example) => (
-                <div className="border-4 border-ink bg-white p-3" key={example.input}>
-                  <div className="font-heading text-[10px]">Example</div>
-                  <p>Input: {example.input}</p>
-                  <p>Output: {example.output}</p>
+            <p className="leading-relaxed">{encounter.question.description}</p>
+            <div className="grid gap-4">
+              {encounter.question.examples.map((example, index) => (
+                <div className="border-l-4 border-ink bg-white p-4" key={example.input}>
+                  <h2 className="mb-2 font-heading text-[10px]">Example {index + 1}</h2>
+                  <p><strong>Input:</strong> <code>{example.input}</code></p>
+                  <p><strong>Output:</strong> <code>{example.output}</code></p>
+                  {example.explanation ? <p><strong>Explanation:</strong> {example.explanation}</p> : null}
                 </div>
               ))}
             </div>
+            {encounter.question.constraints?.length ? (
+              <div>
+                <h2 className="mb-3 font-heading text-[10px]">Constraints</h2>
+                <ul className="list-disc space-y-1 pl-6">
+                  {encounter.question.constraints.map((constraint) => <li key={constraint}><code>{constraint}</code></li>)}
+                </ul>
+              </div>
+            ) : null}
             <div className="space-y-3 border-4 border-ink bg-white p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-heading text-[10px] uppercase">Encounter Flow</p>
                   <p>
-                    Solve first. The successful submit creates energy, then your
-                    party uses that energy to battle and catch.
+                    Solve the problem to earn 1 energy. Entering a battle costs
+                    1 energy; moves and switching are free.
                   </p>
                 </div>
                 <span className={`border-4 border-ink px-2 py-1 font-heading text-[10px] uppercase ${
@@ -720,37 +790,25 @@ export function Battle() {
                 </span>
               </div>
 
-              {solveReward ? (
-                <div className="grid gap-2 sm:grid-cols-4">
+              {solveReward && !isRematch ? (
+                <div className="grid gap-2 sm:grid-cols-1">
                   <div className="border-4 border-ink bg-cream p-2">
-                    <p className="font-heading text-[9px] uppercase">Coins</p>
-                    <p className="font-heading text-lg">+{solveReward.coins}</p>
-                  </div>
-                  <div className="border-4 border-ink bg-cream p-2">
-                    <p className="font-heading text-[9px] uppercase">Trainer XP</p>
-                    <p className="font-heading text-lg">+{solveReward.trainerXp}</p>
-                  </div>
-                  <div className="border-4 border-ink bg-cream p-2">
-                    <p className="font-heading text-[9px] uppercase">Party XP</p>
-                    <p className="font-heading text-lg">+{solveReward.partyXp}</p>
-                  </div>
-                  <div className="border-4 border-ink bg-cream p-2">
-                    <p className="font-heading text-[9px] uppercase">Energy</p>
-                    <p className="font-heading text-lg">
-                      {encounterEnergy}/{encounterMaxEnergy}
-                    </p>
+                    <p className="font-heading text-[9px] uppercase">Battle energy earned</p>
+                    <p className="font-heading text-lg">+{solveReward.energy}</p>
                   </div>
                 </div>
+              ) : isRematch ? (
+                <p className="border-4 border-ink bg-sky p-3 text-lg">Rematch ready. This duplicate solve earned no rewards; entering still costs 1 energy.</p>
               ) : null}
 
               {solveReward && !hasEncounterStarted ? (
-                <PixelButton disabled={isLocked} onClick={startEncounterFight}>
-                  Start Pokemon Fight
+                <PixelButton disabled={isLocked || isStartingFight || isSolveRecording} onClick={startEncounterFight}>
+                  {isStartingFight ? 'Opening gates...' : 'Start Pokemon Fight · 1 energy'}
                 </PixelButton>
               ) : null}
 
               {hasEncounterStarted ? (
-                <PixelButton onClick={() => setIsBattleScreenOpen(true)} variant="secondary">
+                <PixelButton onClick={() => transition(() => setIsBattleScreenOpen(true), 'Entering the arena')} variant="secondary">
                   Return to Fight
                 </PixelButton>
               ) : null}
@@ -800,10 +858,10 @@ export function Battle() {
           </PixelButton>
           <PixelButton
             className="min-h-12 px-4 py-2"
-            disabled={isLocked || isSolved || isQuestionAlreadySolved || isSolvedStateLoading}
+            disabled={isLocked || isSolved || isSolvedStateLoading}
             onClick={() => void submitToJudge('submit')}
           >
-            {isQuestionAlreadySolved ? 'Solved' : 'Submit'}
+            {isQuestionAlreadySolved ? 'Submit again' : 'Submit'}
           </PixelButton>
           <PixelButton
             className="min-h-12 px-4 py-2"
@@ -822,7 +880,7 @@ export function Battle() {
         onLayoutChanged={editorLayout.onLayoutChanged}
         orientation="vertical"
       >
-        <Panel className="h-full min-h-0" defaultSize="72" id="code" minSize="220px">
+        <Panel className="min-h-0" defaultSize="72" id="code" minSize="160px">
           <div className="h-full min-h-0 overflow-hidden border-4 border-ink">
             <Editor
               height="100%"
@@ -840,14 +898,14 @@ export function Battle() {
             />
           </div>
         </Panel>
-        <Separator className="h-2 bg-ink hover:bg-warning" />
+        <Separator aria-label="Resize editor and submissions" className="submission-resize-handle pixel-focus flex h-3 shrink-0 cursor-row-resize items-center justify-center bg-ink hover:bg-warning"><span aria-hidden="true" /></Separator>
         <Panel
-          className="h-full min-h-0"
+          className="min-h-0"
           collapsedSize="60px"
           collapsible
           defaultSize="28"
           id="results"
-          minSize="140px"
+          minSize="160px"
           panelRef={resultsPanelRef}
         >
           <section className="box-border flex h-full min-h-0 flex-col overflow-hidden border-4 border-ink bg-cream">
@@ -867,17 +925,24 @@ export function Battle() {
                 ))}
               </div>
               <button
-                aria-label="Collapse results"
+                aria-label="Expand or collapse results"
                 className="pixel-focus font-heading text-xs"
-                onClick={() => resultsPanelRef.current?.collapse()}
+                onClick={() => {
+                  if (resultsPanelRef.current?.isCollapsed()) resultsPanelRef.current.expand()
+                  else resultsPanelRef.current?.collapse()
+                }}
                 type="button"
               >
-                ▼
+                Resize
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-auto p-3">
               {activeResultTab === 'results' ? (
-                <div className="space-y-2">{resultRows}</div>
+                <div className="space-y-2">
+                  {judgeError ? <p role="alert" className="border-4 border-danger bg-white p-3 text-lg text-danger">Submission error: {judgeError}</p> : null}
+                  {battleAttemptError ? <p role="alert" className="border-4 border-danger bg-white p-3 text-lg text-danger">Battle save error: {battleAttemptError}</p> : null}
+                  {resultRows}
+                </div>
               ) : (
                 <ol className="space-y-2 text-lg">
                   {battleLog.map((entry, index) => (
@@ -897,9 +962,9 @@ export function Battle() {
   const battleMoveButtons = (
     <>
       {battleCommandMenu === 'root' ? (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           <button
-            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            className="pixel-focus min-h-12 border-4 border-ink bg-cream p-2 text-left font-heading text-[10px] hover:bg-warning"
             disabled={!canUseEncounterMove}
             onClick={() => setBattleCommandMenu('fight')}
             type="button"
@@ -907,33 +972,29 @@ export function Battle() {
             Fight
           </button>
           <button
-            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            className="pixel-focus min-h-12 border-4 border-ink bg-cream p-2 text-left font-heading text-[10px] hover:bg-warning"
             onClick={() => setIsBagOpen(true)}
             type="button"
           >
             Bag
           </button>
           <button
-            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
+            className="pixel-focus min-h-12 border-4 border-ink bg-cream p-2 text-left font-heading text-[10px] hover:bg-warning"
             disabled={!canUseEncounterMove}
             onClick={() => setBattleCommandMenu('pokemon')}
             type="button"
           >
             Pokemon
           </button>
-          <button
-            className="pixel-focus border-4 border-ink bg-cream p-4 text-left font-heading text-[10px] hover:bg-warning"
-            disabled={!canUseEncounterMove}
-            onClick={waitTurn}
-            type="button"
-          >
-            Wait
+          <button className="pixel-focus" type="button"
+            onClick={() => transition(() => setIsBattleScreenOpen(false), 'Returning to your solution')}>
+            Code
           </button>
         </div>
       ) : null}
 
       {battleCommandMenu === 'fight' ? (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {playerMoves.map((move) => {
             const effectiveness = getEffectiveness(move.type, encounter.pokemon.types)
             const effectivenessLabel =
@@ -947,35 +1008,29 @@ export function Battle() {
 
             return (
               <button
-                className="pixel-focus grid min-h-20 gap-1 border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-60"
-                disabled={!canUseEncounterMove || encounterEnergy < move.cost}
+                className={`battle-move-card battle-move-card--${move.type.toLowerCase()} pixel-focus grid min-h-[76px] content-center gap-1 border-4 border-ink bg-cream p-2 text-left hover:bg-warning disabled:opacity-60`}
+                disabled={!canUseEncounterMove}
                 key={move.name}
-                onClick={() => useEncounterMove(move)}
+                onClick={() => performEncounterMove(move)}
                 type="button"
               >
-                <span className="font-heading text-[10px]">{move.name}</span>
-                <span className="text-lg">
-                  {move.type} / Pow {move.power} / Energy {move.cost}
+                <span className="flex items-center justify-between gap-2 font-heading text-[10px]">
+                  <span>{move.name}</span>
+                  <span className="battle-move-card__type">{move.type}</span>
                 </span>
-                <span className="text-base">{effectivenessLabel}</span>
+                <span className="text-base">Power {move.power} · Accuracy {move.accuracy}%</span>
+                <span className="text-sm">{effectivenessLabel}</span>
               </button>
             )
           })}
-          <button
-            className="pixel-focus border-4 border-ink bg-cream p-3 text-left font-heading text-[10px] hover:bg-warning"
-            onClick={() => setBattleCommandMenu('root')}
-            type="button"
-          >
-            Back
-          </button>
         </div>
       ) : null}
 
       {battleCommandMenu === 'pokemon' ? (
-        <div className="grid gap-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {partyPokemon.map((pokemon) => (
             <button
-              className="pixel-focus grid grid-cols-[44px_1fr] items-center gap-3 border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-60"
+              className="pixel-focus grid min-h-[76px] grid-cols-[44px_1fr] items-center gap-2 border-4 border-ink bg-cream p-2 text-left hover:bg-warning disabled:opacity-60"
               disabled={!canUseEncounterMove}
               key={pokemon.id}
               onClick={() => switchPokemon(pokemon.id)}
@@ -990,88 +1045,40 @@ export function Battle() {
               <span>
                 <span className="block font-heading text-[10px]">{pokemon.name}</span>
                 <span className="text-lg">
-                  {pokemon.id === playerPokemon.id ? 'Active' : 'Switch: 2 energy'}
+                  {pokemon.id === playerPokemon.id ? 'Active' : 'Ready'}
                 </span>
               </span>
             </button>
           ))}
-          <button
-            className="pixel-focus border-4 border-ink bg-cream p-3 text-left font-heading text-[10px] hover:bg-warning"
-            onClick={() => setBattleCommandMenu('root')}
-            type="button"
-          >
-            Back
-          </button>
         </div>
       ) : null}
     </>
   )
 
   const classicBattleScreen = (
-    <section className="grid h-full min-h-0 grid-rows-[1fr_auto] gap-3 p-3">
-      <div className="relative min-h-0 overflow-hidden border-4 border-ink bg-[#b7e37b]">
-        <div className="absolute left-4 top-4 w-[min(44vw,420px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
-          <div className="mb-2 flex items-center gap-2">
-            <TypeBadge type={topicBadge} />
-            <span className="font-heading text-[10px]">Lv 14</span>
-          </div>
-          <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
-        </div>
-
-        <div className="absolute right-[10%] top-[10%]">
-          <div className="relative">
-            <Sprite
-              className={`h-32 w-32 object-contain transition-all duration-500 sm:h-40 sm:w-40 ${animationClass(
-                'enemy',
-                animation,
-              )}`}
-              id={encounter.pokemon.id}
-              type="front"
-            />
-            {moveVfx?.target === 'enemy' ? (
-              <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
-            ) : null}
-          </div>
-        </div>
-
-        <div className="absolute bottom-[4%] left-[8%]">
-          <div className="relative">
-            <Sprite
-              className={`h-36 w-36 object-contain transition-all duration-500 sm:h-48 sm:w-48 ${animationClass(
-                'player',
-                animation,
-              )}`}
-              id={playerPokemon.id}
-              type="back"
-            />
-            {moveVfx?.target === 'player' ? (
-              <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
-            ) : null}
-          </div>
-        </div>
-
-        <div className="absolute bottom-4 right-4 w-[min(46vw,440px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
-          <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
-          <XPBar current={42} max={100} label="Next" />
-          <p className="mt-2 font-heading text-[10px]">
-            Energy {encounterEnergy}/{encounterMaxEnergy}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid min-h-0 gap-3 lg:grid-cols-[1fr_1.35fr]">
-        <DialogBox
-          className="min-h-32 p-4 text-xs leading-6 shadow-[4px_4px_0_#1a1c2c]"
-          text={dialogText}
+    <section className="pokerogue-battle" aria-label="Battle">
+      <div className="pokerogue-stage">
+        <BattleStage
+          playerId={playerPokemon.id}
+          enemyId={encounter.pokemon.id}
+          event={currentEvent}
+          onComplete={finishCurrentEvent}
         />
-        <PixelCard bodyClassName="grid gap-3 p-3" title={`What will ${playerPokemon.name} do?`}>
-          {battleMoveButtons}
-          <div className="flex flex-wrap justify-center gap-3">
-            <PixelButton onClick={() => setIsBattleScreenOpen(false)} variant="secondary">
-              Code
-            </PixelButton>
-          </div>
-        </PixelCard>
+        <BattleStatus side="enemy" name={encounter.pokemon.name} hp={enemyHp} maxHp={enemyMaxHp} />
+        <BattleStatus side="player" name={playerPokemon.name}
+          level={partyPokemon.find(pokemon => pokemon.id === playerPokemon.id)?.level}
+          hp={playerHp} maxHp={playerMaxHp} />
+        <div className={`pokerogue-console ${canUseEncounterMove ? '' : 'pokerogue-console--playing'}`}>
+          <DialogBox className="pokerogue-console__message" speed={18}
+            text={canUseEncounterMove ? `What will ${playerPokemon.name} do?` : dialogText} />
+          {canUseEncounterMove && <div className="pokerogue-console__commands">{battleMoveButtons}</div>}
+        </div>
+        <div className="pokerogue-stage__toolbar">
+          {battleCommandMenu !== 'root' && canUseEncounterMove &&
+            <button className="pixel-focus" onClick={() => setBattleCommandMenu('root')} type="button">Back</button>}
+          <button className="pixel-focus" disabled={isLocked}
+            onClick={() => transition(() => setIsBattleScreenOpen(false), 'Returning to your solution')} type="button">Code</button>
+        </div>
       </div>
     </section>
   )
@@ -1090,7 +1097,7 @@ export function Battle() {
     setCatchError('')
     setIsOutcomeModalDismissed(true)
     setCatchPhase('throwing')
-    playSound('catchThrow')
+    playBattleSe('pb_throw')
     setBgmScene('catch')
     setBattleLog((current) => [...current.slice(-24), `You threw a ${ball.label}!`])
 
@@ -1121,12 +1128,12 @@ export function Battle() {
 
     window.setTimeout(() => {
       setCatchPhase('shaking')
-      playSound('catchShake')
+      playBattleSe('pb_bounce_1')
     }, 700)
 
     window.setTimeout(() => {
       setCatchPhase(caught ? 'success' : 'breakout')
-      playSound(caught ? 'catchSuccess' : 'catchBreakout')
+      playBattleSe(caught ? 'pb_catch' : 'pb_bounce_2')
       setBgmScene(caught ? 'victory' : 'battle')
       setBattleLog((current) => [
         ...current.slice(-24),
@@ -1138,7 +1145,7 @@ export function Battle() {
   }
 
   return (
-    <main className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink max-[899px]:h-auto max-[899px]:overflow-auto">
+    <main className={`flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink ${isBattleScreenOpen ? '' : 'max-[899px]:h-auto max-[899px]:overflow-auto'}`}>
       <AppHeader
         coins={playerSummary.data?.coins ?? 0}
         onBag={() => setIsBagOpen(true)}
@@ -1154,7 +1161,7 @@ export function Battle() {
         >
           {isBattleCollapsed ? (
             <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
-              <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
+              <HPBar current={playerHp} label={playerPokemon.name} level={partyPokemon.find((pokemon) => pokemon.id === playerPokemon.id)?.level} max={playerMaxHp} />
               <button
                 className="pixel-focus border-4 border-ink bg-cream px-3 py-1 font-heading text-[10px]"
                 onClick={() => setIsBattleCollapsed(false)}
@@ -1162,10 +1169,10 @@ export function Battle() {
               >
                 ▲
               </button>
-              <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
+              <HPBar current={enemyHp} label={encounter.pokemon.name} max={enemyMaxHp} />
             </div>
           ) : (
-            <div className="grid h-full grid-cols-[minmax(220px,1fr)_minmax(260px,1.2fr)_minmax(220px,1fr)] items-center gap-4 p-3">
+            <div className="battle-preview grid h-full grid-cols-[minmax(220px,1fr)_minmax(260px,1.2fr)_minmax(220px,1fr)] items-center gap-4 p-3">
             <div className="grid h-full grid-cols-[96px_1fr] items-center gap-3">
               <div className="relative">
                 <Sprite
@@ -1176,13 +1183,9 @@ export function Battle() {
                   id={playerPokemon.id}
                   type="back"
                 />
-                {moveVfx?.target === 'player' ? (
-                  <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
-                ) : null}
               </div>
               <div className="min-w-0">
-                <HPBar current={playerHp} label={playerPokemon.name} level={12} max={playerMaxHp} />
-                <XPBar current={42} max={100} label="Next" />
+                <HPBar current={playerHp} label={playerPokemon.name} level={partyPokemon.find((pokemon) => pokemon.id === playerPokemon.id)?.level} max={playerMaxHp} />
               </div>
             </div>
 
@@ -1197,9 +1200,8 @@ export function Battle() {
               <div className="min-w-0">
                 <div className="mb-1 flex items-center gap-2">
                   <TypeBadge type={topicBadge} />
-                  <span className="font-heading text-[10px]">Lv 14</span>
                 </div>
-                <HPBar current={enemyHp} label={encounter.pokemon.name} level={14} max={enemyMaxHp} />
+                <HPBar current={enemyHp} label={encounter.pokemon.name} max={enemyMaxHp} />
               </div>
               <div className="relative">
                 <Sprite
@@ -1210,9 +1212,6 @@ export function Battle() {
                   id={encounter.pokemon.id}
                   type="front"
                 />
-                {moveVfx?.target === 'enemy' ? (
-                  <span className={`battle-vfx battle-vfx--${moveVfx.type}`} />
-                ) : null}
               </div>
             </div>
 
@@ -1228,7 +1227,7 @@ export function Battle() {
         </section>
       ) : null}
 
-      <section className="min-h-0 flex-1 p-3 max-[899px]:min-h-[900px]">
+      <section className={`min-h-0 flex-1 p-3 ${isBattleScreenOpen ? 'battle-viewport overflow-hidden' : 'max-[899px]:min-h-[900px]'}`}>
         {isBattleScreenOpen ? (
           classicBattleScreen
         ) : isNarrow ? (
@@ -1254,7 +1253,7 @@ export function Battle() {
         <div className="grid gap-3">
           {bagItems.map((item) => {
             const count =
-              item.id === 'shield' ? 1 : ownedItems.get(item.id) ?? 0
+              ownedItems.get(item.id) ?? 0
 
             return (
             <button
@@ -1262,7 +1261,7 @@ export function Battle() {
               disabled={count <= 0}
               key={item.id}
               onClick={() => {
-                useBagItem(item.id as 'potion' | 'shield' | 'revive')
+                applyBagItem(item.id)
                 setIsBagOpen(false)
               }}
               type="button"
@@ -1278,18 +1277,13 @@ export function Battle() {
       <Modal
         isOpen={phase === 'won' && Boolean(victoryRewards) && !isOutcomeModalDismissed}
         onClose={() => setIsOutcomeModalDismissed(true)}
-        title="Victory"
+        title={isRematch ? 'Rematch complete' : 'Victory'}
       >
         <div className="space-y-4">
-          <p className="text-xl">Server playback awarded:</p>
-          <p className="font-heading text-xs leading-relaxed">
-            {victoryRewards?.xp} XP / {victoryRewards?.coins} coins
-          </p>
-          <p className="text-xl">
-            {encounter.pokemon.name} is weak enough to catch.
-          </p>
+          <p className="text-xl">{isRematch ? `You fought ${encounter.pokemon.name} again. Rematches give no coins, XP, or catch.` : `${encounter.pokemon.name} is weak enough to catch.`}</p>
+          {!isRematch ? <p className="font-heading text-xs leading-relaxed">{victoryRewards?.xp} XP / {victoryRewards?.coins} coins</p> : null}
           <div className="flex justify-center">
-            <PixelButton
+            {!isRematch ? <PixelButton
               disabled={!isWinRecorded}
               onClick={() => {
                 if (!isWinRecorded) {
@@ -1302,7 +1296,7 @@ export function Battle() {
               }}
             >
               {isWinRecorded ? 'Throw a Ball' : 'Saving Win...'}
-            </PixelButton>
+            </PixelButton> : null}
             <PixelButton
               className="ml-3"
               onClick={() => navigate('/practice')}

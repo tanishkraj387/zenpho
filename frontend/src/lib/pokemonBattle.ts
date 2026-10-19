@@ -21,7 +21,6 @@ export type MoveVfx = 'impact' | 'slash' | 'leaf' | 'fire' | 'water' | 'electric
 
 export type BattleMove = {
   accuracy: number
-  cost: number
   description: string
   name: string
   power: number
@@ -77,62 +76,62 @@ const typeChart: Partial<Record<PokemonType, Partial<Record<PokemonType, number>
 
 const moveByType: Record<PokemonType, BattleMove[]> = {
   Normal: [
-    { name: 'Tackle', type: 'Normal', power: 40, accuracy: 100, cost: 3, vfx: 'impact', description: 'Reliable physical hit.' },
-    { name: 'Quick Attack', type: 'Normal', power: 40, accuracy: 100, cost: 4, vfx: 'slash', description: 'Fast priority-style hit.' },
+    { name: 'Tackle', type: 'Normal', power: 40, accuracy: 100, vfx: 'impact', description: 'Reliable physical hit.' },
+    { name: 'Quick Attack', type: 'Normal', power: 40, accuracy: 100, vfx: 'slash', description: 'A swift physical strike.' },
   ],
   Fire: [
-    { name: 'Ember', type: 'Fire', power: 40, accuracy: 100, cost: 4, vfx: 'fire', description: 'A small flame attack.' },
-    { name: 'Flamethrower', type: 'Fire', power: 90, accuracy: 100, cost: 9, vfx: 'fire', description: 'A strong stream of fire.' },
+    { name: 'Ember', type: 'Fire', power: 40, accuracy: 100, vfx: 'fire', description: 'A small flame attack.' },
+    { name: 'Flamethrower', type: 'Fire', power: 90, accuracy: 100, vfx: 'fire', description: 'A strong stream of fire.' },
   ],
   Water: [
-    { name: 'Water Gun', type: 'Water', power: 40, accuracy: 100, cost: 4, vfx: 'water', description: 'A clean water blast.' },
-    { name: 'Surf', type: 'Water', power: 90, accuracy: 100, cost: 9, vfx: 'water', description: 'A heavy wave attack.' },
+    { name: 'Water Gun', type: 'Water', power: 40, accuracy: 100, vfx: 'water', description: 'A clean water blast.' },
+    { name: 'Surf', type: 'Water', power: 90, accuracy: 100, vfx: 'water', description: 'A heavy wave attack.' },
   ],
   Electric: [
-    { name: 'Thunder Shock', type: 'Electric', power: 40, accuracy: 100, cost: 4, vfx: 'electric', description: 'A jolt of electricity.' },
-    { name: 'Thunderbolt', type: 'Electric', power: 90, accuracy: 100, cost: 9, vfx: 'electric', description: 'A powerful electric bolt.' },
+    { name: 'Thunder Shock', type: 'Electric', power: 40, accuracy: 100, vfx: 'electric', description: 'A jolt of electricity.' },
+    { name: 'Thunderbolt', type: 'Electric', power: 90, accuracy: 100, vfx: 'electric', description: 'A powerful electric bolt.' },
   ],
   Grass: [
-    { name: 'Vine Whip', type: 'Grass', power: 45, accuracy: 100, cost: 4, vfx: 'leaf', description: 'Whips with vines.' },
-    { name: 'Razor Leaf', type: 'Grass', power: 55, accuracy: 95, cost: 6, vfx: 'leaf', description: 'Sharp leaves slice the target.' },
+    { name: 'Vine Whip', type: 'Grass', power: 45, accuracy: 100, vfx: 'leaf', description: 'Whips with vines.' },
+    { name: 'Razor Leaf', type: 'Grass', power: 55, accuracy: 95, vfx: 'leaf', description: 'Sharp leaves slice the target.' },
   ],
   Ice: [
-    { name: 'Ice Beam', type: 'Ice', power: 90, accuracy: 100, cost: 9, vfx: 'water', description: 'A freezing beam.' },
+    { name: 'Ice Beam', type: 'Ice', power: 90, accuracy: 100, vfx: 'water', description: 'A freezing beam.' },
   ],
   Fighting: [
-    { name: 'Karate Chop', type: 'Fighting', power: 50, accuracy: 100, cost: 5, vfx: 'impact', description: 'A chopping strike.' },
-    { name: 'Submission', type: 'Fighting', power: 80, accuracy: 80, cost: 8, vfx: 'impact', description: 'Heavy fighting damage.' },
+    { name: 'Karate Chop', type: 'Fighting', power: 50, accuracy: 100, vfx: 'impact', description: 'A chopping strike.' },
+    { name: 'Submission', type: 'Fighting', power: 80, accuracy: 80, vfx: 'impact', description: 'Heavy fighting damage.' },
   ],
   Poison: [
-    { name: 'Poison Sting', type: 'Poison', power: 15, accuracy: 100, cost: 2, vfx: 'slash', description: 'Cheap poison jab.' },
-    { name: 'Sludge', type: 'Poison', power: 65, accuracy: 100, cost: 7, vfx: 'ghost', description: 'A toxic sludge hit.' },
+    { name: 'Poison Sting', type: 'Poison', power: 15, accuracy: 100, vfx: 'slash', description: 'Cheap poison jab.' },
+    { name: 'Sludge', type: 'Poison', power: 65, accuracy: 100, vfx: 'ghost', description: 'A toxic sludge hit.' },
   ],
   Ground: [
-    { name: 'Dig', type: 'Ground', power: 80, accuracy: 100, cost: 8, vfx: 'rock', description: 'A ground attack.' },
-    { name: 'Earthquake', type: 'Ground', power: 100, accuracy: 100, cost: 10, vfx: 'rock', description: 'Huge ground damage.' },
+    { name: 'Dig', type: 'Ground', power: 80, accuracy: 100, vfx: 'rock', description: 'A ground attack.' },
+    { name: 'Earthquake', type: 'Ground', power: 100, accuracy: 100, vfx: 'rock', description: 'Huge ground damage.' },
   ],
   Flying: [
-    { name: 'Gust', type: 'Flying', power: 40, accuracy: 100, cost: 4, vfx: 'slash', description: 'A sharp wind hit.' },
-    { name: 'Wing Attack', type: 'Flying', power: 60, accuracy: 100, cost: 6, vfx: 'slash', description: 'A wing strike.' },
+    { name: 'Gust', type: 'Flying', power: 40, accuracy: 100, vfx: 'slash', description: 'A sharp wind hit.' },
+    { name: 'Wing Attack', type: 'Flying', power: 60, accuracy: 100, vfx: 'slash', description: 'A wing strike.' },
   ],
   Psychic: [
-    { name: 'Confusion', type: 'Psychic', power: 50, accuracy: 100, cost: 5, vfx: 'psychic', description: 'A psychic pulse.' },
-    { name: 'Psychic', type: 'Psychic', power: 90, accuracy: 100, cost: 9, vfx: 'psychic', description: 'A powerful mind attack.' },
+    { name: 'Confusion', type: 'Psychic', power: 50, accuracy: 100, vfx: 'psychic', description: 'A psychic pulse.' },
+    { name: 'Psychic', type: 'Psychic', power: 90, accuracy: 100, vfx: 'psychic', description: 'A powerful mind attack.' },
   ],
   Bug: [
-    { name: 'Leech Life', type: 'Bug', power: 20, accuracy: 100, cost: 3, vfx: 'slash', description: 'Small bug damage.' },
-    { name: 'Twineedle', type: 'Bug', power: 50, accuracy: 100, cost: 5, vfx: 'slash', description: 'A double needle hit.' },
+    { name: 'Leech Life', type: 'Bug', power: 20, accuracy: 100, vfx: 'slash', description: 'Small bug damage.' },
+    { name: 'Twineedle', type: 'Bug', power: 50, accuracy: 100, vfx: 'slash', description: 'A double needle hit.' },
   ],
   Rock: [
-    { name: 'Rock Throw', type: 'Rock', power: 50, accuracy: 90, cost: 5, vfx: 'rock', description: 'Throws a rock.' },
-    { name: 'Rock Slide', type: 'Rock', power: 75, accuracy: 90, cost: 8, vfx: 'rock', description: 'Heavy rock damage.' },
+    { name: 'Rock Throw', type: 'Rock', power: 50, accuracy: 90, vfx: 'rock', description: 'Throws a rock.' },
+    { name: 'Rock Slide', type: 'Rock', power: 75, accuracy: 90, vfx: 'rock', description: 'Heavy rock damage.' },
   ],
   Ghost: [
-    { name: 'Lick', type: 'Ghost', power: 30, accuracy: 100, cost: 3, vfx: 'ghost', description: 'A spooky contact move.' },
-    { name: 'Night Shade', type: 'Ghost', power: 70, accuracy: 100, cost: 7, vfx: 'ghost', description: 'A ghostly strike.' },
+    { name: 'Lick', type: 'Ghost', power: 30, accuracy: 100, vfx: 'ghost', description: 'A spooky contact move.' },
+    { name: 'Night Shade', type: 'Ghost', power: 70, accuracy: 100, vfx: 'ghost', description: 'A ghostly strike.' },
   ],
   Dragon: [
-    { name: 'Dragon Rage', type: 'Dragon', power: 70, accuracy: 100, cost: 7, vfx: 'fire', description: 'Classic dragon damage.' },
+    { name: 'Dragon Rage', type: 'Dragon', power: 70, accuracy: 100, vfx: 'fire', description: 'Classic dragon damage.' },
   ],
 }
 
@@ -150,10 +149,16 @@ export function getBattleMovesForPokemon(pokemon: PokemonSpecies) {
   return [...uniqueMoves.values()].slice(0, 4)
 }
 
-export function chooseEnemyMove(pokemon: PokemonSpecies, turn: number) {
+export function chooseEnemyMove(pokemon: PokemonSpecies, defender: PokemonSpecies, turn: number) {
   const moves = getBattleMovesForPokemon(pokemon)
+  const ranked = moves.map((move) => ({
+    move,
+    score: move.power * (move.accuracy / 100) * getEffectiveness(move.type, defender.types) *
+      (pokemon.types.includes(move.type) ? 1.5 : 1),
+  })).sort((a, b) => b.score - a.score)
 
-  return moves[turn % moves.length] ?? moveByType.Normal[0]
+  // Favor useful moves without repeating the same attack on every turn.
+  return ranked[turn % 3 === 2 ? 1 : 0]?.move ?? ranked[0]?.move ?? moveByType.Normal[0]
 }
 
 function seededRoll(seed: string, turn: number) {
@@ -178,7 +183,7 @@ export function resolveMove({
   turn: number
 }): MoveOutcome {
   const roll = seededRoll(seed, turn)
-  const hit = roll <= move.accuracy
+  const hit = roll < move.accuracy
 
   if (!hit) {
     return {

@@ -18,29 +18,26 @@ function writeLocalSolvedQuestions(questionIds: string[]) {
 }
 
 export function markQuestionSolvedLocally(questionId: string) {
+  if (isSupabaseConfigured) return
   writeLocalSolvedQuestions([...readLocalSolvedQuestions(), questionId])
 }
 
-export async function getSolvedQuestionIds() {
-  const localSolved = readLocalSolvedQuestions()
-
+export async function getSolvedQuestionIds(userId: string) {
   if (!isSupabaseConfigured) {
-    return localSolved
+    return readLocalSolvedQuestions()
   }
 
   const { data, error } = await supabase
     .from('battle_attempts')
     .select('question_id')
-    .eq('status', 'won')
+    .eq('user_id', userId)
+    .eq('sample_status', 'passed')
+    .eq('hidden_status', 'passed')
+    .eq('efficiency_status', 'passed')
 
   if (error) {
     throw error
   }
 
-  return [
-    ...new Set([
-      ...localSolved,
-      ...(data ?? []).map((attempt) => attempt.question_id).filter(Boolean),
-    ]),
-  ]
+  return [...new Set((data ?? []).map((attempt) => attempt.question_id).filter(Boolean))]
 }

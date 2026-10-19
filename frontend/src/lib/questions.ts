@@ -18,10 +18,12 @@ export type CodingQuestion = {
   difficulty: QuestionDifficulty
   topic: TopicType
   description: string
+  constraints?: string[]
   encounterPokemonId?: number
   examples: {
     input: string
     output: string
+    explanation?: string
   }[]
   starterCode: Record<CodeLanguage, string>
 }
@@ -51,6 +53,7 @@ const routeNames: Record<TopicType, string> = {
 }
 
 export const codingQuestions = questionsData as CodingQuestion[]
+const catalogOrder = new Map(codingQuestions.map((question, index) => [question.id, index]))
 
 const topicHints: Record<TopicType, string[]> = {
   arrays: [
@@ -159,10 +162,14 @@ export async function getCodingQuestions() {
     difficulty: question.difficulty as QuestionDifficulty,
     topic: question.topic as TopicType,
     description: question.description,
+    constraints: getQuestionById(question.id)?.constraints,
     encounterPokemonId: question.encounter_pokemon_id as number | undefined,
     examples: question.examples as CodingQuestion['examples'],
     starterCode: question.starter_code as CodingQuestion['starterCode'],
-  }))
+  })).sort((left, right) =>
+    (catalogOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+    (catalogOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+  )
 }
 
 export async function getCodingQuestionById(id: string) {
@@ -191,6 +198,7 @@ export async function getCodingQuestionById(id: string) {
     difficulty: data.difficulty as QuestionDifficulty,
     topic: data.topic as TopicType,
     description: data.description,
+    constraints: getQuestionById(data.id)?.constraints,
     encounterPokemonId: data.encounter_pokemon_id as number | undefined,
     examples: data.examples as CodingQuestion['examples'],
     starterCode: data.starter_code as CodingQuestion['starterCode'],

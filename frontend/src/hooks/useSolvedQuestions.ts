@@ -7,7 +7,7 @@ export function useSolvedQuestions() {
 
   return useQuery({
     enabled: Boolean(user),
-    queryFn: getSolvedQuestionIds,
+    queryFn: () => getSolvedQuestionIds(user!.id),
     queryKey: ['solved-questions', user?.id],
     staleTime: 15_000,
   })

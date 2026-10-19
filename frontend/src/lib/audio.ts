@@ -1,17 +1,9 @@
 import { create } from 'zustand'
 import { getPokemonCry } from './sprites'
 
-export type SoundName =
-  | 'boot'
+export type SoundName = 'boot'
   | 'unlock'
   | 'click'
-  | 'hit'
-  | 'damage'
-  | 'victory'
-  | 'catchThrow'
-  | 'catchShake'
-  | 'catchSuccess'
-  | 'catchBreakout'
 
 export type BgmScene = 'boot' | 'hub' | 'route' | 'battle' | 'gym' | 'victory' | 'catch'
 
@@ -43,6 +35,8 @@ type AudioState = {
   sfxVolume: number
   loadCries: () => Promise<void>
   playPokemonCry: (id: number) => void
+  playBattleCue: (resourceName: string, volume: number, pitch: number) => void
+  playBattleSe: (name: string) => void
   playSound: (sound: SoundName) => void
   setBgmScene: (scene: BgmScene) => void
   setBgmVolume: (volume: number) => void
@@ -72,7 +66,9 @@ let sfxLoadPromise: Promise<SfxManifest | null> | null = null
 let activeTrackUrl = ''
 
 function readStoredNumber(key: string, fallback: number) {
-  const value = Number(localStorage.getItem(key))
+  const stored = localStorage.getItem(key)
+  if (stored === null) return fallback
+  const value = Number(stored)
 
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback
 }
@@ -120,26 +116,6 @@ function playSequence(
   }
 }
 
-function playNoise(duration: number, volume: number) {
-  const context = getAudioContext()
-  const bufferSize = Math.floor(context.sampleRate * duration)
-  const buffer = context.createBuffer(1, bufferSize, context.sampleRate)
-  const data = buffer.getChannelData(0)
-
-  for (let index = 0; index < bufferSize; index += 1) {
-    data[index] = (Math.random() * 2 - 1) * (1 - index / bufferSize)
-  }
-
-  const source = context.createBufferSource()
-  const gain = context.createGain()
-
-  gain.gain.value = 0.09 * volume
-  source.buffer = buffer
-  source.connect(gain)
-  gain.connect(context.destination)
-  source.start()
-}
-
 function playGeneratedSound(sound: SoundName, volume: number) {
   if (sound === 'boot') {
     playSequence([[220, 0.08], [330, 0.08], [440, 0.12]], volume)
@@ -147,21 +123,15 @@ function playGeneratedSound(sound: SoundName, volume: number) {
     playSequence([[520, 0.06], [780, 0.08], [1040, 0.12]], volume)
   } else if (sound === 'click') {
     playTone(620, 0.04, volume)
-  } else if (sound === 'hit') {
-    playSequence([[280, 0.05], [190, 0.08]], volume, 'sawtooth')
-  } else if (sound === 'damage') {
-    playNoise(0.12, volume)
-  } else if (sound === 'victory') {
-    playSequence([[523, 0.08], [659, 0.08], [784, 0.08], [1047, 0.16]], volume)
-  } else if (sound === 'catchThrow') {
-    playSequence([[392, 0.05], [523, 0.08], [659, 0.1]], volume)
-  } else if (sound === 'catchShake') {
-    playSequence([[196, 0.05], [196, 0.05], [196, 0.05]], volume)
-  } else if (sound === 'catchSuccess') {
-    playSequence([[392, 0.08], [523, 0.08], [784, 0.18]], volume)
-  } else if (sound === 'catchBreakout') {
-    playSequence([[330, 0.08], [220, 0.12]], volume, 'sawtooth')
   }
+}
+
+function playBattleAudio(path: string, volume = 100, pitch = 100) {
+  if (!useAudioStore.getState().enabled) return
+  const audio = new Audio(path)
+  audio.volume = Math.min(1, Math.max(0, useAudioStore.getState().sfxVolume * volume / 100))
+  audio.playbackRate = Math.max(0.5, Math.min(2, pitch / 100))
+  void audio.play().catch(() => undefined)
 }
 
 async function getLocalRomManifest() {
@@ -250,10 +220,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     cryAudio = new Audio(getPokemonCry(id))
     cryAudio.volume = get().sfxVolume
     void cryAudio.play().catch(() => {
-      set({ cryStatus: 'missing' })
-      playGeneratedSound('click', get().sfxVolume)
+      cryAudio = new Audio(`/user-assets/audio/cries/${id}.ogg`)
+      cryAudio.volume = get().sfxVolume
+      void cryAudio.play().catch(() => set({ cryStatus: 'missing' }))
     })
   },
+  playBattleCue: (resourceName, volume, pitch) => {
+    playBattleAudio(`/pokerogue/audio/battle_anims/${encodeURIComponent(resourceName)}`, volume, pitch)
+  },
+  playBattleSe: (name) => playBattleAudio(`/pokerogue/audio/se/${encodeURIComponent(name)}.wav`),
   playSound: (sound) => {
     if (!get().enabled) {
       return
@@ -308,8 +283,13 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const nextScene = scene ?? get().bgmScene
 
     set({ bgmScene: nextScene, bgmStatus: 'loading' })
-    const manifest = await getLocalRomManifest()
-    const track = selectTrack(manifest, nextScene)
+    const pokerogueTrack = nextScene === 'battle'
+      ? { id: 'pokerogue-wild-battle', title: 'Wild battle', url: '/pokerogue/audio/bgm/battle_wild.mp3' }
+      : nextScene === 'victory'
+        ? { id: 'pokerogue-victory', title: 'Battle victory', url: '/pokerogue/audio/bgm/bw/victory_trainer.mp3' }
+        : null
+    const manifest = pokerogueTrack ? null : await getLocalRomManifest()
+    const track = pokerogueTrack ?? selectTrack(manifest, nextScene)
 
     if (!track) {
       set({ bgmStatus: 'missing' })

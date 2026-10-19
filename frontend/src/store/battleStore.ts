@@ -1,15 +1,19 @@
 import { create } from 'zustand'
 
+type HitFeedback = { damage: number; critical: boolean; effectiveness: number }
+
 export type BattlePhase = 'thinking' | 'judging' | 'animating' | 'won' | 'lost'
 
 export type BattleEvent =
   | { type: 'text'; text: string }
-  | { type: 'player_attack'; text: string }
-  | { type: 'enemy_hit'; text: string }
+  | { type: 'player_attack'; text: string; animationId: string }
+  | ({ type: 'enemy_hit'; text: string } & HitFeedback)
   | { type: 'enemy_hp'; value: number; text: string }
   | { type: 'enemy_faint'; text: string }
-  | { type: 'enemy_attack'; text: string }
-  | { type: 'player_hit'; text: string }
+  | { type: 'enemy_attack'; text: string; animationId: string }
+  | { type: 'switch_out'; text: string }
+  | { type: 'switch_in'; text: string }
+  | ({ type: 'player_hit'; text: string } & HitFeedback)
   | { type: 'player_hp'; value?: number; delta?: number; text: string }
   | { type: 'victory'; text: string; rewards?: { xp: number; coins: number } }
   | { type: 'defeat'; text: string }
@@ -20,7 +24,7 @@ export type TestGroupState = {
   state: 'pending' | 'passed' | 'failed'
 }
 
-type BattleAnimation = 'idle' | 'player-lunge' | 'enemy-lunge' | 'enemy-hit' | 'player-hit' | 'enemy-faint'
+type BattleAnimation = 'idle' | 'player-lunge' | 'enemy-lunge' | 'enemy-hit' | 'player-hit' | 'enemy-faint' | 'switch-out' | 'switch-in'
 
 type BattleState = {
   phase: BattlePhase
@@ -58,6 +62,9 @@ function applyEvent(state: BattleState, event: BattleEvent): Partial<BattleState
   if (event.type === 'enemy_attack') {
     return { animation: 'enemy-lunge', dialogText: event.text }
   }
+
+  if (event.type === 'switch_out') return { animation: 'switch-out', dialogText: event.text }
+  if (event.type === 'switch_in') return { animation: 'switch-in', dialogText: event.text }
 
   if (event.type === 'enemy_hit') {
     return { animation: 'enemy-hit', dialogText: event.text }
@@ -157,9 +164,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       eventQueue: remainingEvents,
     }))
 
-    window.setTimeout(() => {
-      get().finishCurrentEvent()
-    }, eventDelayMs)
+    if (nextEvent.type !== 'player_attack' && nextEvent.type !== 'enemy_attack') {
+      const delay = nextEvent.type === 'switch_out' ? 1000 : nextEvent.type === 'switch_in' ? 250 : eventDelayMs
+      window.setTimeout(() => get().finishCurrentEvent(), delay)
+    }
   },
   finishCurrentEvent: () => {
     set((state) => ({

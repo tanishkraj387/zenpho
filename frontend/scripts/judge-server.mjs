@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
-import testSuites from '../src/data/question-tests.json' with { type: 'json' }
+import testSuites from '../../judge-data/question-tests.json' with { type: 'json' }
 
 const port = Number(process.env.JUDGE_PORT ?? 8787)
 const pythonImage = process.env.JUDGE_PYTHON_IMAGE ?? 'python:3.12-alpine'
@@ -246,24 +246,24 @@ async function runGroup({ code, language, tests }) {
 
 function rewardsForDifficulty(difficulty) {
   if (difficulty === 'hard') {
-    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 44, maxEnergy: 54 }
+    return { coins: 90, trainerXp: 220, partyXp: 180, energy: 1, maxEnergy: 1 }
   }
 
   if (difficulty === 'easy') {
-    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 24, maxEnergy: 34 }
+    return { coins: 20, trainerXp: 60, partyXp: 45, energy: 1, maxEnergy: 1 }
   }
 
-  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 34, maxEnergy: 44 }
+  return { coins: 45, trainerXp: 120, partyXp: 90, energy: 1, maxEnergy: 1 }
 }
 
-function buildEvents({ failedGroup, mode, pokemonName, topicLabel, rewards }) {
+function buildEvents({ failedGroup, mode, pokemonName }) {
   if (!failedGroup && mode === 'submit') {
     return [
       {
         type: 'text',
-        text: `Solved! Server playback awarded ${rewards.partyXp} XP and ${rewards.coins} coins.`,
+        text: 'All checkpoints passed. The encounter is ready.',
       },
-      { type: 'text', text: `${topicLabel} energy is ready for the encounter.` },
+      { type: 'text', text: 'You earned 1 battle energy. It is spent when you enter the battle.' },
     ]
   }
 
@@ -295,7 +295,7 @@ function buildEvents({ failedGroup, mode, pokemonName, topicLabel, rewards }) {
 }
 
 async function judgeSubmission(payload) {
-  const { code, difficulty, language, mode, pokemonName, questionId, topicLabel } = payload
+  const { code, difficulty, language, mode, pokemonName, questionId } = payload
 
   if (!questionId || !testSuites[questionId]) {
     throw new Error('Unknown question.')
@@ -344,10 +344,13 @@ async function judgeSubmission(payload) {
       label: groupLabels[group],
       passed: false,
       message: result.error
-        ? `${groupLabels[group]} failed: ${result.error.split('\n')[0]}`
+        ? group === 'samples'
+          ? `${groupLabels[group]} failed:\n${result.error.slice(0, 1600)}`
+          : result.error.startsWith('Timed out')
+            ? `${groupLabels[group]} exceeded the time limit.`
+            : `${groupLabels[group]} failed with a runtime error. Check your solution against the sample cases.`
         : `${groupLabels[group]} failed on test ${Number(result.failedIndex ?? 0) + 1}.`,
-      actual: result.actual,
-      expected: result.expected,
+      ...(group === 'samples' ? { actual: result.actual, expected: result.expected } : {}),
     })
     break
   }
@@ -360,8 +363,6 @@ async function judgeSubmission(payload) {
       failedGroup,
       mode,
       pokemonName: pokemonName ?? 'the wild Pokemon',
-      rewards,
-      topicLabel: topicLabel ?? 'Coding',
     }),
     rewards,
     solved: mode === 'submit' && !failedGroup,

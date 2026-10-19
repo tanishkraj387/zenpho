@@ -1,0 +1,78 @@
+/* Close the gates before swapping scenes, then unlock and reveal. */
+.loading-gate .loading-gate__door { transition: transform 850ms cubic-bezier(.22,.8,.22,1); }
+.loading-gate .loading-gate__ball { animation-duration: 850ms; }
+.loading-gate.is-closing .loading-gate__door--left { animation: gate-close-left 480ms cubic-bezier(.4,0,.2,1) both; }
+.loading-gate.is-closing .loading-gate__door--right { animation: gate-close-right 480ms cubic-bezier(.4,0,.2,1) both; }
+.loading-gate.is-closing .loading-gate__ball,
+.loading-gate.is-closing::after { animation: gate-lock-in 480ms both; }
+.loading-gate__caption { position: absolute; z-index: 5; top: calc(50% + 110px); width: min(90%,480px); text-align: center; color: #172133; transition: opacity 200ms; }
+.loading-gate__caption p { margin: 0 0 12px; font-family: var(--font-heading); font-size: clamp(12px,2vw,18px); line-height: 1.7; }
+.loading-gate__caption span { font-size: 20px; }
+.loading-gate__track { width: 128px; height: 8px; margin: 22px auto; background: #a0b2c1; overflow: hidden; }
+.loading-gate__track i { display: block; height: 100%; width: 40%; background: #172133; animation: gate-progress 1s ease-in-out infinite alternate; }
+.loading-gate.is-opening .loading-gate__caption { opacity: 0; }
+.loading-gate.is-closing .loading-gate__caption { animation: gate-lock-in 480ms both; }
+@keyframes gate-close-left { from { transform: translateX(-105%); } to { transform: translateX(0); } }
+@keyframes gate-close-right { from { transform: translateX(105%); } to { transform: translateX(0); } }
+@keyframes gate-lock-in { 0%,65% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes gate-progress { to { transform: translateX(150%); } }
+
+/* Terrain, impact rings and pixel debris use the existing game palette. */
+.battle-arena { isolation: isolate; }
+.submission-resize-handle { touch-action: none; }
+.submission-resize-handle span { width: 44px; height: 4px; background: #f4efe1; }
+.submission-resize-handle:hover span, .submission-resize-handle:focus-visible span { background: #1a1c2c; }
+.battle-screen { display: grid; grid-template-rows: minmax(220px, 1fr) auto; min-height: 0; height: 100%; }
+.battle-screen .battle-screen__dialog { min-height: 0; padding: 12px; line-height: 1.25; }
+.battle-arena { background: #8fc2dc; }
+.battle-arena__backdrop, .battle-arena__terrain { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
+.battle-arena__backdrop { z-index: -2; image-rendering: pixelated; filter: saturate(.82); }
+.battle-arena__terrain { z-index: -1; image-rendering: pixelated; }
+.battle-arena__terrain--enemy { opacity: .98; }
+.battle-arena__combatant--enemy { right: 12%; top: 18%; }
+.battle-arena__combatant--player { left: 6%; bottom: 7%; }
+.battle-arena__combatant--enemy { animation: battle-enter-enemy 500ms cubic-bezier(.2,.8,.25,1) both; }
+.battle-arena__combatant--player { animation: battle-enter-player 550ms cubic-bezier(.2,.8,.25,1) both; }
+.battle-arena__info--enemy { animation: battle-info-enter-enemy 450ms steps(6,end) both; }
+.battle-arena__info--player { animation: battle-info-enter-player 450ms steps(6,end) both; }
+.battle-move-card { --move-accent: #a9bbca; box-shadow: inset 0 4px var(--move-accent); transition: transform 140ms, box-shadow 140ms; }
+.battle-move-card:not(:disabled):hover { transform: translateY(-3px); box-shadow: inset 0 4px var(--move-accent), 4px 4px 0 #1a1c2c; }
+.battle-move-card:not(:disabled):active { transform: translateY(1px); box-shadow: inset 0 4px var(--move-accent); }
+.battle-arena__info { z-index: 5; }
+.battle-move-card__type { flex: none; border: 2px solid #1a1c2c; background: var(--move-accent); padding: 2px 5px; font-size: 8px; }
+.battle-move-card--fire { --move-accent: #f3ae72; }
+.battle-move-card--water, .battle-move-card--ice { --move-accent: #91cbec; }
+.battle-move-card--electric { --move-accent: #f5d66d; }
+.battle-move-card--grass, .battle-move-card--bug { --move-accent: #a9d779; }
+.battle-move-card--psychic, .battle-move-card--ghost, .battle-move-card--poison { --move-accent: #c9a6db; }
+.battle-move-card--rock, .battle-move-card--ground, .battle-move-card--fighting { --move-accent: #c8aa87; }
+.battle-move-card--dragon, .battle-move-card--flying { --move-accent: #a4b7e2; }
+.battle-move-animation { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
+.battle-sprite--switch-out { animation: battle-return-to-ball 250ms ease-in both; }
+.battle-sprite--switch-in { animation: battle-send-out 250ms ease-out both; }
+.battle-sprite--faint { animation: battle-faint-drop 500ms ease-in both; }
+@keyframes battle-return-to-ball { to { transform: scale(.5); } }
+@keyframes battle-send-out { from { transform: scale(.5); } to { transform: scale(1); } }
+@keyframes battle-faint-drop { to { translate: 0 70%; } }
+@keyframes battle-enter-enemy { from { opacity: 0; translate: 70px -25px; scale: .8; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes battle-enter-player { from { opacity: 0; translate: -70px 25px; scale: .8; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes battle-info-enter-enemy { from { opacity: 0; translate: -35px 0; } to { opacity: 1; translate: 0 0; } }
+@keyframes battle-info-enter-player { from { opacity: 0; translate: 35px 0; } to { opacity: 1; translate: 0 0; } }
+@media (max-width: 640px) {
+.battle-screen { padding: 0; gap: 8px; }
+  .battle-screen { height: auto; grid-template-rows: auto auto; align-content: start; }
+  .battle-arena { height: clamp(220px, 52vw, 320px); min-height: 0; }
+  .loading-gate__caption { top: calc(50% + 95px); }
+}
+@media (max-width: 899px) {
+  .battle-preview { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .battle-preview > :nth-child(2) { display: none; }
+  .battle-preview > :first-child { grid-template-columns: 48px minmax(0,1fr); gap: 6px; }
+  .battle-preview > :nth-child(3) { grid-template-columns: minmax(0,1fr) 48px; gap: 6px; }
+  .battle-preview .font-heading { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-gate *, .loading-gate::after, .battle-arena__combatant, .battle-arena__info,
+  .battle-sprite--switch-out, .battle-sprite--switch-in, .battle-sprite--faint { animation: none !important; transition: none !important; }
+  .loading-gate.is-opening .loading-gate__ball { opacity: 0; }
+}

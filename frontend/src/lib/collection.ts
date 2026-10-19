@@ -9,54 +9,6 @@ export type CollectionEntry = {
   status: CollectionStatus
 }
 
-const previewSeenCollection: Record<number, CollectionEntry> = {
-  25: {
-    affinity: 'Strings',
-    source: 'Route preview',
-    status: 'seen',
-  },
-  54: {
-    affinity: 'Arrays',
-    source: 'Practice route preview',
-    status: 'seen',
-  },
-  63: {
-    affinity: 'Graphs',
-    source: 'Question encounter preview',
-    status: 'seen',
-  },
-  92: {
-    affinity: 'Graphs',
-    source: 'Wild encounter preview',
-    status: 'seen',
-  },
-  129: {
-    affinity: 'Practice',
-    source: 'Practice encounter preview',
-    status: 'seen',
-  },
-  133: {
-    affinity: 'DP',
-    source: 'Milestone preview',
-    status: 'seen',
-  },
-  143: {
-    affinity: 'Trees',
-    source: 'Gym preview',
-    status: 'seen',
-  },
-  147: {
-    affinity: 'DP',
-    source: 'Hard DP preview',
-    status: 'seen',
-  },
-  150: {
-    affinity: 'Hard DP',
-    source: 'Legendary milestone preview',
-    status: 'seen',
-  },
-}
-
 function formatCaughtAt(value: string | null) {
   if (!value) {
     return undefined
@@ -79,7 +31,7 @@ function formatAffinity(value: string | null) {
 
 export async function getCollectionEntries(userId: string): Promise<Record<number, CollectionEntry>> {
   if (!isSupabaseConfigured) {
-    return previewSeenCollection
+    throw new Error('Collection is unavailable. Please reconnect and try again.')
   }
 
   const [creaturesResult, pokedexResult, seenResult] = await Promise.all([
@@ -110,7 +62,7 @@ export async function getCollectionEntries(userId: string): Promise<Record<numbe
     throw seenResult.error
   }
 
-  const entries: Record<number, CollectionEntry> = { ...previewSeenCollection }
+  const entries: Record<number, CollectionEntry> = {}
 
   for (const pokedexEntry of pokedexResult.data ?? []) {
     entries[pokedexEntry.pokemon_id] = {

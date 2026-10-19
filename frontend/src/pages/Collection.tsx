@@ -38,14 +38,6 @@ const statusClasses: Record<CollectionStatus, string> = {
   unknown: 'bg-ink text-cream',
 }
 
-function getDisplayStats(id: number) {
-  return {
-    attack: 30 + ((id * 7) % 70),
-    defense: 28 + ((id * 11) % 72),
-    focus: 35 + ((id * 5) % 65),
-  }
-}
-
 function StatusPill({ status }: { status: CollectionStatus }) {
   return (
     <span
@@ -88,7 +80,6 @@ export function Collection() {
     return matchesFilter && matchesSearch
   })
   const selectedPokemon = collection.find((pokemon) => pokemon.id === selectedPokemonId)
-  const selectedStats = selectedPokemon ? getDisplayStats(selectedPokemon.id) : null
 
   return (
     <main className="min-h-screen bg-sky font-pixel text-ink">
@@ -110,8 +101,7 @@ export function Collection() {
               </p>
               {collectionEntries.isError ? (
                 <p className="border-4 border-ink bg-warning p-3 text-lg">
-                  Pokedex is using preview seen data until Supabase collection
-                  rows are reachable.
+                  Your Pokedex could not be loaded. Please refresh to try again.
                 </p>
               ) : null}
             </div>
@@ -220,7 +210,7 @@ export function Collection() {
         </div>
       </section>
 
-      {selectedPokemon && selectedStats ? (
+      {selectedPokemon ? (
         <Modal
           isOpen
           onClose={() => setSelectedPokemonId(null)}
@@ -277,20 +267,6 @@ export function Collection() {
                   </dd>
                 </div>
               </dl>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border-4 border-ink bg-white p-3">
-                  <p className="font-heading text-[9px] uppercase">Attack</p>
-                  <p className="mt-1 font-heading text-lg">{selectedStats.attack}</p>
-                </div>
-                <div className="border-4 border-ink bg-white p-3">
-                  <p className="font-heading text-[9px] uppercase">Defense</p>
-                  <p className="mt-1 font-heading text-lg">{selectedStats.defense}</p>
-                </div>
-                <div className="border-4 border-ink bg-white p-3">
-                  <p className="font-heading text-[9px] uppercase">Focus</p>
-                  <p className="mt-1 font-heading text-lg">{selectedStats.focus}</p>
-                </div>
-              </div>
             </div>
           </div>
         </Modal>

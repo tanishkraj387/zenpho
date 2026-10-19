@@ -47,8 +47,7 @@ const trainerStats = {
 }
 
 const navActions: NavAction[] = [
-  { label: 'Battle', to: '/battle' },
-  { label: 'Practice', to: '/practice', variant: 'secondary' },
+  { label: 'Practice', to: '/practice' },
   { label: 'Shop', to: '/shop', variant: 'secondary' },
   { label: 'Gyms', to: '/gyms', variant: 'secondary' },
   { label: 'Pokedex', to: '/collection', variant: 'secondary' },
@@ -222,7 +221,7 @@ export function Hub() {
                 value={String(coins)}
               />
               <StatTile
-                detail="Drains from runs, submits, and hard encounters."
+                detail="Earn one by solving a question; spend one to enter its battle."
                 label="Energy"
                 value={`${energy.current}/${energy.max}`}
               />

@@ -536,7 +536,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Given an integer array nums, return true if any value appears at least twice. Otherwise return false.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 19,
     "constraints": [
       "0 <= nums.length <= 100000",
       "-1000000000 <= nums[i] <= 1000000000"
@@ -562,7 +562,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Given daily prices, choose one day to buy and a later day to sell. Return the maximum profit, or 0 if no profit is possible.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 52,
     "constraints": [
       "1 <= prices.length <= 100000",
       "0 <= prices[i] <= 10000"
@@ -588,7 +588,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Move every zero to the end of nums while preserving the relative order of nonzero values. Return the updated array.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 50,
     "constraints": [
       "0 <= nums.length <= 100000",
       "-100000 <= nums[i] <= 100000"
@@ -614,7 +614,7 @@
     "difficulty": "medium",
     "topic": "arrays",
     "description": "Rotate nums to the right by k positions. Return the rotated array.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 28,
     "constraints": [
       "0 <= nums.length <= 100000",
       "0 <= k <= 100000"
@@ -640,7 +640,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "nums contains distinct numbers from 0 through n with exactly one missing. Return the missing number.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 43,
     "constraints": [
       "0 <= nums.length <= 100000",
       "Every value is unique and lies in [0, nums.length]."
@@ -666,7 +666,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Return the distinct values present in both nums1 and nums2 in ascending order.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 98,
     "constraints": [
       "0 <= nums1.length, nums2.length <= 100000",
       "-100000 <= nums1[i], nums2[i] <= 100000"
@@ -692,7 +692,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Return the value that appears more than floor(nums.length / 2) times. Such a value always exists.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 56,
     "constraints": [
       "1 <= nums.length <= 100000",
       "A majority value is guaranteed."
@@ -718,7 +718,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "nums is sorted in nondecreasing order. Return the squares of its values in nondecreasing order.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 27,
     "constraints": [
       "0 <= nums.length <= 100000",
       "-10000 <= nums[i] <= 10000"
@@ -744,7 +744,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Given distinct integers nums sorted in ascending order, return the index of target or -1 if it is absent.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 81,
     "constraints": [
       "0 <= nums.length <= 100000",
       "nums is strictly increasing."
@@ -770,7 +770,7 @@
     "difficulty": "easy",
     "topic": "arrays",
     "description": "Return the first index whose left-side sum equals its right-side sum. An empty side has sum 0. Return -1 if none exists.",
-    "encounterPokemonId": 54,
+    "encounterPokemonId": 116,
     "constraints": [
       "1 <= nums.length <= 100000",
       "-1000 <= nums[i] <= 1000"
@@ -796,7 +796,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Reverse the order of words in s. A word is a run of non-space characters. Join words with one space.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 53,
     "constraints": [
       "0 <= s.length <= 100000",
       "s contains printable characters and spaces."
@@ -822,7 +822,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Return true if t contains the same characters with the same counts as s, in any order.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 35,
     "constraints": [
       "0 <= s.length, t.length <= 100000",
       "Inputs use lowercase English letters."
@@ -848,7 +848,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Return the longest prefix shared by every string in strs. If there is no shared prefix, return an empty string.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 37,
     "constraints": [
       "0 <= strs.length <= 1000",
       "0 <= strs[i].length <= 200"
@@ -874,7 +874,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Convert a valid Roman numeral s to its integer value. Subtractive pairs such as IV and IX are allowed.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 96,
     "constraints": [
       "1 <= s.length <= 15",
       "s is a valid Roman numeral from 1 to 3999."
@@ -900,7 +900,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Return true if every opening bracket has a matching closing bracket in the correct order.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 48,
     "constraints": [
       "0 <= s.length <= 100000",
       "s contains only (), [], and {}."
@@ -926,7 +926,7 @@
     "difficulty": "medium",
     "topic": "strings",
     "description": "Return the length of the longest contiguous substring of s with no repeated character.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 137,
     "constraints": [
       "0 <= s.length <= 100000",
       "s contains printable ASCII characters."
@@ -952,7 +952,7 @@
     "difficulty": "easy",
     "topic": "strings",
     "description": "Return true if each character of s can be mapped consistently to one unique character of t.",
-    "encounterPokemonId": 25,
+    "encounterPokemonId": 102,
     "constraints": [
       "1 <= s.length, t.length <= 100000",
       "s and t have the same length."
@@ -978,7 +978,7 @@
     "difficulty": "medium",
     "topic": "math",
     "description": "Return the number of prime numbers strictly less than n.",
-    "encounterPokemonId": 74,
+    "encounterPokemonId": 101,
     "constraints": [
       "0 <= n <= 1000000"
     ],
@@ -1003,7 +1003,7 @@
     "difficulty": "easy",
     "topic": "math",
     "description": "Return true if the decimal digits of x read the same from both ends. Negative values are not palindromes.",
-    "encounterPokemonId": 74,
+    "encounterPokemonId": 100,
     "constraints": [
       "-2147483648 <= x <= 2147483647"
     ],
@@ -1028,7 +1028,7 @@
     "difficulty": "easy",
     "topic": "math",
     "description": "Return true if n is a positive power of two.",
-    "encounterPokemonId": 74,
+    "encounterPokemonId": 111,
     "constraints": [
       "-2147483648 <= n <= 2147483647"
     ],
@@ -1053,7 +1053,7 @@
     "difficulty": "medium",
     "topic": "math",
     "description": "Return the number of trailing zero digits in n factorial.",
-    "encounterPokemonId": 74,
+    "encounterPokemonId": 82,
     "constraints": [
       "0 <= n <= 1000000000"
     ],
@@ -1078,7 +1078,7 @@
     "difficulty": "medium",
     "topic": "dp",
     "description": "Choose nonadjacent houses to maximize the sum of their values. Return the largest possible sum.",
-    "encounterPokemonId": 65,
+    "encounterPokemonId": 79,
     "constraints": [
       "0 <= nums.length <= 100000",
       "0 <= nums[i] <= 1000"
@@ -1104,7 +1104,7 @@
     "difficulty": "easy",
     "topic": "dp",
     "description": "Pay cost[i] when stepping on stair i. You may start at stair 0 or 1 and climb one or two steps. Return the minimum cost to step beyond the array.",
-    "encounterPokemonId": 65,
+    "encounterPokemonId": 60,
     "constraints": [
       "2 <= cost.length <= 100000",
       "0 <= cost[i] <= 999"
@@ -1130,7 +1130,7 @@
     "difficulty": "medium",
     "topic": "dp",
     "description": "A robot starts at the top-left of an m by n grid and moves only right or down. Return the number of ways to reach the bottom-right.",
-    "encounterPokemonId": 65,
+    "encounterPokemonId": 80,
     "constraints": [
       "1 <= m, n <= 15"
     ],
@@ -1155,7 +1155,7 @@
     "difficulty": "medium",
     "topic": "dp",
     "description": "Given coin denominations and an amount, return the fewest coins needed to make the amount, or -1 if impossible. Coins may be reused.",
-    "encounterPokemonId": 65,
+    "encounterPokemonId": 138,
     "constraints": [
       "1 <= coins.length <= 20",
       "1 <= coins[i] <= 10000",
@@ -1182,7 +1182,7 @@
     "difficulty": "medium",
     "topic": "graphs",
     "description": "Starting at image[sr][sc], change that cell and every connected cell with its original color to color. Cells connect horizontally or vertically. Return the new image.",
-    "encounterPokemonId": 92,
+    "encounterPokemonId": 73,
     "constraints": [
       "1 <= image.length, image[i].length <= 50",
       "0 <= sr < image.length; 0 <= sc < image[0].length"
@@ -1208,7 +1208,7 @@
     "difficulty": "medium",
     "topic": "graphs",
     "description": "Given n nodes numbered 0 through n-1 and undirected edges, return the number of connected components.",
-    "encounterPokemonId": 92,
+    "encounterPokemonId": 117,
     "constraints": [
       "1 <= n <= 100000",
       "0 <= edges.length <= 200000",
@@ -1235,7 +1235,7 @@
     "difficulty": "easy",
     "topic": "graphs",
     "description": "Given an undirected graph, return true if there is a path from source to destination.",
-    "encounterPokemonId": 92,
+    "encounterPokemonId": 41,
     "constraints": [
       "1 <= n <= 100000",
       "0 <= edges.length <= 200000",
@@ -1262,7 +1262,7 @@
     "difficulty": "easy",
     "topic": "trees",
     "description": "Two binary trees are given as level-order arrays with null gaps. Return true if their structure and values match.",
-    "encounterPokemonId": 133,
+    "encounterPokemonId": 13,
     "constraints": [
       "0 <= p.length, q.length <= 1023",
       "null denotes an absent node."
@@ -1288,7 +1288,7 @@
     "difficulty": "easy",
     "topic": "trees",
     "description": "The tree is a level-order array with null gaps. Return the number of nodes on the shortest root-to-leaf path; return 0 for an empty tree.",
-    "encounterPokemonId": 133,
+    "encounterPokemonId": 46,
     "constraints": [
       "0 <= root.length <= 1023",
       "null denotes an absent node."

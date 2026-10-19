@@ -12,18 +12,19 @@ export type LoadedPokemonSprite = {
   frames: AtlasFrame[]
 }
 
-const atlasCache = new Map<number, Promise<LoadedPokemonSprite>>()
+const atlasCache = new Map<string, Promise<LoadedPokemonSprite>>()
 
-export function loadPokemonSprite(id: number) {
-  const cached = atlasCache.get(id)
+export function loadPokemonSprite(id: number, back = false) {
+  const key = `${back ? 'back/' : ''}${id}`
+  const cached = atlasCache.get(key)
   if (cached) return cached
 
   const atlas = (async () => {
     const [metadataResponse, image] = await Promise.all([
-      fetch(`/pokerogue/pokemon/${id}.json`),
+      fetch(`/pokerogue/pokemon/${key}.json`),
       (async () => {
         const sprite = new Image()
-        sprite.src = `/pokerogue/pokemon/${id}.png`
+        sprite.src = `/pokerogue/pokemon/${key}.png`
         await sprite.decode()
         return sprite
       })(),
@@ -32,14 +33,14 @@ export function loadPokemonSprite(id: number) {
     if (!metadataResponse.ok) throw new Error(`PokéRogue sprite metadata missing for Pokémon ${id}`)
     const metadata = await metadataResponse.json() as PokemonAtlas
     const frames = (metadata.textures?.[0]?.frames ?? metadata.frames ?? [])
-      .filter((frame) => frame.filename.endsWith('.png'))
+      .filter((frame) => frame.filename.endsWith('.png') && Number.parseInt(frame.filename, 10) >= 1 && Number.parseInt(frame.filename, 10) <= 400)
       .sort((left, right) => Number.parseInt(left.filename, 10) - Number.parseInt(right.filename, 10)) ?? []
     if (!frames.length) throw new Error(`PokéRogue sprite atlas is empty for Pokémon ${id}`)
     return { image, frames }
   })()
 
-  atlasCache.set(id, atlas)
-  atlas.catch(() => atlasCache.delete(id))
+  atlasCache.set(key, atlas)
+  atlas.catch(() => atlasCache.delete(key))
   return atlas
 }
 

@@ -10,7 +10,6 @@ import { useQuestionEncounters } from '../hooks/useQuestionEncounters'
 import { useSolvedQuestions } from '../hooks/useSolvedQuestions'
 import {
   getTopicLabel,
-  type CodingQuestion,
 } from '../lib/questions'
 import { getRarityLabel, type QuestionDifficulty, type TopicType } from '../lib/pokemon'
 
@@ -28,18 +27,6 @@ function getBadgeTopic(topic: TopicType): BadgeTopicType {
   const label = getTopicLabel(topic)
 
   return label as BadgeTopicType
-}
-
-function getEnergyCost(question: CodingQuestion) {
-  if (question.difficulty === 'hard') {
-    return 8
-  }
-
-  if (question.difficulty === 'medium') {
-    return 5
-  }
-
-  return 3
 }
 
 export function Practice() {
@@ -80,7 +67,7 @@ export function Practice() {
       <AppHeader coins={coins} />
       <section className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
         <PixelCard bodyClassName="p-4 sm:p-5" title="Practice Routes">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="grid gap-5">
             <div className="space-y-3">
               <p className="font-heading text-[10px] uppercase leading-relaxed">
                 Question encounters
@@ -99,9 +86,6 @@ export function Practice() {
                 </p>
               ) : null}
             </div>
-            <Link to="/battle">
-              <PixelButton className="w-full sm:w-auto">Start a Battle</PixelButton>
-            </Link>
           </div>
         </PixelCard>
 
@@ -207,8 +191,7 @@ export function Practice() {
                       <span className="font-heading text-[10px]">{pokemon.name}</span>
                     </p>
                     <p>
-                      Rarity: {getRarityLabel(pokemon.rarity)} / Energy cost:{' '}
-                      {getEnergyCost(question)}
+                      Rarity: {getRarityLabel(pokemon.rarity)} / Battle entry: 1 energy
                     </p>
                     <p>Checkpoint groups: samples, hidden, efficiency</p>
                   </div>

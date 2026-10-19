@@ -23,17 +23,13 @@ export function Sprite({ alt, className = '', id, type, ...props }: SpriteProps)
     context.imageSmoothingEnabled = false
     const draw = async () => {
       try {
-        const sprite = await loadPokemonSprite(id)
+        const sprite = await loadPokemonSprite(id, type === 'back')
         if (stopped) return
-        const idleFrames = sprite.frames.filter((frame) => {
-          const frameNumber = Number.parseInt(frame.filename, 10)
-          return frameNumber >= 1 && frameNumber <= 16
-        })
-        const frames = idleFrames.length ? idleFrames : [sprite.frames[0]]
+        const frames = sprite.frames
         const paint = () => {
           if (stopped) return
           context.clearRect(0, 0, canvas.width, canvas.height)
-          drawPokemonSprite(context, { ...sprite, frames }, frameIndex++, 48, 48, 82, type === 'back')
+          drawPokemonSprite(context, { ...sprite, frames }, frameIndex++, 48, 48, 82)
         }
         paint()
         const timer = window.setInterval(paint, 100)

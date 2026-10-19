@@ -53,6 +53,7 @@ const initialTests: TestGroupState[] = [
 ]
 
 const eventDelayMs = 850
+let eventTimer: number | undefined
 
 function applyEvent(state: BattleState, event: BattleEvent): Partial<BattleState> {
   if (event.type === 'player_attack') {
@@ -120,7 +121,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   tests: initialTests,
   victoryRewards: null,
   setJudging: () => set({ phase: 'judging', dialogText: 'Checking the submission...' }),
-  resetBattle: (dialogText) =>
+  resetBattle: (dialogText) => {
+    window.clearTimeout(eventTimer)
     set({
       phase: 'thinking',
       eventQueue: [],
@@ -133,8 +135,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       animation: 'idle',
       tests: initialTests,
       victoryRewards: null,
-    }),
+    })
+  },
   enqueueEvents: (events, tests) => {
+    window.clearTimeout(eventTimer)
     set((state) => ({
       eventQueue: events,
       currentEvent: null,
@@ -146,6 +150,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().playNextEvent()
   },
   playNextEvent: () => {
+    window.clearTimeout(eventTimer)
     const state = get()
     const [nextEvent, ...remainingEvents] = state.eventQueue
 
@@ -165,11 +170,17 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }))
 
     if (nextEvent.type !== 'player_attack' && nextEvent.type !== 'enemy_attack') {
-      const delay = nextEvent.type === 'switch_out' ? 1000 : nextEvent.type === 'switch_in' ? 250 : eventDelayMs
-      window.setTimeout(() => get().finishCurrentEvent(), delay)
+      const delay = nextEvent.type === 'switch_out' || nextEvent.type === 'switch_in' ? 300
+        : nextEvent.type === 'enemy_hit' || nextEvent.type === 'player_hit' ? 360
+        : nextEvent.type === 'enemy_hp' || nextEvent.type === 'player_hp' || nextEvent.type === 'enemy_faint' ? 500
+        : eventDelayMs
+      eventTimer = window.setTimeout(() => {
+        if (get().currentEvent === nextEvent) get().finishCurrentEvent()
+      }, delay)
     }
   },
   finishCurrentEvent: () => {
+    window.clearTimeout(eventTimer)
     set((state) => ({
       animation:
         state.currentEvent?.type === 'enemy_faint' || state.currentEvent?.type === 'victory'

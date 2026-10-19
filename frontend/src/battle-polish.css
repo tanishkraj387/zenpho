@@ -76,3 +76,44 @@
   .battle-sprite--switch-out, .battle-sprite--switch-in, .battle-sprite--faint { animation: none !important; transition: none !important; }
   .loading-gate.is-opening .loading-gate__ball { opacity: 0; }
 }
+
+@font-face { font-family: 'Pokemon Emerald'; src: url('/pokerogue/pokemon-emerald-pro.ttf') format('truetype'); font-display: swap; }
+
+/* One 320 × 180 coordinate system for the field, HUD, and command window. */
+.battle-viewport { display: grid; place-items: center; padding: 0 !important; background: #16151d; }
+.pokerogue-battle { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; container-type: size; }
+.pokerogue-stage { position: relative; width: min(100cqw, 177.7778cqh); aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; isolation: isolate; background: #8fc2dc; image-rendering: pixelated; }
+.pokerogue-stage__canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.pokerogue-status { position: absolute; width: 40.625%; color: #fff; font-size: 2.5cqw; line-height: 1; text-shadow: .3cqw .3cqw #303038; background-size: 100% 100%; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; }
+.pokerogue-status--enemy { left: 0; top: 12.22%; height: 17.22%; background-image: url('/pokerogue/images/ui/pbinfo_enemy_mini.png'); }
+.pokerogue-status--player { right: 0; top: 55.55%; height: 23.33%; background-image: url('/pokerogue/images/ui/pbinfo_player.png'); }
+.pokerogue-status__name { position: absolute; top: 19%; left: 9%; max-width: 70%; white-space: nowrap; }
+.pokerogue-status__level { position: absolute; right: 10%; top: 19%; font-size: 2.2cqw; }
+.pokerogue-status__hp { position: absolute; left: 53.85%; top: 47.62%; width: 36.92%; height: 4.76%; background: #504850; }
+.pokerogue-status--enemy .pokerogue-status__hp { top: 64.52%; height: 6.45%; }
+.pokerogue-status__hp i { display: block; height: 100%; transition: width 500ms linear; }
+.pokerogue-status__value { position: absolute; right: 11%; top: 61%; font-size: 2.3cqw; }
+.pokerogue-console { position: absolute; inset: auto 0 0; height: 22.22%; display: grid; grid-template-columns: 56% 44%; color: #f8f8f8; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; }
+.pokerogue-console--playing { grid-template-columns: 1fr; }
+.pokerogue-console .pokerogue-console__message, .pokerogue-console .pokerogue-console__commands { position: relative; border: 1.875cqw solid transparent; border-image: url('/pokerogue/images/ui/window_1.png') 6 fill stretch; background: transparent; box-shadow: none; min-width: 0; }
+.pokerogue-console .pokerogue-console__message { padding: .7cqw 1cqw; min-height: 0; color: #fff; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; font-size: 2.8cqw; line-height: 1.2; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-console__message > span { position: absolute; bottom: 1.6cqw; right: 2cqw; margin: 0; font-size: 2cqw; }
+.pokerogue-console__commands { padding: .2cqw .5cqw; }
+.pokerogue-console__commands > div { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 100%; }
+.pokerogue-console__commands button { position: relative; display: flex; align-items: center; gap: .5cqw; padding: 0 0 0 2cqw; min-height: 0; border: 0; background: transparent; color: #fff; box-shadow: none; font: inherit; font-size: 2.6cqw; line-height: 1; transform: none !important; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-console__commands button::before { content: ''; position: absolute; left: .5cqw; width: 0; height: 0; border-top: .65cqw solid transparent; border-bottom: .65cqw solid transparent; border-left: 1cqw solid #fff; opacity: 0; }
+.pokerogue-console__commands button:hover::before, .pokerogue-console__commands button:focus-visible::before { opacity: 1; }
+.pokerogue-console__commands button:hover, .pokerogue-console__commands button:focus-visible { color: #f8d878; background: transparent; box-shadow: none; }
+.pokerogue-console__commands button > span { font: inherit; display: block; }
+.pokerogue-console__commands .battle-move-card > span:not(:first-child), .pokerogue-console__commands .battle-move-card__type { display: none; }
+.pokerogue-console__commands button > span > span { font: inherit; }
+.pokerogue-console__commands button > canvas { width: 3cqw; height: 3cqw; }
+.pokerogue-console__commands button > canvas + span { font-size: 2cqw; }
+.pokerogue-console__commands button > canvas + span > span:last-child { display: none; }
+.pokerogue-stage__toolbar { position: absolute; right: 2%; top: 2%; display: flex; gap: 2cqw; font-size: 2cqw; color: #fff; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-stage__toolbar button { cursor: pointer; padding: .4cqw 1cqw; background: #303038b3; }
+.pokerogue-stage__toolbar button:disabled { opacity: .4; cursor: default; }
+.pokerogue-stage__error { position: absolute; top: 0; left: 0; right: 0; padding: 1cqw; background: #7c2424; color: #fff; font-size: 2.5cqw; }
+@media (max-width: 899px) {
+  .battle-viewport { min-height: min(65vh, 80vw); }
+}

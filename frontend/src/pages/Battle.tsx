@@ -17,7 +17,10 @@ import { Modal } from '../components/ui/Modal'
 import { PixelButton } from '../components/ui/PixelButton'
 import { PixelCard } from '../components/ui/PixelCard'
 import { Sprite } from '../components/ui/Sprite'
-import { BattleMoveAnimation } from '../components/ui/BattleMoveAnimation'
+import { BattleStage } from '../components/ui/BattleStage'
+import { BattleStatus } from '../components/ui/BattleStatus'
+import { loadMoveAnimation, prepareBattleScene } from '../lib/pokerogueAnimation'
+import { loadPokemonSprite } from '../lib/pokeroguePokemonSprites'
 import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/TypeBadge'
 import { useBattleQuestion } from '../hooks/useBattleQuestion'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
@@ -31,7 +34,7 @@ import {
   type CodeLanguage,
 } from '../lib/questions'
 import { judgeCode, type JudgeDiagnostic, type JudgeResult } from '../lib/judge'
-import { getItemSprite, getSprite, type ItemSpriteName } from '../lib/sprites'
+import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
 import { markQuestionSolvedLocally } from '../lib/progress'
@@ -94,6 +97,15 @@ function moveAnimationId(name: string) {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
+function battleErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = error.message
+    if (typeof message === 'string' && message.trim()) return message
+  }
+
+  return fallback
+}
+
 function animationClass(target: 'player' | 'enemy', animation: string) {
   if (target === 'player') {
     if (animation === 'switch-out') {
@@ -145,6 +157,9 @@ export function Battle() {
     return playerParty.data ?? []
   }, [playerParty.data])
   const [activePokemonId, setActivePokemonId] = useState<number | null>(null)
+  useEffect(() => {
+    for (const pokemon of partyPokemon) void loadPokemonSprite(pokemon.id, true).catch(() => undefined)
+  }, [partyPokemon])
   const [pendingSwitchPokemonId, setPendingSwitchPokemonId] = useState<number | null>(null)
   const playerPokemon =
     getPokemonById(activePokemonId ?? partyPokemon[0]?.id ?? 25) ?? getPokemonById(25)!
@@ -152,6 +167,13 @@ export function Battle() {
   const questionHints = getQuestionHints(encounter.question)
   const questionNumber = codingQuestions.findIndex((question) => question.id === encounter.question.id) + 1
   const openingDialog = `A wild ${encounter.pokemon.name} appeared on ${encounter.routeName}!`
+  useEffect(() => {
+    for (const pokemon of [playerPokemon, encounter.pokemon]) {
+      for (const move of getBattleMovesForPokemon(pokemon)) {
+        void loadMoveAnimation(moveAnimationId(move.name), pokemon === playerPokemon ? 'player' : 'enemy').catch(() => undefined)
+      }
+    }
+  }, [playerPokemon, encounter.pokemon])
   const [language, setLanguage] = useState<CodeLanguage>('python')
   const [code, setCode] = useState(encounter.question.starterCode.python)
   const [isBagOpen, setIsBagOpen] = useState(false)
@@ -423,10 +445,7 @@ export function Battle() {
         setBattleAttemptId(attempt?.id ?? null)
       })
       .catch((error) => {
-        const message =
-          error instanceof Error ? error.message : 'Could not create battle attempt.'
-
-        setBattleAttemptError(message)
+        setBattleAttemptError(battleErrorMessage(error, 'Could not create battle attempt.'))
       })
   }, [
     encounter.question.id,
@@ -485,9 +504,7 @@ export function Battle() {
         queryClient.invalidateQueries({ queryKey: ['solved-questions'] }),
       ])
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not record battle result.'
-
-      setBattleAttemptError(message)
+      setBattleAttemptError(battleErrorMessage(error, 'Could not record battle result.'))
     }
   }
 
@@ -546,10 +563,12 @@ export function Battle() {
       return
     }
 
+    setBattleAttemptError('')
     setIsStartingFight(true)
     void (async () => {
       try {
         if (!battleAttemptId) throw new Error('The battle attempt is still being prepared. Try again in a moment.')
+        await prepareBattleScene(playerPokemon.id, encounter.pokemon.id)
         const remainingEnergy = await spendBattleEnergy(battleAttemptId)
         if (remainingEnergy === null) {
           throw new Error('Sign in to spend energy and start this battle.')
@@ -564,8 +583,7 @@ export function Battle() {
         ])
         void queryClient.invalidateQueries({ queryKey: ['player-summary'] })
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Could not start the battle.'
-        setBattleAttemptError(message)
+        setBattleAttemptError(battleErrorMessage(error, 'Could not start the battle.'))
       } finally {
         setIsStartingFight(false)
       }
@@ -723,8 +741,8 @@ export function Battle() {
               <TypeBadge type={topicBadge} />
             </div>
             {battleAttemptError ? (
-              <p className="border-4 border-ink bg-warning p-3 text-lg">
-                Your battle could not be saved: {battleAttemptError}
+              <p role="alert" className="border-4 border-ink bg-warning p-3 text-lg">
+                Battle error: {battleAttemptError}
               </p>
             ) : null}
             {judgeError ? (
@@ -968,6 +986,10 @@ export function Battle() {
           >
             Pokemon
           </button>
+          <button className="pixel-focus" type="button"
+            onClick={() => transition(() => setIsBattleScreenOpen(false), 'Returning to your solution')}>
+            Code
+          </button>
         </div>
       ) : null}
 
@@ -1034,80 +1056,29 @@ export function Battle() {
   )
 
   const classicBattleScreen = (
-    <section className="battle-screen grid h-full min-h-0 grid-rows-[minmax(220px,1fr)_auto] gap-3 p-3">
-      <div className="battle-arena relative min-h-0 overflow-hidden border-4 border-ink">
-        <img alt="" className="battle-arena__backdrop" draggable="false" src="/pokerogue/images/arenas/grass_bg.png" />
-        <img alt="" className="battle-arena__terrain battle-arena__terrain--enemy" draggable="false" src="/pokerogue/images/arenas/grass_b.png" />
-        <img alt="" className="battle-arena__terrain battle-arena__terrain--player" draggable="false" src="/pokerogue/images/arenas/grass_a.png" />
-        {currentEvent?.type === 'player_attack' || currentEvent?.type === 'enemy_attack' ? (
-          <BattleMoveAnimation
-            animationId={currentEvent.animationId}
-            attacker={currentEvent.type === 'player_attack' ? 'player' : 'enemy'}
-            enemySprite={getSprite(encounter.pokemon.id, 'front')}
-            onComplete={finishCurrentEvent}
-            playerSprite={getSprite(playerPokemon.id, 'back')}
-          />
-        ) : null}
-        <div className="battle-arena__info battle-arena__info--enemy absolute left-4 top-4 w-[min(44vw,420px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
-          <div className="mb-2 flex items-center gap-2">
-            <TypeBadge type={topicBadge} />
-          </div>
-          <HPBar current={enemyHp} label={encounter.pokemon.name} max={enemyMaxHp} />
-        </div>
-
-        <div className="battle-arena__combatant battle-arena__combatant--enemy absolute right-[10%] top-[10%]">
-          <div className="relative">
-            <Sprite
-              className={`h-28 w-28 object-contain sm:h-36 sm:w-36 ${currentEvent?.type === 'player_attack' || currentEvent?.type === 'enemy_attack' ? 'opacity-0' : animationClass(
-                'enemy',
-                animation,
-              )}`}
-              id={encounter.pokemon.id}
-              type="front"
-            />
-          </div>
-        </div>
-
-        <div className="battle-arena__combatant battle-arena__combatant--player absolute bottom-[4%] left-[8%]">
-          <div className="relative">
-            <Sprite
-              className={`h-28 w-28 object-contain sm:h-36 sm:w-36 ${currentEvent?.type === 'player_attack' || currentEvent?.type === 'enemy_attack' ? 'opacity-0' : animationClass(
-                'player',
-                animation,
-              )}`}
-              id={playerPokemon.id}
-              type="back"
-            />
-          </div>
-        </div>
-
-        <div className="battle-arena__info battle-arena__info--player absolute bottom-4 right-4 w-[min(46vw,440px)] border-4 border-ink bg-cream p-3 shadow-[4px_4px_0_#1a1c2c]">
-          <HPBar current={playerHp} label={playerPokemon.name} level={partyPokemon.find((pokemon) => pokemon.id === playerPokemon.id)?.level} max={playerMaxHp} />
-          <p className="mt-2 font-heading text-[9px] text-ink/70">Battle energy is spent on entry only</p>
-        </div>
-      </div>
-
-      <div className="grid min-h-0 gap-2">
-        <DialogBox
-          className="battle-screen__dialog p-3 text-xs leading-5 shadow-[4px_4px_0_#1a1c2c]"
-          text={dialogText}
+    <section className="pokerogue-battle" aria-label="Battle">
+      <div className="pokerogue-stage">
+        <BattleStage
+          playerId={playerPokemon.id}
+          enemyId={encounter.pokemon.id}
+          event={currentEvent}
+          onComplete={finishCurrentEvent}
         />
-        <section className="pixel-panel bg-cream text-ink">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-ink px-3 py-2 text-cream">
-            <h2 className="font-heading text-[10px] uppercase leading-relaxed">What will {playerPokemon.name} do?</h2>
-            <div className="flex gap-2">
-              {battleCommandMenu !== 'root' ? (
-                <button className="pixel-focus border-2 border-cream px-2 py-1 font-heading text-[9px] uppercase hover:bg-cream hover:text-ink" onClick={() => setBattleCommandMenu('root')} type="button">
-                  Back
-                </button>
-              ) : null}
-              <button className="pixel-focus border-2 border-cream px-2 py-1 font-heading text-[9px] uppercase hover:bg-cream hover:text-ink" onClick={() => transition(() => setIsBattleScreenOpen(false), 'Returning to your solution')} type="button">
-                Code
-              </button>
-            </div>
-          </div>
-          <div className="p-2">{battleMoveButtons}</div>
-        </section>
+        <BattleStatus side="enemy" name={encounter.pokemon.name} hp={enemyHp} maxHp={enemyMaxHp} />
+        <BattleStatus side="player" name={playerPokemon.name}
+          level={partyPokemon.find(pokemon => pokemon.id === playerPokemon.id)?.level}
+          hp={playerHp} maxHp={playerMaxHp} />
+        <div className={`pokerogue-console ${canUseEncounterMove ? '' : 'pokerogue-console--playing'}`}>
+          <DialogBox className="pokerogue-console__message" speed={18}
+            text={canUseEncounterMove ? `What will ${playerPokemon.name} do?` : dialogText} />
+          {canUseEncounterMove && <div className="pokerogue-console__commands">{battleMoveButtons}</div>}
+        </div>
+        <div className="pokerogue-stage__toolbar">
+          {battleCommandMenu !== 'root' && canUseEncounterMove &&
+            <button className="pixel-focus" onClick={() => setBattleCommandMenu('root')} type="button">Back</button>}
+          <button className="pixel-focus" disabled={isLocked}
+            onClick={() => transition(() => setIsBattleScreenOpen(false), 'Returning to your solution')} type="button">Code</button>
+        </div>
       </div>
     </section>
   )
@@ -1174,7 +1145,7 @@ export function Battle() {
   }
 
   return (
-    <main className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink max-[899px]:h-auto max-[899px]:overflow-auto">
+    <main className={`flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink ${isBattleScreenOpen ? '' : 'max-[899px]:h-auto max-[899px]:overflow-auto'}`}>
       <AppHeader
         coins={playerSummary.data?.coins ?? 0}
         onBag={() => setIsBagOpen(true)}
@@ -1256,7 +1227,7 @@ export function Battle() {
         </section>
       ) : null}
 
-      <section className={`min-h-0 flex-1 p-3 ${isBattleScreenOpen ? 'overflow-y-auto max-[899px]:min-h-[680px]' : 'max-[899px]:min-h-[900px]'}`}>
+      <section className={`min-h-0 flex-1 p-3 ${isBattleScreenOpen ? 'battle-viewport overflow-hidden' : 'max-[899px]:min-h-[900px]'}`}>
         {isBattleScreenOpen ? (
           classicBattleScreen
         ) : isNarrow ? (

@@ -4,6 +4,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { PixelCard } from '../ui/PixelCard'
 import { useAuthStore } from '../../store/authStore'
 import { getPostLoginPath } from '../../lib/starter'
+import { isSupabaseConfigured } from '../../lib/supabase'
 
 type RouteWrapperProps = {
   children?: ReactNode
@@ -22,13 +23,14 @@ function LoadingScreen() {
 export function ProtectedRoute({ children }: RouteWrapperProps) {
   const loading = useAuthStore((state) => state.loading)
   const user = useAuthStore((state) => state.user)
+  const session = useAuthStore((state) => state.session)
   const location = useLocation()
 
   if (loading) {
     return <LoadingScreen />
   }
 
-  if (!user) {
+  if (!user || (isSupabaseConfigured && !session)) {
     return <Navigate replace state={{ from: location }} to="/login" />
   }
 

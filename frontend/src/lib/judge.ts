@@ -28,7 +28,8 @@ export type JudgeResult = {
   tests: Record<TestGroupState['id'], TestGroupState['state']>
 }
 
-const judgeUrl = import.meta.env.VITE_JUDGE_URL || 'http://localhost:8787/judge'
+const judgeUrl = import.meta.env.VITE_JUDGE_URL?.trim()
+  || `${window.location.protocol}//${window.location.hostname}:8787/judge`
 
 export async function judgeCode({
   code,
@@ -45,21 +46,26 @@ export async function judgeCode({
   question: Pick<CodingQuestion, 'difficulty' | 'id'>
   topicLabel: string
 }) {
-  const response = await fetch(judgeUrl, {
-    body: JSON.stringify({
-      code,
-      difficulty: question.difficulty,
-      language,
-      mode,
-      pokemonName,
-      questionId: question.id,
-      topicLabel,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-  })
+  let response: Response
+  try {
+    response = await fetch(judgeUrl, {
+      body: JSON.stringify({
+        code,
+        difficulty: question.difficulty,
+        language,
+        mode,
+        pokemonName,
+        questionId: question.id,
+        topicLabel,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    })
+  } catch {
+    throw new Error(`Could not reach the judge at ${judgeUrl}. Start npm run judge on the website host and check port 8787.`)
+  }
 
   const body = (await response.json()) as Partial<JudgeResult> & { error?: string }
 

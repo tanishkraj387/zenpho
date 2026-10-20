@@ -1,32 +1,29 @@
-# React + TypeScript + Vite
+# Zenpho frontend and local judge
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Use two terminals in `frontend/` on the computer hosting the website. Docker Desktop must be installed and running in Linux-container mode.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+docker info
+docker pull python:3.12-alpine
+docker pull node:22-alpine
+npm run judge
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+In the second terminal:
+
+```powershell
+npm run dev -- --host 0.0.0.0
+```
+
+Open the URL shown by Vite. A browser on another device needs access to both the website port and TCP port 8787 on the host computer. The frontend uses the website hostname and port 8787 for the judge by default. Set `VITE_JUDGE_URL` only if the judge runs on a different host; restart Vite after changing a `VITE_` setting.
+
+`npm run judge` starts an HTTP server, not a persistent Docker container. Each Run or Submit request creates a short-lived container, and `--rm` removes it after the tests finish. If `docker info` fails, start Docker Desktop and retry before submitting. If the browser reports that it cannot reach the judge, check the host address, port 8787, and the host firewall.
+
+To check the full Python judging path, leave `npm run judge` running and use a third terminal in `frontend/`:
+
+```powershell
+npm run judge:check
+```
+
+This submits a known-good two-sum solution to the local judge and reports each checkpoint. It does not save player progress or grant rewards.

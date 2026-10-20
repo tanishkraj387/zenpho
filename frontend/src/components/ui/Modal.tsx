@@ -8,12 +8,13 @@ type ModalProps = {
   isOpen: boolean
   title: string
   onClose: () => void
+  showCloseButton?: boolean
 }
 
 const focusableSelector =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
 
-export function Modal({ children, isOpen, onClose, title }: ModalProps) {
+export function Modal({ children, isOpen, onClose, title, showCloseButton = true }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,9 +78,7 @@ export function Modal({ children, isOpen, onClose, title }: ModalProps) {
         <PixelCard title={title}>
           <div className="space-y-4">
             {children}
-            <PixelButton onClick={onClose} variant="secondary">
-              Close
-            </PixelButton>
+            {showCloseButton ? <PixelButton onClick={onClose} variant="secondary">Close</PixelButton> : null}
           </div>
         </PixelCard>
       </div>

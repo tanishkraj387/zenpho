@@ -41,8 +41,8 @@ type BattleState = {
   enqueueEvents: (events: BattleEvent[], tests?: Record<TestGroupState['id'], TestGroupState['state']>) => void
   playNextEvent: () => void
   finishCurrentEvent: () => void
-  useBagItem: (item: 'potion' | 'shield' | 'revive') => void
   resetBattle: (dialogText: string) => void
+  setPlayerHp: (value: number, max: number) => void
   setJudging: () => void
 }
 
@@ -137,6 +137,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       victoryRewards: null,
     })
   },
+  setPlayerHp: (value, max) => set({
+    playerHp: Math.max(0, Math.min(max, value)),
+    playerMaxHp: max,
+  }),
   enqueueEvents: (events, tests) => {
     window.clearTimeout(eventTimer)
     set((state) => ({
@@ -188,24 +192,5 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           : 'idle',
     }))
     get().playNextEvent()
-  },
-  useBagItem: (item) => {
-    if (item === 'potion') {
-      set((state) => ({
-        playerHp: Math.min(state.playerMaxHp, state.playerHp + 25),
-        dialogText: 'Potion restored 25 HP.',
-      }))
-      return
-    }
-
-    if (item === 'shield') {
-      set({ dialogText: 'Shield is ready. It would reduce the next hit in a real battle.' })
-      return
-    }
-
-    set((state) => ({
-      playerHp: state.playerHp <= 0 ? Math.floor(state.playerMaxHp / 2) : state.playerHp,
-      dialogText: state.playerHp <= 0 ? 'Revive brought you back!' : 'Revive has no effect right now.',
-    }))
   },
 }))

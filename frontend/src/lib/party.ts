@@ -6,18 +6,24 @@ export type PlayerPartyMember = PokemonSpecies & {
   isStarter: boolean
   level: number
   xp: number
+  currentHp: number
+  maxHp: number
+  slot: number
 }
 
 function fallbackParty(): PlayerPartyMember[] {
   return starterPokemonIds
     .map((id) => getPokemonById(id))
     .filter((pokemon): pokemon is PokemonSpecies => Boolean(pokemon))
-    .map((pokemon) => ({
+    .map((pokemon, index) => ({
       ...pokemon,
       creatureId: `fallback-${pokemon.id}`,
       isStarter: true,
       level: 5,
       xp: 0,
+      currentHp: 100,
+      maxHp: 100,
+      slot: index + 1,
     }))
 }
 
@@ -28,7 +34,7 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
 
   const { data, error } = await supabase
     .from('party_slots')
-    .select('slot,player_creatures(id,pokemon_id,level,xp,is_starter)')
+    .select('slot,player_creatures(id,pokemon_id,level,xp,is_starter,current_hp,max_hp)')
     .eq('user_id', userId)
     .order('slot', { ascending: true })
 
@@ -54,17 +60,20 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
           isStarter: creature.is_starter,
           level: creature.level,
           xp: creature.xp,
+          currentHp: creature.current_hp,
+          maxHp: creature.max_hp,
+          slot: slot.slot,
         }
       })
       .filter((pokemon): pokemon is PlayerPartyMember => Boolean(pokemon)) ?? []
 
-  if (slottedParty.length > 0) {
+  if ((data?.length ?? 0) > 0) {
     return slottedParty
   }
 
   const fallbackResult = await supabase
     .from('player_creatures')
-    .select('id,pokemon_id,level,xp,is_starter,caught_at')
+    .select('id,pokemon_id,level,xp,is_starter,current_hp,max_hp,caught_at')
     .eq('user_id', userId)
     .order('is_starter', { ascending: false })
     .order('caught_at', { ascending: true })
@@ -76,7 +85,7 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
 
   const party =
     fallbackResult.data
-      ?.map((creature) => {
+      ?.map((creature, index) => {
         const pokemon = getPokemonById(creature.pokemon_id)
 
         if (!pokemon) {
@@ -89,9 +98,57 @@ export async function getPlayerParty(userId: string): Promise<PlayerPartyMember[
           isStarter: creature.is_starter,
           level: creature.level,
           xp: creature.xp,
+          currentHp: creature.current_hp,
+          maxHp: creature.max_hp,
+          slot: index + 1,
         }
       })
       .filter((pokemon): pokemon is PlayerPartyMember => Boolean(pokemon)) ?? []
 
-  return party.length > 0 ? party : fallbackParty()
+  return party
+}
+
+export async function getOwnedCreatures(userId: string): Promise<PlayerPartyMember[]> {
+  if (!isSupabaseConfigured) return fallbackParty()
+
+  const { data, error } = await supabase
+    .from('player_creatures')
+    .select('id,pokemon_id,level,xp,is_starter,current_hp,max_hp,caught_at')
+    .eq('user_id', userId)
+    .order('caught_at', { ascending: true })
+
+  if (error) throw error
+
+  return (data ?? []).flatMap((creature) => {
+    const pokemon = getPokemonById(creature.pokemon_id)
+    return pokemon ? [{
+      ...pokemon,
+      creatureId: creature.id,
+      isStarter: creature.is_starter,
+      level: creature.level,
+      xp: creature.xp,
+      currentHp: creature.current_hp,
+      maxHp: creature.max_hp,
+      slot: 0,
+    }] : []
+  })
+}
+
+export async function setPartySlot(slot: number, creatureId: string | null) {
+  if (!isSupabaseConfigured) throw new Error('Party editing requires a connected account.')
+  const { error } = await supabase.rpc('set_party_slot', {
+    p_slot: slot,
+    p_creature_id: creatureId,
+  })
+  if (error) throw error
+}
+
+export async function applyHealingItem(creatureId: string, itemKey: string): Promise<number> {
+  if (!isSupabaseConfigured) throw new Error('Healing requires a connected account.')
+  const { data, error } = await supabase.rpc('use_healing_item', {
+    p_creature_id: creatureId,
+    p_item_key: itemKey,
+  })
+  if (error) throw error
+  return Number(data)
 }

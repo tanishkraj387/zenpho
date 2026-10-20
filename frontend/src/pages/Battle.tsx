@@ -23,6 +23,7 @@ import { loadMoveAnimation, prepareBattleScene } from '../lib/pokerogueAnimation
 import { loadPokemonSprite } from '../lib/pokeroguePokemonSprites'
 import { TypeBadge, type TopicType as BadgeTopicType } from '../components/ui/TypeBadge'
 import { useBattleQuestion } from '../hooks/useBattleQuestion'
+import { useCollectionEntries } from '../hooks/useCollectionEntries'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import { usePlayerParty } from '../hooks/usePlayerParty'
 import { useShopSummary } from '../hooks/useShopSummary'
@@ -37,23 +38,23 @@ import { judgeCode, type JudgeDiagnostic, type JudgeResult } from '../lib/judge'
 import { getItemSprite, type ItemSpriteName } from '../lib/sprites'
 import { useAudioStore } from '../lib/audio'
 import { catchPokemon } from '../lib/collection'
+import { applyHealingItem } from '../lib/party'
 import { markQuestionSolvedLocally } from '../lib/progress'
 import {
   recordBattleResult,
   spendBattleEnergy,
   startBattleAttempt,
+  takeBattleAction,
   type BattleAttemptStatus,
   type TestGroupStatus,
 } from '../lib/battleAttempts'
 import { getPokemonById } from '../lib/pokemon'
 import {
-  chooseEnemyMove,
   getBattleMovesForPokemon,
   getEffectiveness,
-  resolveMove,
   type BattleMove,
 } from '../lib/pokemonBattle'
-import { type BattleEvent, useBattleStore } from '../store/battleStore'
+import { useBattleStore } from '../store/battleStore'
 
 type BallItem = {
   id: Extract<ItemSpriteName, 'poke-ball' | 'great-ball' | 'ultra-ball' | 'master-ball'>
@@ -152,11 +153,13 @@ export function Battle() {
   const playerParty = usePlayerParty()
   const shopSummary = useShopSummary()
   const solvedQuestions = useSolvedQuestions()
+  const collectionEntries = useCollectionEntries()
   const encounter = battleQuestion.data!
   const partyPokemon = useMemo(() => {
     return playerParty.data ?? []
   }, [playerParty.data])
   const [activePokemonId, setActivePokemonId] = useState<number | null>(null)
+  const [activeCreatureId, setActiveCreatureId] = useState<string | null>(null)
   useEffect(() => {
     for (const pokemon of partyPokemon) void loadPokemonSprite(pokemon.id, true).catch(() => undefined)
   }, [partyPokemon])
@@ -177,6 +180,9 @@ export function Battle() {
   const [language, setLanguage] = useState<CodeLanguage>('python')
   const [code, setCode] = useState(encounter.question.starterCode.python)
   const [isBagOpen, setIsBagOpen] = useState(false)
+  const [selectedHealingItem, setSelectedHealingItem] = useState<string | null>(null)
+  const [isActionPending, setIsActionPending] = useState(false)
+  const [needsForcedSwitch, setNeedsForcedSwitch] = useState(false)
   const [isBattleCollapsed, setIsBattleCollapsed] = useState(false)
   const [activeProblemTab, setActiveProblemTab] = useState<'description' | 'hints'>('description')
   const [activeResultTab, setActiveResultTab] = useState<'results' | 'log'>('results')
@@ -189,8 +195,8 @@ export function Battle() {
   const [isStartingFight, setIsStartingFight] = useState(false)
   const [isSolveRecording, setIsSolveRecording] = useState(false)
   const [isBattleScreenOpen, setIsBattleScreenOpen] = useState(false)
+  const [showFightPrompt, setShowFightPrompt] = useState(false)
   const [battleCommandMenu, setBattleCommandMenu] = useState<BattleCommandMenu>('root')
-  const [encounterTurn, setEncounterTurn] = useState(0)
   const [catchError, setCatchError] = useState('')
   const [battleAttemptError, setBattleAttemptError] = useState('')
   const [judgeError, setJudgeError] = useState('')
@@ -225,18 +231,20 @@ export function Battle() {
     playerHp,
     playerMaxHp,
     resetBattle,
+    setPlayerHp,
     setJudging,
     tests,
-    useBagItem: applyBagItem,
-    victoryRewards,
   } = useBattleStore()
 
   const isLocked = phase === 'judging' || phase === 'animating'
   const isSolved = Boolean(solveReward)
   const isQuestionAlreadySolved = (solvedQuestions.data ?? []).includes(encounter.question.id)
+  const isPokemonCaught = collectionEntries.data?.[encounter.pokemon.id]?.status === 'caught'
+  const canCatchPokemon = !collectionEntries.isLoading && !collectionEntries.isError && !isPokemonCaught
   const isSolvedStateLoading = solvedQuestions.isLoading
   const canUseEncounterMove =
-    isSolved && hasEncounterStarted && isBattleScreenOpen && phase !== 'won' && phase !== 'lost' && !isLocked
+    isSolved && hasEncounterStarted && isBattleScreenOpen && phase !== 'won' && phase !== 'lost' && !isLocked && !isActionPending && !needsForcedSwitch && playerHp > 0
+  const canSwitchPokemon = isSolved && hasEncounterStarted && isBattleScreenOpen && phase !== 'won' && phase !== 'lost' && !isLocked && !isActionPending
   const playerMoves = useMemo(() => getBattleMovesForPokemon(playerPokemon), [playerPokemon])
   const ownedItems = useMemo(() => {
     return new Map(shopSummary.data?.items.map((item) => [item.itemKey, item.owned]) ?? [])
@@ -250,19 +258,8 @@ export function Battle() {
     [ownedItems],
   )
   const bagItems = useMemo(
-    () => [
-      {
-        id: 'potion' as const,
-        label: `Potion x${ownedItems.get('potion') ?? 0}`,
-        note: 'Restore 25 HP.',
-      },
-      {
-        id: 'revive' as const,
-        label: `Revive x${ownedItems.get('revive') ?? 0}`,
-        note: 'Works only at 0 HP.',
-      },
-    ],
-    [ownedItems],
+    () => (shopSummary.data?.items ?? []).filter((item) => item.category === 'healing'),
+    [shopSummary.data?.items],
   )
 
   useEffect(() => {
@@ -272,8 +269,8 @@ export function Battle() {
   }, [phase])
 
   useEffect(() => {
-    if (!activePokemonId && partyPokemon[0]) {
-      setActivePokemonId(partyPokemon[0].id)
+    if (!activePokemonId && partyPokemon.length > 0) {
+      setActivePokemonId((partyPokemon.find((pokemon) => pokemon.currentHp > 0) ?? partyPokemon[0]).id)
     }
   }, [activePokemonId, partyPokemon])
 
@@ -373,7 +370,10 @@ export function Battle() {
         setIsRematch(rematch)
         setSolveReward(rematch ? { ...result.rewards, coins: 0, trainerXp: 0, partyXp: 0, energy: 0 } : result.rewards)
         setHasEncounterStarted(false)
-        transition(() => setIsBattleScreenOpen(false), 'Question solved!')
+        transition(() => {
+          setIsBattleScreenOpen(true)
+          setShowFightPrompt(true)
+        }, 'Question solved!')
         setIsBattleCollapsed(false)
         setBattleCommandMenu('root')
       }
@@ -428,8 +428,11 @@ export function Battle() {
     setIsRematch(false)
     setHasEncounterStarted(false)
     setIsBattleScreenOpen(false)
+    setShowFightPrompt(false)
     setBattleCommandMenu('root')
-    setEncounterTurn(0)
+    setNeedsForcedSwitch(false)
+    setActiveCreatureId(null)
+    setActivePokemonId(null)
     setBattleAttemptError('')
     setJudgeError('')
     setJudgeDiagnostics([])
@@ -456,6 +459,12 @@ export function Battle() {
     playPokemonCry,
     resetBattle,
   ])
+
+  useEffect(() => {
+    if (hasEncounterStarted) return
+    const member = partyPokemon.find((pokemon) => pokemon.id === activePokemonId)
+    if (member) setPlayerHp(member.currentHp, member.maxHp)
+  }, [activePokemonId, hasEncounterStarted, partyPokemon, setPlayerHp])
 
   function updateLanguage(nextLanguage: CodeLanguage) {
     setLanguage(nextLanguage)
@@ -508,56 +517,6 @@ export function Battle() {
     }
   }
 
-  function getEnemyTurnEvents(turn: number) {
-    const enemyMove = chooseEnemyMove(encounter.pokemon, playerPokemon, turn)
-    const enemyOutcome = resolveMove({
-      attacker: encounter.pokemon,
-      defender: playerPokemon,
-      move: enemyMove,
-      seed: `${encounter.question.id}-enemy`,
-      turn,
-    })
-    const dealtDamage = enemyOutcome.hit
-      ? Math.max(0, Math.round(enemyOutcome.damage * 0.7))
-      : 0
-    const nextPlayerHp = Math.max(0, playerHp - dealtDamage)
-    const events: BattleEvent[] = [
-      {
-        type: 'enemy_attack',
-        text: `${encounter.pokemon.name} used ${enemyMove.name}!`,
-        animationId: moveAnimationId(enemyMove.name),
-      },
-    ]
-    if (dealtDamage > 0) {
-      events.push({
-        type: 'player_hit',
-        text: enemyOutcome.message,
-        damage: dealtDamage,
-        critical: enemyOutcome.critical,
-        effectiveness: enemyOutcome.effectiveness,
-      })
-      events.push({
-        type: 'player_hp',
-        value: nextPlayerHp,
-        text: nextPlayerHp <= 0
-          ? `${playerPokemon.name} cannot continue.`
-          : `${playerPokemon.name} took ${dealtDamage} damage.`,
-      })
-    } else {
-      events.push({ type: 'text', text: enemyOutcome.message })
-    }
-
-    if (nextPlayerHp <= 0) {
-      events.push({ type: 'defeat', text: 'Your party fainted. Solve another question to recover.' })
-      void recordCurrentBattleResult(
-        { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
-        'defeat',
-      )
-    }
-
-    return events
-  }
-
   function startEncounterFight() {
     if (!solveReward || isLocked || isStartingFight) {
       return
@@ -568,109 +527,108 @@ export function Battle() {
     void (async () => {
       try {
         if (!battleAttemptId) throw new Error('The battle attempt is still being prepared. Try again in a moment.')
-        await prepareBattleScene(playerPokemon.id, encounter.pokemon.id)
+        const freshParty = await playerParty.refetch()
+        const lead = freshParty.data?.find((pokemon) => pokemon.currentHp > 0)
+        if (!lead) throw new Error('No healthy Pokemon is available in your party. Use a Revive first.')
+        await prepareBattleScene(lead.id, encounter.pokemon.id)
         const remainingEnergy = await spendBattleEnergy(battleAttemptId)
         if (remainingEnergy === null) {
           throw new Error('Sign in to spend energy and start this battle.')
         }
+        setActivePokemonId(lead.id)
+        setActiveCreatureId(lead.creatureId)
+        setPlayerHp(lead.currentHp, lead.maxHp)
         setHasEncounterStarted(true)
-        transition(() => setIsBattleScreenOpen(true), 'Entering the arena')
-        playPokemonCry(playerPokemon.id)
+        setShowFightPrompt(false)
+        setIsBattleScreenOpen(true)
+        playPokemonCry(lead.id)
         setBgmScene('battle')
         enqueueEvents([
-          { type: 'text', text: `${playerPokemon.name} stepped forward. 1 energy was spent to enter this battle; ${remainingEnergy} remains.` },
+          { type: 'text', text: `${lead.name} stepped forward. 1 energy was spent to enter this battle; ${remainingEnergy} remains.` },
           { type: 'text', text: `${encounter.pokemon.name} is ready to battle.` },
         ])
         void queryClient.invalidateQueries({ queryKey: ['player-summary'] })
       } catch (error) {
         setBattleAttemptError(battleErrorMessage(error, 'Could not start the battle.'))
+        setShowFightPrompt(true)
       } finally {
         setIsStartingFight(false)
       }
     })()
   }
 
-  function performEncounterMove(move: BattleMove) {
-    if (!canUseEncounterMove) {
-      enqueueEvents([
-        {
-          type: 'text',
-          text: 'The encounter is not ready yet.',
-        },
+  async function runBattleAction(action: 'move' | 'switch' | 'item', options: {
+    moveName?: string
+    creatureId?: string
+    itemKey?: string
+  } = {}) {
+    if (!battleAttemptId || isActionPending) return
+    setIsActionPending(true)
+    setBattleAttemptError('')
+    try {
+      const result = await takeBattleAction({ attemptId: battleAttemptId, action, ...options })
+      if (action === 'switch') {
+        const nextPokemon = partyPokemon.find((pokemon) => pokemon.creatureId === result.activeCreatureId)
+        if (nextPokemon) setPendingSwitchPokemonId(nextPokemon.id)
+        setActiveCreatureId(result.activeCreatureId)
+      }
+      setNeedsForcedSwitch(result.needsSwitch)
+      setBattleCommandMenu('root')
+      setIsBagOpen(false)
+      setSelectedHealingItem(null)
+      enqueueEvents(result.events)
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+        queryClient.invalidateQueries({ queryKey: ['owned-creatures'] }),
+        queryClient.invalidateQueries({ queryKey: ['shop-summary'] }),
       ])
-      return
+      if (result.outcome) {
+        await recordCurrentBattleResult(
+          { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
+          result.outcome === 'won' ? 'victory' : 'defeat',
+        )
+      }
+    } catch (error) {
+      const message = battleErrorMessage(error, 'Battle action failed.')
+      setBattleAttemptError(message)
+      enqueueEvents([{ type: 'text', text: message }])
+    } finally {
+      setIsActionPending(false)
     }
-
-    const playerOutcome = resolveMove({
-      attacker: playerPokemon,
-      defender: encounter.pokemon,
-      move,
-      seed: encounter.question.id,
-      turn: encounterTurn,
-    })
-    const nextEnemyHp = Math.max(0, enemyHp - playerOutcome.damage)
-    const events: BattleEvent[] = [
-      { type: 'player_attack', text: `${playerPokemon.name} used ${move.name}!`, animationId: moveAnimationId(move.name) },
-    ]
-    if (playerOutcome.hit && playerOutcome.damage > 0) {
-      events.push({
-        type: 'enemy_hit',
-        text: playerOutcome.message,
-        damage: playerOutcome.damage,
-        critical: playerOutcome.critical,
-        effectiveness: playerOutcome.effectiveness,
-      })
-    } else {
-      events.push({ type: 'text', text: playerOutcome.message })
-    }
-    events.push({
-      type: 'enemy_hp',
-      value: nextEnemyHp,
-      text: `${encounter.pokemon.name} has ${nextEnemyHp} HP remaining.`,
-    })
-
-    if (nextEnemyHp <= 0) {
-      events.push(
-        { type: 'enemy_faint', text: `${encounter.pokemon.name} is weak enough to catch.` },
-        {
-          type: 'victory',
-          text: `${playerPokemon.name}'s team won the encounter. Throw a ball!`,
-          rewards: { xp: solveReward?.partyXp ?? 0, coins: solveReward?.coins ?? 0 },
-        },
-      )
-      void recordCurrentBattleResult(
-        { samples: 'passed', hidden: 'passed', efficiency: 'passed' },
-        'victory',
-      )
-    } else {
-      events.push(...getEnemyTurnEvents(encounterTurn))
-    }
-
-    setEncounterTurn((turn) => turn + 1)
-    setBattleCommandMenu('root')
-    enqueueEvents(events)
   }
 
-  function switchPokemon(nextPokemonId: number) {
-    if (!canUseEncounterMove || nextPokemonId === playerPokemon.id) {
-      setBattleCommandMenu('root')
+  function performEncounterMove(move: BattleMove) {
+    if (!canUseEncounterMove) return
+    void runBattleAction('move', { moveName: move.name })
+  }
+
+  function switchPokemon(creatureId: string) {
+    const nextPokemon = partyPokemon.find((pokemon) => pokemon.creatureId === creatureId)
+    if (!canSwitchPokemon || !nextPokemon || nextPokemon.currentHp <= 0 || creatureId === activeCreatureId) return
+    void runBattleAction('switch', { creatureId })
+  }
+
+  async function healPokemon(creatureId: string) {
+    if (!selectedHealingItem || isActionPending) return
+    if (hasEncounterStarted && phase !== 'won' && phase !== 'lost') {
+      await runBattleAction('item', { creatureId, itemKey: selectedHealingItem })
       return
     }
-
-    const nextPokemon = getPokemonById(nextPokemonId)
-
-    if (!nextPokemon) {
-      return
+    setIsActionPending(true)
+    try {
+      await applyHealingItem(creatureId, selectedHealingItem)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['player-party'] }),
+        queryClient.invalidateQueries({ queryKey: ['owned-creatures'] }),
+        queryClient.invalidateQueries({ queryKey: ['shop-summary'] }),
+      ])
+      setIsBagOpen(false)
+      setSelectedHealingItem(null)
+    } catch (error) {
+      setBattleAttemptError(battleErrorMessage(error, 'Could not use this item.'))
+    } finally {
+      setIsActionPending(false)
     }
-
-    setPendingSwitchPokemonId(nextPokemon.id)
-    setEncounterTurn((turn) => turn + 1)
-    setBattleCommandMenu('root')
-    enqueueEvents([
-      { type: 'switch_out', text: `Come back, ${playerPokemon.name}!` },
-      { type: 'switch_in', text: `Go, ${nextPokemon.name}!` },
-      ...getEnemyTurnEvents(encounterTurn),
-    ])
   }
 
   const resultRows = useMemo(
@@ -752,7 +710,7 @@ export function Battle() {
             ) : null}
             {isQuestionAlreadySolved ? (
               <p className="border-4 border-ink bg-hp-green p-3 text-lg text-cream">
-                Solved. Submit again to rematch this Pokemon. Rematches give no coins, XP, or catch.
+                Solved. Submit again to rematch this Pokemon. Rematches give no coins or XP, but you can catch it if you do not own it yet.
               </p>
             ) : null}
             <p className="leading-relaxed">{encounter.question.description}</p>
@@ -802,8 +760,11 @@ export function Battle() {
               ) : null}
 
               {solveReward && !hasEncounterStarted ? (
-                <PixelButton disabled={isLocked || isStartingFight || isSolveRecording} onClick={startEncounterFight}>
-                  {isStartingFight ? 'Opening gates...' : 'Start Pokemon Fight · 1 energy'}
+                <PixelButton disabled={isLocked || isStartingFight || isSolveRecording} onClick={() => transition(() => {
+                  setIsBattleScreenOpen(true)
+                  setShowFightPrompt(true)
+                }, 'Entering the arena')}>
+                  Go to Battle
                 </PixelButton>
               ) : null}
 
@@ -973,6 +934,7 @@ export function Battle() {
           </button>
           <button
             className="pixel-focus min-h-12 border-4 border-ink bg-cream p-2 text-left font-heading text-[10px] hover:bg-warning"
+            disabled={!canUseEncounterMove}
             onClick={() => setIsBagOpen(true)}
             type="button"
           >
@@ -980,7 +942,7 @@ export function Battle() {
           </button>
           <button
             className="pixel-focus min-h-12 border-4 border-ink bg-cream p-2 text-left font-heading text-[10px] hover:bg-warning"
-            disabled={!canUseEncounterMove}
+            disabled={!canSwitchPokemon}
             onClick={() => setBattleCommandMenu('pokemon')}
             type="button"
           >
@@ -1031,9 +993,9 @@ export function Battle() {
           {partyPokemon.map((pokemon) => (
             <button
               className="pixel-focus grid min-h-[76px] grid-cols-[44px_1fr] items-center gap-2 border-4 border-ink bg-cream p-2 text-left hover:bg-warning disabled:opacity-60"
-              disabled={!canUseEncounterMove}
+              disabled={!canSwitchPokemon || pokemon.currentHp === 0 || pokemon.creatureId === activeCreatureId}
               key={pokemon.id}
-              onClick={() => switchPokemon(pokemon.id)}
+              onClick={() => switchPokemon(pokemon.creatureId)}
               type="button"
             >
               <Sprite
@@ -1045,7 +1007,7 @@ export function Battle() {
               <span>
                 <span className="block font-heading text-[10px]">{pokemon.name}</span>
                 <span className="text-lg">
-                  {pokemon.id === playerPokemon.id ? 'Active' : 'Ready'}
+                  {pokemon.currentHp === 0 ? 'Fainted' : pokemon.creatureId === activeCreatureId ? 'Active' : 'Ready'} · {pokemon.currentHp}/{pokemon.maxHp} HP
                 </span>
               </span>
             </button>
@@ -1093,6 +1055,7 @@ export function Battle() {
   }
 
   async function startCatch(ball: BallItem) {
+    if (!canCatchPokemon || !isWinRecorded) return
     setSelectedBall(ball)
     setCatchError('')
     setIsOutcomeModalDismissed(true)
@@ -1148,7 +1111,9 @@ export function Battle() {
     <main className={`flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-sky font-pixel text-ink ${isBattleScreenOpen ? '' : 'max-[899px]:h-auto max-[899px]:overflow-auto'}`}>
       <AppHeader
         coins={playerSummary.data?.coins ?? 0}
-        onBag={() => setIsBagOpen(true)}
+        onBag={() => {
+          if (!hasEncounterStarted || canUseEncounterMove || phase === 'won' || phase === 'lost') setIsBagOpen(true)
+        }}
         onHint={isLocked ? undefined : showHint}
         showBattleActions
       />
@@ -1249,41 +1214,71 @@ export function Battle() {
         )}
       </section>
 
-      <Modal isOpen={isBagOpen} onClose={() => setIsBagOpen(false)} title="Bag">
-        <div className="grid gap-3">
-          {bagItems.map((item) => {
-            const count =
-              ownedItems.get(item.id) ?? 0
-
-            return (
-            <button
-              className="pixel-focus border-4 border-ink bg-cream p-3 text-left hover:bg-warning"
-              disabled={count <= 0}
-              key={item.id}
-              onClick={() => {
-                applyBagItem(item.id)
-                setIsBagOpen(false)
-              }}
-              type="button"
-            >
-              <span className="block font-heading text-[10px]">{item.label}</span>
-              <span className="text-xl">{item.note}</span>
+      <Modal isOpen={isBagOpen} onClose={() => { setIsBagOpen(false); setSelectedHealingItem(null) }} title="Bag">
+        {battleAttemptError ? <p role="alert" className="text-danger">{battleAttemptError}</p> : null}
+        {!selectedHealingItem ? <div className="grid gap-3">
+          {bagItems.map((item) => <button
+            className="pixel-focus border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-50"
+            disabled={item.owned <= 0 || isActionPending}
+            key={item.itemKey}
+            onClick={() => setSelectedHealingItem(item.itemKey)}
+            type="button"
+          ><span className="block font-heading text-[10px]">{item.name} · {item.owned}</span><span className="text-xl">{item.effect}</span></button>)}
+        </div> : <div className="grid gap-3">
+          <p>Use {bagItems.find((item) => item.itemKey === selectedHealingItem)?.name} on:</p>
+          {partyPokemon.map((pokemon) => {
+            const isRevive = selectedHealingItem === 'revive' || selectedHealingItem === 'max-revive'
+            const canHeal = isRevive ? pokemon.currentHp === 0 : pokemon.currentHp > 0 && pokemon.currentHp < pokemon.maxHp
+            return <button className="pixel-focus border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-50"
+              disabled={!canHeal || isActionPending} key={pokemon.creatureId}
+              onClick={() => void healPokemon(pokemon.creatureId)} type="button">
+              {pokemon.name} · {pokemon.currentHp}/{pokemon.maxHp} HP
             </button>
-            )
           })}
+          <PixelButton onClick={() => setSelectedHealingItem(null)} variant="secondary">Back to items</PixelButton>
+        </div>}
+      </Modal>
+
+      <Modal isOpen={needsForcedSwitch && phase !== 'animating' && phase !== 'lost'} onClose={() => undefined} showCloseButton={false} title="Choose your next Pokemon">
+        <p>Your active Pokemon fainted. Pick a healthy party member to keep fighting.</p>
+        {battleAttemptError ? <p role="alert" className="text-danger">{battleAttemptError}</p> : null}
+        <div className="grid gap-2">{partyPokemon.filter((pokemon) => pokemon.currentHp > 0 && pokemon.creatureId !== activeCreatureId).map((pokemon) =>
+          <button className="pixel-focus border-4 border-ink bg-cream p-3 text-left hover:bg-warning disabled:opacity-50"
+            disabled={isActionPending} key={pokemon.creatureId} onClick={() => switchPokemon(pokemon.creatureId)} type="button">
+            {pokemon.name} · {pokemon.currentHp}/{pokemon.maxHp} HP
+          </button>)}</div>
+      </Modal>
+
+      <Modal
+        isOpen={showFightPrompt && !isLocked}
+        onClose={() => navigate('/hub')}
+        title="Question solved"
+      >
+        <div className="space-y-4">
+          <p className="text-xl">Your solution passed every checkpoint. Fight {encounter.pokemon.name} for 1 energy?</p>
+          {isRematch ? <p className="text-lg">This rematch gives no coins or XP. {isPokemonCaught ? 'You already own this Pokemon.' : 'You can catch this Pokemon if you win.'}</p> : null}
+          {battleAttemptError ? <p className="border-4 border-danger bg-white p-3 text-danger" role="alert">{battleAttemptError}</p> : null}
+          <div className="flex flex-wrap justify-center gap-3">
+            <PixelButton disabled={isStartingFight || !battleAttemptId} onClick={startEncounterFight}>
+              {isStartingFight ? 'Opening gates...' : 'Fight · 1 energy'}
+            </PixelButton>
+            <PixelButton onClick={() => navigate('/hub')} variant="secondary">Back to Hub</PixelButton>
+          </div>
         </div>
       </Modal>
 
       <Modal
-        isOpen={phase === 'won' && Boolean(victoryRewards) && !isOutcomeModalDismissed}
+        isOpen={phase === 'won' && !isOutcomeModalDismissed}
         onClose={() => setIsOutcomeModalDismissed(true)}
         title={isRematch ? 'Rematch complete' : 'Victory'}
       >
         <div className="space-y-4">
-          <p className="text-xl">{isRematch ? `You fought ${encounter.pokemon.name} again. Rematches give no coins, XP, or catch.` : `${encounter.pokemon.name} is weak enough to catch.`}</p>
-          {!isRematch ? <p className="font-heading text-xs leading-relaxed">{victoryRewards?.xp} XP / {victoryRewards?.coins} coins</p> : null}
+          <p className="text-xl">{isPokemonCaught ? `You already own ${encounter.pokemon.name}.` : `${encounter.pokemon.name} is weak enough to catch.`}</p>
+          {isRematch ? <p className="text-lg">Rematches give no coins or XP.</p> : null}
+          {collectionEntries.isError ? <p role="alert" className="text-lg">Could not check your collection. Try again shortly.</p> : null}
+          {!isRematch && isWinRecorded ? <p className="font-heading text-xs leading-relaxed">Victory rewards credited to your trainer and party.</p> : null}
           <div className="flex justify-center">
-            {!isRematch ? <PixelButton
+            {canCatchPokemon ? <PixelButton
               disabled={!isWinRecorded}
               onClick={() => {
                 if (!isWinRecorded) {

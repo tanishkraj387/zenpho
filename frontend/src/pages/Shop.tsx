@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { AppHeader } from '../components/auth/AppHeader'
@@ -42,16 +42,12 @@ export function Shop() {
   }
   const shopItems = summary?.items ?? []
   const message = shopSummary.isError
-    ? 'Shop is using empty fallback data until Supabase shop tables are reachable.'
-    : purchaseMessage || 'Inventory, purchases, and balances are controlled by Supabase.'
+    ? 'Shop inventory could not be loaded. Please refresh and try again.'
+    : purchaseMessage || 'Potions restore HP; Revives bring fainted Pokemon back for your next battle.'
 
-  const filteredItems = useMemo(
-    () =>
-      activeCategory === 'all'
-        ? shopItems
-        : shopItems.filter((item) => item.category === activeCategory),
-    [activeCategory],
-  )
+  const filteredItems = activeCategory === 'all'
+    ? shopItems
+    : shopItems.filter((item) => item.category === activeCategory)
 
   async function buyItem(item: ShopItem) {
     setPurchaseMessage('')
@@ -87,8 +83,8 @@ export function Shop() {
                 Stock up before the next route
               </h1>
               <p className="max-w-3xl text-xl leading-relaxed">
-                Spend coins on balls and battle items. The backend owns
-                inventory, purchases, and balances.
+                Spend coins on balls and healing items. Revive fainted Pokemon
+                from your party screen, or use items during a battle.
               </p>
             </div>
             <Link to="/hub">
@@ -110,7 +106,7 @@ export function Shop() {
               <article className="border-4 border-ink bg-white p-4 shadow-[4px_4px_0_#1a1c2c]">
                 <XPBar current={energy.current} label="Energy" max={energy.max} />
                 <p className="mt-3 text-xl">
-                  Energy drains from runs, submits, and harder encounters.
+                  Each battle costs 1 energy. Solving a new question earns 1 energy.
                 </p>
               </article>
             </div>

@@ -6,7 +6,8 @@ This guide is a reproducible blueprint for rebuilding and operating Zenpho. It d
 | --- | --- |
 | [1. Architecture and concepts](01-architecture-and-concepts.md) | Why the browser, judge, Docker, and Supabase are separate; state ownership and request flow |
 | [2. Local setup](02-local-setup.md) | Exact commands for hosted or local Supabase, env files, judge, Vite, and another device |
-| [3. Build from scratch](03-build-from-scratch.md) | Ordered manual implementation plan from an empty Vite project through a complete game |
+| [3. Build from scratch](03-build-from-scratch.md) | Ordered manual implementation plan from an empty Vite project through a complete game; links to the detailed beginner course |
+| [Beginner build course and source companion](from-scratch/README.md) | Plain-language lessons, copyable full text source, and an explanation of every project file |
 | [4. Database and authentication](04-database-and-auth.md) | Tables, RLS, migrations, RPCs, signup bootstrap, confirmation, and persistence |
 | [5. Judge and battle](05-judge-and-battle.md) | Code contracts, test groups, Docker execution, energy, party combat, catches, and rewards |
 | [6. Frontend and assets](06-frontend-and-assets.md) | Routes, React state layers, loading gates, sprites, effects, audio, and licensing |
@@ -15,7 +16,7 @@ This guide is a reproducible blueprint for rebuilding and operating Zenpho. It d
 ## How to use this guide
 
 - **I want to run the repo:** Follow [local setup](02-local-setup.md), then [verification](07-verification-deployment-and-troubleshooting.md).
-- **I want to build it myself:** Read [architecture](01-architecture-and-concepts.md), then follow every checkpoint in [build from scratch](03-build-from-scratch.md). Keep the database and judge chapters beside you for contracts and schema details.
+- **I want to build it myself:** If new to programming, begin with the [beginner course](from-scratch/README.md). Otherwise read [architecture](01-architecture-and-concepts.md), then follow every checkpoint in [build from scratch](03-build-from-scratch.md). Keep the database and judge chapters beside you for contracts and schema details.
 - **I want to extend it:** Locate the relevant feature in the [repository map](../README.md#repository-map), read its current contract, add a new migration for database changes, and rerun the corresponding checks.
 - **I want to publish it:** First read [security and current limitations](07-verification-deployment-and-troubleshooting.md#security-and-current-limitations). A Vite build by itself is not a deployment of the judge or database.
 

@@ -1,6 +1,6 @@
 # 3. Rebuild Zenpho manually from an empty directory
 
-This is an implementation recipe, not an instruction to copy the existing code blindly. Follow the stages in order. Each stage names the files to create, the contract those files must satisfy, and a check before proceeding. The companion chapters give the full data model and request flows. The checked-in source is a reference implementation for details such as exact UI markup and every catalog row.
+This is an implementation recipe, not an instruction to copy the existing code blindly. Follow the stages in order. Each stage names the files to create, the contract those files must satisfy, and a check before proceeding. The companion chapters give the full data model and request flows. The checked-in source is a reference implementation for details such as exact UI markup and every catalog row. For a slower, first-time-programmer path with code examples and a full copyable text-source snapshot, follow the [beginner build course](from-scratch/README.md) and its [file atlas](from-scratch/file-atlas.md).
 
 ## Stage 0 — Set the rules before writing code
 

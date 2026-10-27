@@ -1,5 +1,7 @@
 # Battle presentation
 
+> **Historical implementation note:** The final section's client-side `resolveMove` limitation is outdated. Current combat turns use PostgreSQL `take_battle_action`; the browser-supplied checkpoint status limitation remains. See the [current battle guide](../docs/05-judge-and-battle.md).
+
 `LoadingGate` closes the gates before changing routes and opens them once the next
 screen is ready. `useGateTransition` applies the same transition inside the battle
 without unmounting the editor. Solved submissions display a success state before

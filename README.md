@@ -42,6 +42,8 @@ Open the address printed by Vite. To verify the entire Python judge path, use a 
 
 The [documentation index](docs/README.md) is the reading path for developers who want to recreate the project manually. It covers [architecture](docs/01-architecture-and-concepts.md), [setup](docs/02-local-setup.md), the [from-scratch build](docs/03-build-from-scratch.md), [database and auth](docs/04-database-and-auth.md), [judging and game rules](docs/05-judge-and-battle.md), [frontend and media](docs/06-frontend-and-assets.md), and [verification/deployment](docs/07-verification-deployment-and-troubleshooting.md). New programmers can follow the [beginner build course](docs/from-scratch/README.md), which explains the code and includes a copyable text-source companion.
 
+For the two project halves, read [Frontend concepts](docs/FRONTEND.md) and [Backend concepts](docs/BACKEND.md). The [presentation context brief](docs/PRESENTATION_CONTEXT.md) is a single file to hand to an agent making a slide deck.
+
 ## Repository map
 
 ```text

@@ -1,6 +1,15 @@
 # Zenpho developer guide
 
-This guide is a reproducible blueprint for rebuilding and operating Zenpho. It describes the **current repository at commit `689391c`** and distinguishes shipped behavior from recommended hardening. Read the pages in order if you are building from an empty directory; use the table below as a reference once the project is running.
+This guide is a reproducible blueprint for rebuilding and operating Zenpho. It describes the current repository and distinguishes shipped behavior from recommended hardening. Read the pages in order if you are building from an empty directory; use the table below as a reference once the project is running.
+
+## Choose a project half
+
+| Beginner guide | What it explains |
+| --- | --- |
+| [FRONTEND.md](FRONTEND.md) | Browser pages, React/TypeScript, routing, state, queries, editor, responsive UI, animation, and audio. |
+| [BACKEND.md](BACKEND.md) | Supabase Auth, PostgreSQL/RLS/functions, the Node/Docker judge, persistence, rewards, and security boundaries. |
+
+For an agent creating slides, give it the single [presentation context brief](PRESENTATION_CONTEXT.md). It summarizes the project and separates verified features from current limitations.
 
 | Guide | What you will learn and produce |
 | --- | --- |

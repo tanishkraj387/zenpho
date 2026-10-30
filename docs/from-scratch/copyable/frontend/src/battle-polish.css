@@ -1,0 +1,119 @@
+/* Close the gates before swapping scenes, then unlock and reveal. */
+.loading-gate .loading-gate__door { transition: transform 850ms cubic-bezier(.22,.8,.22,1); }
+.loading-gate .loading-gate__ball { animation-duration: 850ms; }
+.loading-gate.is-closing .loading-gate__door--left { animation: gate-close-left 480ms cubic-bezier(.4,0,.2,1) both; }
+.loading-gate.is-closing .loading-gate__door--right { animation: gate-close-right 480ms cubic-bezier(.4,0,.2,1) both; }
+.loading-gate.is-closing .loading-gate__ball,
+.loading-gate.is-closing::after { animation: gate-lock-in 480ms both; }
+.loading-gate__caption { position: absolute; z-index: 5; top: calc(50% + 110px); width: min(90%,480px); text-align: center; color: #172133; transition: opacity 200ms; }
+.loading-gate__caption p { margin: 0 0 12px; font-family: var(--font-heading); font-size: clamp(12px,2vw,18px); line-height: 1.7; }
+.loading-gate__caption span { font-size: 20px; }
+.loading-gate__track { width: 128px; height: 8px; margin: 22px auto; background: #a0b2c1; overflow: hidden; }
+.loading-gate__track i { display: block; height: 100%; width: 40%; background: #172133; animation: gate-progress 1s ease-in-out infinite alternate; }
+.loading-gate.is-opening .loading-gate__caption { opacity: 0; }
+.loading-gate.is-closing .loading-gate__caption { animation: gate-lock-in 480ms both; }
+@keyframes gate-close-left { from { transform: translateX(-105%); } to { transform: translateX(0); } }
+@keyframes gate-close-right { from { transform: translateX(105%); } to { transform: translateX(0); } }
+@keyframes gate-lock-in { 0%,65% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes gate-progress { to { transform: translateX(150%); } }
+
+/* Terrain, impact rings and pixel debris use the existing game palette. */
+.battle-arena { isolation: isolate; }
+.submission-resize-handle { touch-action: none; }
+.submission-resize-handle span { width: 44px; height: 4px; background: #f4efe1; }
+.submission-resize-handle:hover span, .submission-resize-handle:focus-visible span { background: #1a1c2c; }
+.battle-screen { display: grid; grid-template-rows: minmax(220px, 1fr) auto; min-height: 0; height: 100%; }
+.battle-screen .battle-screen__dialog { min-height: 0; padding: 12px; line-height: 1.25; }
+.battle-arena { background: #8fc2dc; }
+.battle-arena__backdrop, .battle-arena__terrain { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
+.battle-arena__backdrop { z-index: -2; image-rendering: pixelated; filter: saturate(.82); }
+.battle-arena__terrain { z-index: -1; image-rendering: pixelated; }
+.battle-arena__terrain--enemy { opacity: .98; }
+.battle-arena__combatant--enemy { right: 12%; top: 18%; }
+.battle-arena__combatant--player { left: 6%; bottom: 7%; }
+.battle-arena__combatant--enemy { animation: battle-enter-enemy 500ms cubic-bezier(.2,.8,.25,1) both; }
+.battle-arena__combatant--player { animation: battle-enter-player 550ms cubic-bezier(.2,.8,.25,1) both; }
+.battle-arena__info--enemy { animation: battle-info-enter-enemy 450ms steps(6,end) both; }
+.battle-arena__info--player { animation: battle-info-enter-player 450ms steps(6,end) both; }
+.battle-move-card { --move-accent: #a9bbca; box-shadow: inset 0 4px var(--move-accent); transition: transform 140ms, box-shadow 140ms; }
+.battle-move-card:not(:disabled):hover { transform: translateY(-3px); box-shadow: inset 0 4px var(--move-accent), 4px 4px 0 #1a1c2c; }
+.battle-move-card:not(:disabled):active { transform: translateY(1px); box-shadow: inset 0 4px var(--move-accent); }
+.battle-arena__info { z-index: 5; }
+.battle-move-card__type { flex: none; border: 2px solid #1a1c2c; background: var(--move-accent); padding: 2px 5px; font-size: 8px; }
+.battle-move-card--fire { --move-accent: #f3ae72; }
+.battle-move-card--water, .battle-move-card--ice { --move-accent: #91cbec; }
+.battle-move-card--electric { --move-accent: #f5d66d; }
+.battle-move-card--grass, .battle-move-card--bug { --move-accent: #a9d779; }
+.battle-move-card--psychic, .battle-move-card--ghost, .battle-move-card--poison { --move-accent: #c9a6db; }
+.battle-move-card--rock, .battle-move-card--ground, .battle-move-card--fighting { --move-accent: #c8aa87; }
+.battle-move-card--dragon, .battle-move-card--flying { --move-accent: #a4b7e2; }
+.battle-move-animation { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
+.battle-sprite--switch-out { animation: battle-return-to-ball 250ms ease-in both; }
+.battle-sprite--switch-in { animation: battle-send-out 250ms ease-out both; }
+.battle-sprite--faint { animation: battle-faint-drop 500ms ease-in both; }
+@keyframes battle-return-to-ball { to { transform: scale(.5); } }
+@keyframes battle-send-out { from { transform: scale(.5); } to { transform: scale(1); } }
+@keyframes battle-faint-drop { to { translate: 0 70%; } }
+@keyframes battle-enter-enemy { from { opacity: 0; translate: 70px -25px; scale: .8; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes battle-enter-player { from { opacity: 0; translate: -70px 25px; scale: .8; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes battle-info-enter-enemy { from { opacity: 0; translate: -35px 0; } to { opacity: 1; translate: 0 0; } }
+@keyframes battle-info-enter-player { from { opacity: 0; translate: 35px 0; } to { opacity: 1; translate: 0 0; } }
+@media (max-width: 640px) {
+.battle-screen { padding: 0; gap: 8px; }
+  .battle-screen { height: auto; grid-template-rows: auto auto; align-content: start; }
+  .battle-arena { height: clamp(220px, 52vw, 320px); min-height: 0; }
+  .loading-gate__caption { top: calc(50% + 95px); }
+}
+@media (max-width: 899px) {
+  .battle-preview { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .battle-preview > :nth-child(2) { display: none; }
+  .battle-preview > :first-child { grid-template-columns: 48px minmax(0,1fr); gap: 6px; }
+  .battle-preview > :nth-child(3) { grid-template-columns: minmax(0,1fr) 48px; gap: 6px; }
+  .battle-preview .font-heading { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-gate *, .loading-gate::after, .battle-arena__combatant, .battle-arena__info,
+  .battle-sprite--switch-out, .battle-sprite--switch-in, .battle-sprite--faint { animation: none !important; transition: none !important; }
+  .loading-gate.is-opening .loading-gate__ball { opacity: 0; }
+}
+
+@font-face { font-family: 'Pokemon Emerald'; src: url('/pokerogue/pokemon-emerald-pro.ttf') format('truetype'); font-display: swap; }
+
+/* One 320 × 180 coordinate system for the field, HUD, and command window. */
+.battle-viewport { display: grid; place-items: center; padding: 0 !important; background: #16151d; }
+.pokerogue-battle { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; container-type: size; }
+.pokerogue-stage { position: relative; width: min(100cqw, 177.7778cqh); aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; isolation: isolate; background: #8fc2dc; image-rendering: pixelated; }
+.pokerogue-stage__canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.pokerogue-status { position: absolute; width: 40.625%; color: #fff; font-size: 2.5cqw; line-height: 1; text-shadow: .3cqw .3cqw #303038; background-size: 100% 100%; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; }
+.pokerogue-status--enemy { left: 0; top: 12.22%; height: 17.22%; background-image: url('/pokerogue/images/ui/pbinfo_enemy_mini.png'); }
+.pokerogue-status--player { right: 0; top: 55.55%; height: 23.33%; background-image: url('/pokerogue/images/ui/pbinfo_player.png'); }
+.pokerogue-status__name { position: absolute; top: 19%; left: 9%; max-width: 70%; white-space: nowrap; }
+.pokerogue-status__level { position: absolute; right: 10%; top: 19%; font-size: 2.2cqw; }
+.pokerogue-status__hp { position: absolute; left: 53.85%; top: 47.62%; width: 36.92%; height: 4.76%; background: #504850; }
+.pokerogue-status--enemy .pokerogue-status__hp { top: 64.52%; height: 6.45%; }
+.pokerogue-status__hp i { display: block; height: 100%; transition: width 500ms linear; }
+.pokerogue-status__value { position: absolute; right: 11%; top: 61%; font-size: 2.3cqw; }
+.pokerogue-console { position: absolute; inset: auto 0 0; height: 22.22%; display: grid; grid-template-columns: 56% 44%; color: #f8f8f8; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; }
+.pokerogue-console--playing { grid-template-columns: 1fr; }
+.pokerogue-console .pokerogue-console__message, .pokerogue-console .pokerogue-console__commands { position: relative; border: 1.875cqw solid transparent; border-image: url('/pokerogue/images/ui/window_1.png') 6 fill stretch; background: transparent; box-shadow: none; min-width: 0; }
+.pokerogue-console .pokerogue-console__message { padding: .7cqw 1cqw; min-height: 0; color: #fff; font-family: 'Pokemon Emerald', var(--font-pixel), monospace; font-size: 2.8cqw; line-height: 1.2; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-console__message > span { position: absolute; bottom: 1.6cqw; right: 2cqw; margin: 0; font-size: 2cqw; }
+.pokerogue-console__commands { padding: .2cqw .5cqw; }
+.pokerogue-console__commands > div { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 100%; }
+.pokerogue-console__commands button { position: relative; display: flex; align-items: center; gap: .5cqw; padding: 0 0 0 2cqw; min-height: 0; border: 0; background: transparent; color: #fff; box-shadow: none; font: inherit; font-size: 2.6cqw; line-height: 1; transform: none !important; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-console__commands button::before { content: ''; position: absolute; left: .5cqw; width: 0; height: 0; border-top: .65cqw solid transparent; border-bottom: .65cqw solid transparent; border-left: 1cqw solid #fff; opacity: 0; }
+.pokerogue-console__commands button:hover::before, .pokerogue-console__commands button:focus-visible::before { opacity: 1; }
+.pokerogue-console__commands button:hover, .pokerogue-console__commands button:focus-visible { color: #f8d878; background: transparent; box-shadow: none; }
+.pokerogue-console__commands button > span { font: inherit; display: block; }
+.pokerogue-console__commands .battle-move-card > span:not(:first-child), .pokerogue-console__commands .battle-move-card__type { display: none; }
+.pokerogue-console__commands button > span > span { font: inherit; }
+.pokerogue-console__commands button > canvas { width: 3cqw; height: 3cqw; }
+.pokerogue-console__commands button > canvas + span { font-size: 2cqw; }
+.pokerogue-console__commands button > canvas + span > span:last-child { display: none; }
+.pokerogue-stage__toolbar { position: absolute; right: 2%; top: 2%; display: flex; gap: 2cqw; font-size: 2cqw; color: #fff; text-shadow: .3cqw .3cqw #303038; }
+.pokerogue-stage__toolbar button { cursor: pointer; padding: .4cqw 1cqw; background: #303038b3; }
+.pokerogue-stage__toolbar button:disabled { opacity: .4; cursor: default; }
+.pokerogue-stage__error { position: absolute; top: 0; left: 0; right: 0; padding: 1cqw; background: #7c2424; color: #fff; font-size: 2.5cqw; }
+@media (max-width: 899px) {
+  .battle-viewport { min-height: min(65vh, 80vw); }
+}

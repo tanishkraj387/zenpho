@@ -1,6 +1,6 @@
 # Zenpho QA Checklist
 
-Run this before pushing or demoing.
+Run this before pushing or demoing. For the full cross-device and service checks, see the [current verification guide](../docs/07-verification-deployment-and-troubleshooting.md).
 
 ## Setup
 
@@ -29,13 +29,13 @@ Run this before pushing or demoing.
 - Practice filters work for search, difficulty, topic, and solved status.
 - Selecting a route opens `/battle?question=...`.
 - Run only updates sample-test state.
-- Submit success opens the Pokemon fight.
-- Moves can be used repeatedly while enough energy remains.
-- Wait restores energy and lets the enemy act.
+- Submit success opens a Fight or Hub prompt.
+- Starting a fight spends one energy; moves do not spend energy.
 - Switch Pokemon changes the active party member.
-- Win records the solved question before catch is allowed.
-- Failed catch and defeat return to Practice.
+- The successful submission records the solve before the fight; a win enables a catch attempt.
+- A fainted active Pokemon can switch to a healthy party member; defeat follows party collapse.
 - Solved questions cannot be farmed for repeat rewards.
+- A solved question can be resubmitted for a rematch and catch attempt if its species is unowned.
 
 ## Collection, Shop, Profile, Leaderboard, Gyms
 

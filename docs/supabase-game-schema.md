@@ -1,6 +1,8 @@
 # Supabase Game Schema
 
-This schema is the first backend authority layer for Zenpho.
+> **Historical note:** This document describes the first backend migration, not the current schema or game rules. Use the [current database/auth guide](04-database-and-auth.md), [judge/battle guide](05-judge-and-battle.md), and latest SQL migrations for implementation.
+
+This schema was the first backend authority layer for Zenpho.
 
 ## Files
 

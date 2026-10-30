@@ -1,5 +1,7 @@
 # Zenpho Data Model Plan
 
+> **Historical proposal:** The rules below were superseded by later migrations. In the current game, a first solve grants one energy, starting a fight spends one energy, and moves do not spend energy. See the [current developer guide](../../docs/README.md) and [battle rules](../../docs/05-judge-and-battle.md).
+
 ## Approved Product Rules
 
 - Solving a coding question creates a Pokemon encounter.

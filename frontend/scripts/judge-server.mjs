@@ -66,7 +66,7 @@ function runCommand(command, args, timeoutMs) {
     })
     child.on('error', (error) => {
       clearTimeout(timeout)
-      resolve({ code: 1, stdout, stderr: error.message, timedOut })
+      resolve({ code: 1, stdout, stderr: error.message, timedOut, spawnErrorCode: error.code })
     })
     child.on('close', (code) => {
       clearTimeout(timeout)
@@ -76,12 +76,12 @@ function runCommand(command, args, timeoutMs) {
 }
 
 function isInfrastructureError(message) {
+  const normalized = message.toLowerCase()
   return (
-    message.includes('spawn EPERM') ||
-    message.includes('failed to connect to the docker API') ||
-    message.includes('Cannot connect to the Docker daemon') ||
-    message.includes('dockerDesktopLinuxEngine') ||
-    message.includes('is the docker daemon running')
+    normalized.includes('failed to connect to the docker api') ||
+    normalized.includes('cannot connect to the docker daemon') ||
+    normalized.includes('dockerdesktoplinuxengine') ||
+    normalized.includes('is the docker daemon running')
   )
 }
 
@@ -186,6 +186,8 @@ async function runGroup({ code, language, tests }) {
       [
         'run',
         '--rm',
+        '--pull',
+        'never',
         '--network',
         'none',
         '--memory',
@@ -207,13 +209,21 @@ async function runGroup({ code, language, tests }) {
       return { passed: false, error: 'Timed out before finishing this test group.' }
     }
 
+    if (result.spawnErrorCode) {
+      return {
+        passed: false,
+        error: `Docker could not start (${result.spawnErrorCode}). Install Docker Desktop, start its engine, and ensure the docker command is available in this terminal.`,
+        infrastructureError: true,
+      }
+    }
+
     if (result.code !== 0) {
       const error = result.stderr.trim() || 'Code failed before tests completed.'
 
       return {
         passed: false,
         error,
-        infrastructureError: isInfrastructureError(error),
+        infrastructureError: (result.code >= 125 && result.code <= 127) || isInfrastructureError(error),
       }
     }
 
@@ -394,8 +404,22 @@ const server = createServer(async (request, response) => {
   }
 })
 
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log(`Zenpho Docker judge listening on http://localhost:${port}`)
   console.log(`Python image: ${pythonImage}`)
   console.log(`JavaScript image: ${nodeImage}`)
+
+  const dockerInfo = await runCommand('docker', ['info', '--format', '{{.ServerVersion}}'], 5000)
+  if (dockerInfo.code !== 0) {
+    console.error(`Docker is not ready: ${dockerInfo.stderr.trim() || 'docker info failed.'}`)
+    return
+  }
+
+  console.log(`Docker engine ready: ${dockerInfo.stdout.trim()}`)
+  for (const image of [pythonImage, nodeImage]) {
+    const inspected = await runCommand('docker', ['image', 'inspect', image], 5000)
+    if (inspected.code !== 0) {
+      console.error(`Judge image missing: ${image}. Run docker pull ${image} before submitting.`)
+    }
+  }
 })

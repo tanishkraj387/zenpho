@@ -1,0 +1,1311 @@
+[
+  {
+    "id": "easy-arrays-two-sum",
+    "title": "Two Sum Training",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Given an array of integers nums and an integer target, find two distinct indices whose values add to target. Return their indices in ascending order. Exactly one answer exists.",
+    "encounterPokemonId": 54,
+    "examples": [
+      {
+        "input": "nums = [2,7,11,15], target = 9",
+        "output": "[0,1]"
+      },
+      {
+        "input": "nums = [3,2,4], target = 6",
+        "output": "[1,2]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums, target):\n    return []\n",
+      "javascript": "export function solve(nums, target) {\n  return []\n}\n"
+    },
+    "constraints": [
+      "2 <= nums.length <= 10000",
+      "Exactly one pair adds to target.",
+      "Return the pair of indices in ascending order."
+    ]
+  },
+  {
+    "id": "easy-strings-palindrome",
+    "title": "Clean Palindrome",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Given a string s, keep only its alphanumeric characters and compare them without regard to case. Return true if the resulting string reads the same forward and backward.",
+    "encounterPokemonId": 25,
+    "examples": [
+      {
+        "input": "s = \"Race car!\"",
+        "output": "true"
+      },
+      {
+        "input": "s = \"debug\"",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return False\n",
+      "javascript": "export function solve(s) {\n  return false\n}\n"
+    },
+    "constraints": [
+      "0 <= s.length <= 200000",
+      "Ignore case and all nonalphanumeric characters."
+    ]
+  },
+  {
+    "id": "easy-math-fizz-buzz-count",
+    "title": "Fizz Buzz Count",
+    "difficulty": "easy",
+    "topic": "math",
+    "description": "Given a positive integer n, count the integers from 1 through n that are divisible by 3 or by 5. Count a number divisible by both only once.",
+    "encounterPokemonId": 74,
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "4"
+      },
+      {
+        "input": "n = 15",
+        "output": "7"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return 0\n",
+      "javascript": "export function solve(n) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= n <= 1000000000",
+      "Count numbers divisible by 3 or 5 once."
+    ]
+  },
+  {
+    "id": "medium-arrays-longest-streak",
+    "title": "Longest Clean Streak",
+    "difficulty": "medium",
+    "topic": "arrays",
+    "description": "Given an array nums of daily score changes, choose one nonempty contiguous subarray. Return the largest sum that any such streak can produce.",
+    "encounterPokemonId": 66,
+    "examples": [
+      {
+        "input": "nums = [1,2,3,4]",
+        "output": "10"
+      },
+      {
+        "input": "nums = [2,-1,2,3]",
+        "output": "6"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return 0\n",
+      "javascript": "export function solve(nums) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= nums.length <= 100000",
+      "-10000 <= nums[i] <= 10000",
+      "The selected streak must contain at least one value."
+    ]
+  },
+  {
+    "id": "medium-strings-group-anagrams",
+    "title": "Anagram Boxes",
+    "difficulty": "medium",
+    "topic": "strings",
+    "description": "Given an array of lowercase words, words belong to the same group when they contain the same characters with the same counts. Return the number of distinct anagram groups.",
+    "encounterPokemonId": 63,
+    "examples": [
+      {
+        "input": "words = [\"eat\",\"tea\",\"tan\",\"ate\"]",
+        "output": "2"
+      },
+      {
+        "input": "words = [\"abc\",\"bca\",\"cab\",\"dog\"]",
+        "output": "2"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(words):\n    return 0\n",
+      "javascript": "export function solve(words) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "0 <= words.length <= 10000",
+      "Words contain lowercase English letters.",
+      "Return the number of groups, not the groups themselves."
+    ]
+  },
+  {
+    "id": "medium-trees-level-sum",
+    "title": "Best Tree Level",
+    "difficulty": "medium",
+    "topic": "trees",
+    "description": "A binary tree is represented by level-order values with null entries for missing nodes. Return the one-based level whose node values have the largest sum.",
+    "encounterPokemonId": 133,
+    "examples": [
+      {
+        "input": "root = [1,7,0,7,-8,null,null]",
+        "output": "2"
+      },
+      {
+        "input": "root = [5,3,8]",
+        "output": "2"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= root.length <= 1023",
+      "null denotes an absent node.",
+      "The root is level 1."
+    ]
+  },
+  {
+    "id": "medium-graphs-island-count",
+    "title": "Island Counter",
+    "difficulty": "medium",
+    "topic": "graphs",
+    "description": "Given a grid of 0s and 1s, count groups of connected land cells. Land cells connect only to horizontal or vertical neighbors.",
+    "encounterPokemonId": 92,
+    "examples": [
+      {
+        "input": "grid = [[1,1,0],[0,1,0],[1,0,1]]",
+        "output": "3"
+      },
+      {
+        "input": "grid = [[1,1],[1,1]]",
+        "output": "1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(grid):\n    return 0\n",
+      "javascript": "export function solve(grid) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= grid.length, grid[i].length <= 300",
+      "Cells contain 0 for water or 1 for land.",
+      "Only horizontal and vertical neighbors connect."
+    ]
+  },
+  {
+    "id": "hard-dp-coin-routes",
+    "title": "Coin Route DP",
+    "difficulty": "hard",
+    "topic": "dp",
+    "description": "Given coin denominations and a target, return how many combinations make the target exactly. You may use each denomination repeatedly; changing the order does not make a new combination.",
+    "encounterPokemonId": 147,
+    "examples": [
+      {
+        "input": "coins = [1,2,5], target = 5",
+        "output": "4"
+      },
+      {
+        "input": "coins = [2], target = 3",
+        "output": "0"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(coins, target):\n    return 0\n",
+      "javascript": "export function solve(coins, target) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= coins.length <= 100",
+      "0 <= target <= 5000",
+      "Coin order does not matter and denominations may be reused."
+    ]
+  },
+  {
+    "id": "hard-graphs-shortest-signal",
+    "title": "Shortest Signal",
+    "difficulty": "hard",
+    "topic": "graphs",
+    "description": "There are n nodes labeled from 1 to n. Each directed edge contains a source, destination, and positive travel time. A signal starts at start; return the time when every node has received it, or -1 if a node cannot be reached.",
+    "encounterPokemonId": 94,
+    "examples": [
+      {
+        "input": "n = 4, edges = [[2,1,1],[2,3,1],[3,4,1]], start = 2",
+        "output": "2"
+      },
+      {
+        "input": "n = 2, edges = [[1,2,1]], start = 2",
+        "output": "-1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n, edges, start):\n    return -1\n",
+      "javascript": "export function solve(n, edges, start) {\n  return -1\n}\n"
+    },
+    "constraints": [
+      "1 <= n <= 100",
+      "Edges are directed and have positive travel time.",
+      "Return -1 when any node is unreachable."
+    ]
+  },
+  {
+    "id": "hard-math-prime-window",
+    "title": "Prime Window",
+    "difficulty": "hard",
+    "topic": "math",
+    "description": "Given a maximum value n and inclusive range queries [left, right], return the number of prime integers in each range in query order.",
+    "encounterPokemonId": 150,
+    "examples": [
+      {
+        "input": "n = 10, queries = [[1,10],[4,8]]",
+        "output": "[4,2]"
+      },
+      {
+        "input": "n = 20, queries = [[10,20]]",
+        "output": "[4]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n, queries):\n    return []\n",
+      "javascript": "export function solve(n, queries) {\n  return []\n}\n"
+    },
+    "constraints": [
+      "2 <= n <= 1000000",
+      "Each query [left, right] uses inclusive bounds."
+    ]
+  },
+  {
+    "id": "easy-arrays-merge-tracks",
+    "title": "Merge Tracks",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Given two arrays a and b sorted in nondecreasing order, return one sorted array containing every value from both inputs, including duplicates.",
+    "encounterPokemonId": 1,
+    "examples": [
+      {
+        "input": "a = [1,3], b = [2,4]",
+        "output": "[1,2,3,4]"
+      },
+      {
+        "input": "a = [], b = [5]",
+        "output": "[5]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(a, b):\n    return []\n",
+      "javascript": "export function solve(a, b) {\n  return []\n}\n"
+    },
+    "constraints": [
+      "0 <= a.length, b.length <= 100000",
+      "Both input arrays are sorted."
+    ]
+  },
+  {
+    "id": "easy-strings-first-unique",
+    "title": "First Unique Rune",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Given a string s, return the zero-based index of its first character that occurs exactly once. Return -1 when no character is unique.",
+    "encounterPokemonId": 39,
+    "examples": [
+      {
+        "input": "s = \"leetcode\"",
+        "output": "0"
+      },
+      {
+        "input": "s = \"aabb\"",
+        "output": "-1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return -1\n",
+      "javascript": "export function solve(s) {\n  return -1\n}\n"
+    },
+    "constraints": [
+      "0 <= s.length <= 100000",
+      "Return -1 if every character repeats."
+    ]
+  },
+  {
+    "id": "easy-trees-max-depth",
+    "title": "Tiny Tree Depth",
+    "difficulty": "easy",
+    "topic": "trees",
+    "description": "A binary tree is represented by level-order values with null entries for missing nodes. Return the number of nodes along the longest root-to-leaf path; return 0 for an empty tree.",
+    "encounterPokemonId": 10,
+    "examples": [
+      {
+        "input": "root = [3,9,20,null,null,15,7]",
+        "output": "3"
+      },
+      {
+        "input": "root = []",
+        "output": "0"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "0 <= root.length <= 1023",
+      "null denotes an absent node."
+    ]
+  },
+  {
+    "id": "medium-arrays-product-signal",
+    "title": "Product Signal",
+    "difficulty": "medium",
+    "topic": "arrays",
+    "description": "Given an integer array nums, return an array answer where answer[i] is the product of every value in nums except nums[i]. Preserve the original element order.",
+    "encounterPokemonId": 67,
+    "examples": [
+      {
+        "input": "nums = [1,2,3,4]",
+        "output": "[24,12,8,6]"
+      },
+      {
+        "input": "nums = [2,3]",
+        "output": "[3,2]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return []\n",
+      "javascript": "export function solve(nums) {\n  return []\n}\n"
+    },
+    "constraints": [
+      "2 <= nums.length <= 100000",
+      "Return one product for each index, excluding that value."
+    ]
+  },
+  {
+    "id": "medium-graphs-course-order",
+    "title": "Course Order",
+    "difficulty": "medium",
+    "topic": "graphs",
+    "description": "There are n courses numbered from 0 to n-1. Each prerequisite pair [course, required] means required must be finished first. Return true if every course can be finished.",
+    "encounterPokemonId": 93,
+    "examples": [
+      {
+        "input": "n = 2, prerequisites = [[1,0]]",
+        "output": "true"
+      },
+      {
+        "input": "n = 2, prerequisites = [[1,0],[0,1]]",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n, prerequisites):\n    return False\n",
+      "javascript": "export function solve(n, prerequisites) {\n  return false\n}\n"
+    },
+    "constraints": [
+      "1 <= n <= 1000",
+      "Prerequisites are directed pairs of valid course indices.",
+      "Return true when a complete ordering exists."
+    ]
+  },
+  {
+    "id": "medium-dp-climb-routes",
+    "title": "Climb Routes",
+    "difficulty": "medium",
+    "topic": "dp",
+    "description": "You are climbing n steps and may take either one or two steps at a time. Return the number of distinct sequences of moves that reach the top.",
+    "encounterPokemonId": 64,
+    "examples": [
+      {
+        "input": "n = 3",
+        "output": "3"
+      },
+      {
+        "input": "n = 5",
+        "output": "8"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return 0\n",
+      "javascript": "export function solve(n) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= n <= 45",
+      "You may climb one or two steps at a time."
+    ]
+  },
+  {
+    "id": "medium-math-subarray-divisible",
+    "title": "Divisible Signals",
+    "difficulty": "medium",
+    "topic": "math",
+    "description": "Given an integer array nums and a positive integer k, count the nonempty contiguous subarrays whose sum is divisible by k.",
+    "encounterPokemonId": 75,
+    "examples": [
+      {
+        "input": "nums = [4,5,0,-2,-3,1], k = 5",
+        "output": "7"
+      },
+      {
+        "input": "nums = [5], k = 9",
+        "output": "0"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums, k):\n    return 0\n",
+      "javascript": "export function solve(nums, k) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= nums.length <= 100000",
+      "1 <= k <= 10000",
+      "Count contiguous, nonempty subarrays."
+    ]
+  },
+  {
+    "id": "hard-trees-path-sum",
+    "title": "Path Sum Storm",
+    "difficulty": "hard",
+    "topic": "trees",
+    "description": "A binary tree is represented by level-order values with null entries for missing nodes. A path follows parent-child edges without repeating a node and may start and end anywhere. Return the largest path sum.",
+    "encounterPokemonId": 143,
+    "examples": [
+      {
+        "input": "root = [1,2,3]",
+        "output": "6"
+      },
+      {
+        "input": "root = [-10,9,20,null,null,15,7]",
+        "output": "42"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "1 <= root.length <= 1023",
+      "null denotes an absent node.",
+      "A path may start and end at any nodes."
+    ]
+  },
+  {
+    "id": "hard-dp-edit-distance",
+    "title": "Edit Distance Gate",
+    "difficulty": "hard",
+    "topic": "dp",
+    "description": "Given strings word1 and word2, return the fewest single-character insertions, deletions, or replacements required to turn word1 into word2.",
+    "encounterPokemonId": 149,
+    "examples": [
+      {
+        "input": "word1 = \"horse\", word2 = \"ros\"",
+        "output": "3"
+      },
+      {
+        "input": "word1 = \"intention\", word2 = \"execution\"",
+        "output": "5"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(word1, word2):\n    return 0\n",
+      "javascript": "export function solve(word1, word2) {\n  return 0\n}\n"
+    },
+    "constraints": [
+      "0 <= word1.length, word2.length <= 500",
+      "Allowed operations are insert, delete, and replace."
+    ]
+  },
+  {
+    "id": "hard-strings-min-window",
+    "title": "Minimum Window",
+    "difficulty": "hard",
+    "topic": "strings",
+    "description": "Given strings s and t, return the shortest contiguous substring of s containing every character of t with at least its required count. Return an empty string if no such window exists.",
+    "encounterPokemonId": 65,
+    "examples": [
+      {
+        "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+        "output": "\"BANC\""
+      },
+      {
+        "input": "s = \"a\", t = \"aa\"",
+        "output": "\"\""
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s, t):\n    return \"\"\n",
+      "javascript": "export function solve(s, t) {\n  return \"\"\n}\n"
+    },
+    "constraints": [
+      "1 <= s.length <= 100000",
+      "1 <= t.length <= 10000",
+      "Character counts in t must all appear in the window."
+    ]
+  },
+  {
+    "id": "easy-arrays-contains-duplicate",
+    "title": "Contains Duplicate",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Given an integer array nums, return true if any value appears at least twice. Otherwise return false.",
+    "encounterPokemonId": 19,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "-1000000000 <= nums[i] <= 1000000000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [1,2,3,1]",
+        "output": "true"
+      },
+      {
+        "input": "nums = [1,2,3,4]",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return False\n",
+      "javascript": "export function solve(nums) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-best-profit",
+    "title": "Best Time to Buy and Sell Stock",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Given daily prices, choose one day to buy and a later day to sell. Return the maximum profit, or 0 if no profit is possible.",
+    "encounterPokemonId": 52,
+    "constraints": [
+      "1 <= prices.length <= 100000",
+      "0 <= prices[i] <= 10000"
+    ],
+    "examples": [
+      {
+        "input": "prices = [7,1,5,3,6,4]",
+        "output": "5"
+      },
+      {
+        "input": "prices = [7,6,4,3,1]",
+        "output": "0"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(prices):\n    return 0\n",
+      "javascript": "export function solve(prices) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-move-zeroes",
+    "title": "Move Zeroes",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Move every zero to the end of nums while preserving the relative order of nonzero values. Return the updated array.",
+    "encounterPokemonId": 50,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "-100000 <= nums[i] <= 100000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [0,1,0,3,12]",
+        "output": "[1,3,12,0,0]"
+      },
+      {
+        "input": "nums = [0]",
+        "output": "[0]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return []\n",
+      "javascript": "export function solve(nums) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "medium-arrays-rotate",
+    "title": "Rotate Array",
+    "difficulty": "medium",
+    "topic": "arrays",
+    "description": "Rotate nums to the right by k positions. Return the rotated array.",
+    "encounterPokemonId": 28,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "0 <= k <= 100000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [1,2,3,4,5,6,7], k = 3",
+        "output": "[5,6,7,1,2,3,4]"
+      },
+      {
+        "input": "nums = [-1,-100,3,99], k = 2",
+        "output": "[3,99,-1,-100]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums, k):\n    return []\n",
+      "javascript": "export function solve(nums, k) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-missing-number",
+    "title": "Missing Number",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "nums contains distinct numbers from 0 through n with exactly one missing. Return the missing number.",
+    "encounterPokemonId": 43,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "Every value is unique and lies in [0, nums.length]."
+    ],
+    "examples": [
+      {
+        "input": "nums = [3,0,1]",
+        "output": "2"
+      },
+      {
+        "input": "nums = [0,1]",
+        "output": "2"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return 0\n",
+      "javascript": "export function solve(nums) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-intersection",
+    "title": "Intersection of Two Arrays",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Return the distinct values present in both nums1 and nums2 in ascending order.",
+    "encounterPokemonId": 98,
+    "constraints": [
+      "0 <= nums1.length, nums2.length <= 100000",
+      "-100000 <= nums1[i], nums2[i] <= 100000"
+    ],
+    "examples": [
+      {
+        "input": "nums1 = [1,2,2,1], nums2 = [2,2]",
+        "output": "[2]"
+      },
+      {
+        "input": "nums1 = [4,9,5], nums2 = [9,4,9,8,4]",
+        "output": "[4,9]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums1, nums2):\n    return []\n",
+      "javascript": "export function solve(nums1, nums2) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-majority",
+    "title": "Majority Element",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Return the value that appears more than floor(nums.length / 2) times. Such a value always exists.",
+    "encounterPokemonId": 56,
+    "constraints": [
+      "1 <= nums.length <= 100000",
+      "A majority value is guaranteed."
+    ],
+    "examples": [
+      {
+        "input": "nums = [3,2,3]",
+        "output": "3"
+      },
+      {
+        "input": "nums = [2,2,1,1,1,2,2]",
+        "output": "2"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return 0\n",
+      "javascript": "export function solve(nums) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-sorted-squares",
+    "title": "Squares of a Sorted Array",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "nums is sorted in nondecreasing order. Return the squares of its values in nondecreasing order.",
+    "encounterPokemonId": 27,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "-10000 <= nums[i] <= 10000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [-4,-1,0,3,10]",
+        "output": "[0,1,9,16,100]"
+      },
+      {
+        "input": "nums = [-7,-3,2,3,11]",
+        "output": "[4,9,9,49,121]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return []\n",
+      "javascript": "export function solve(nums) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-binary-search",
+    "title": "Binary Search",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Given distinct integers nums sorted in ascending order, return the index of target or -1 if it is absent.",
+    "encounterPokemonId": 81,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "nums is strictly increasing."
+    ],
+    "examples": [
+      {
+        "input": "nums = [-1,0,3,5,9,12], target = 9",
+        "output": "4"
+      },
+      {
+        "input": "nums = [-1,0,3,5,9,12], target = 2",
+        "output": "-1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums, target):\n    return -1\n",
+      "javascript": "export function solve(nums, target) {\n  return -1\n}\n"
+    }
+  },
+  {
+    "id": "easy-arrays-pivot-index",
+    "title": "Find Pivot Index",
+    "difficulty": "easy",
+    "topic": "arrays",
+    "description": "Return the first index whose left-side sum equals its right-side sum. An empty side has sum 0. Return -1 if none exists.",
+    "encounterPokemonId": 116,
+    "constraints": [
+      "1 <= nums.length <= 100000",
+      "-1000 <= nums[i] <= 1000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [1,7,3,6,5,6]",
+        "output": "3"
+      },
+      {
+        "input": "nums = [1,2,3]",
+        "output": "-1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return -1\n",
+      "javascript": "export function solve(nums) {\n  return -1\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-reverse-words",
+    "title": "Reverse Words in a String",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Reverse the order of words in s. A word is a run of non-space characters. Join words with one space.",
+    "encounterPokemonId": 53,
+    "constraints": [
+      "0 <= s.length <= 100000",
+      "s contains printable characters and spaces."
+    ],
+    "examples": [
+      {
+        "input": "s = \"the sky is blue\"",
+        "output": "\"blue is sky the\""
+      },
+      {
+        "input": "s = \"  hello world  \"",
+        "output": "\"world hello\""
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return \"\"\n",
+      "javascript": "export function solve(s) {\n  return \"\"\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-valid-anagram",
+    "title": "Valid Anagram",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Return true if t contains the same characters with the same counts as s, in any order.",
+    "encounterPokemonId": 35,
+    "constraints": [
+      "0 <= s.length, t.length <= 100000",
+      "Inputs use lowercase English letters."
+    ],
+    "examples": [
+      {
+        "input": "s = \"anagram\", t = \"nagaram\"",
+        "output": "true"
+      },
+      {
+        "input": "s = \"rat\", t = \"car\"",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s, t):\n    return False\n",
+      "javascript": "export function solve(s, t) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-common-prefix",
+    "title": "Longest Common Prefix",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Return the longest prefix shared by every string in strs. If there is no shared prefix, return an empty string.",
+    "encounterPokemonId": 37,
+    "constraints": [
+      "0 <= strs.length <= 1000",
+      "0 <= strs[i].length <= 200"
+    ],
+    "examples": [
+      {
+        "input": "strs = [\"flower\",\"flow\",\"flight\"]",
+        "output": "\"fl\""
+      },
+      {
+        "input": "strs = [\"dog\",\"racecar\",\"car\"]",
+        "output": "\"\""
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(strs):\n    return \"\"\n",
+      "javascript": "export function solve(strs) {\n  return \"\"\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-roman-integer",
+    "title": "Roman to Integer",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Convert a valid Roman numeral s to its integer value. Subtractive pairs such as IV and IX are allowed.",
+    "encounterPokemonId": 96,
+    "constraints": [
+      "1 <= s.length <= 15",
+      "s is a valid Roman numeral from 1 to 3999."
+    ],
+    "examples": [
+      {
+        "input": "s = \"III\"",
+        "output": "3"
+      },
+      {
+        "input": "s = \"MCMXCIV\"",
+        "output": "1994"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return 0\n",
+      "javascript": "export function solve(s) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-valid-parentheses",
+    "title": "Valid Parentheses",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Return true if every opening bracket has a matching closing bracket in the correct order.",
+    "encounterPokemonId": 48,
+    "constraints": [
+      "0 <= s.length <= 100000",
+      "s contains only (), [], and {}."
+    ],
+    "examples": [
+      {
+        "input": "s = \"()[]{}\"",
+        "output": "true"
+      },
+      {
+        "input": "s = \"(]\"",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return False\n",
+      "javascript": "export function solve(s) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "medium-strings-longest-substring",
+    "title": "Longest Substring Without Repeating Characters",
+    "difficulty": "medium",
+    "topic": "strings",
+    "description": "Return the length of the longest contiguous substring of s with no repeated character.",
+    "encounterPokemonId": 137,
+    "constraints": [
+      "0 <= s.length <= 100000",
+      "s contains printable ASCII characters."
+    ],
+    "examples": [
+      {
+        "input": "s = \"abcabcbb\"",
+        "output": "3"
+      },
+      {
+        "input": "s = \"bbbbb\"",
+        "output": "1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s):\n    return 0\n",
+      "javascript": "export function solve(s) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-strings-isomorphic",
+    "title": "Isomorphic Strings",
+    "difficulty": "easy",
+    "topic": "strings",
+    "description": "Return true if each character of s can be mapped consistently to one unique character of t.",
+    "encounterPokemonId": 102,
+    "constraints": [
+      "1 <= s.length, t.length <= 100000",
+      "s and t have the same length."
+    ],
+    "examples": [
+      {
+        "input": "s = \"egg\", t = \"add\"",
+        "output": "true"
+      },
+      {
+        "input": "s = \"foo\", t = \"bar\"",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(s, t):\n    return False\n",
+      "javascript": "export function solve(s, t) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "medium-math-count-primes",
+    "title": "Count Primes",
+    "difficulty": "medium",
+    "topic": "math",
+    "description": "Return the number of prime numbers strictly less than n.",
+    "encounterPokemonId": 101,
+    "constraints": [
+      "0 <= n <= 1000000"
+    ],
+    "examples": [
+      {
+        "input": "n = 10",
+        "output": "4"
+      },
+      {
+        "input": "n = 0",
+        "output": "0"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return 0\n",
+      "javascript": "export function solve(n) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-math-palindrome-number",
+    "title": "Palindrome Number",
+    "difficulty": "easy",
+    "topic": "math",
+    "description": "Return true if the decimal digits of x read the same from both ends. Negative values are not palindromes.",
+    "encounterPokemonId": 100,
+    "constraints": [
+      "-2147483648 <= x <= 2147483647"
+    ],
+    "examples": [
+      {
+        "input": "x = 121",
+        "output": "true"
+      },
+      {
+        "input": "x = -121",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(x):\n    return False\n",
+      "javascript": "export function solve(x) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "easy-math-power-two",
+    "title": "Power of Two",
+    "difficulty": "easy",
+    "topic": "math",
+    "description": "Return true if n is a positive power of two.",
+    "encounterPokemonId": 111,
+    "constraints": [
+      "-2147483648 <= n <= 2147483647"
+    ],
+    "examples": [
+      {
+        "input": "n = 1",
+        "output": "true"
+      },
+      {
+        "input": "n = 16",
+        "output": "true"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return False\n",
+      "javascript": "export function solve(n) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "medium-math-trailing-zeroes",
+    "title": "Factorial Trailing Zeroes",
+    "difficulty": "medium",
+    "topic": "math",
+    "description": "Return the number of trailing zero digits in n factorial.",
+    "encounterPokemonId": 82,
+    "constraints": [
+      "0 <= n <= 1000000000"
+    ],
+    "examples": [
+      {
+        "input": "n = 3",
+        "output": "0"
+      },
+      {
+        "input": "n = 5",
+        "output": "1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n):\n    return 0\n",
+      "javascript": "export function solve(n) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "medium-dp-house-robber",
+    "title": "House Robber",
+    "difficulty": "medium",
+    "topic": "dp",
+    "description": "Choose nonadjacent houses to maximize the sum of their values. Return the largest possible sum.",
+    "encounterPokemonId": 79,
+    "constraints": [
+      "0 <= nums.length <= 100000",
+      "0 <= nums[i] <= 1000"
+    ],
+    "examples": [
+      {
+        "input": "nums = [1,2,3,1]",
+        "output": "4"
+      },
+      {
+        "input": "nums = [2,7,9,3,1]",
+        "output": "12"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(nums):\n    return 0\n",
+      "javascript": "export function solve(nums) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-dp-min-cost-stairs",
+    "title": "Min Cost Climbing Stairs",
+    "difficulty": "easy",
+    "topic": "dp",
+    "description": "Pay cost[i] when stepping on stair i. You may start at stair 0 or 1 and climb one or two steps. Return the minimum cost to step beyond the array.",
+    "encounterPokemonId": 60,
+    "constraints": [
+      "2 <= cost.length <= 100000",
+      "0 <= cost[i] <= 999"
+    ],
+    "examples": [
+      {
+        "input": "cost = [10,15,20]",
+        "output": "15"
+      },
+      {
+        "input": "cost = [1,100,1,1,1,100,1,1,100,1]",
+        "output": "6"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(cost):\n    return 0\n",
+      "javascript": "export function solve(cost) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "medium-dp-unique-paths",
+    "title": "Unique Paths",
+    "difficulty": "medium",
+    "topic": "dp",
+    "description": "A robot starts at the top-left of an m by n grid and moves only right or down. Return the number of ways to reach the bottom-right.",
+    "encounterPokemonId": 80,
+    "constraints": [
+      "1 <= m, n <= 15"
+    ],
+    "examples": [
+      {
+        "input": "m = 3, n = 7",
+        "output": "28"
+      },
+      {
+        "input": "m = 3, n = 2",
+        "output": "3"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(m, n):\n    return 0\n",
+      "javascript": "export function solve(m, n) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "medium-dp-coin-change",
+    "title": "Coin Change",
+    "difficulty": "medium",
+    "topic": "dp",
+    "description": "Given coin denominations and an amount, return the fewest coins needed to make the amount, or -1 if impossible. Coins may be reused.",
+    "encounterPokemonId": 138,
+    "constraints": [
+      "1 <= coins.length <= 20",
+      "1 <= coins[i] <= 10000",
+      "0 <= amount <= 10000"
+    ],
+    "examples": [
+      {
+        "input": "coins = [1,2,5], amount = 11",
+        "output": "3"
+      },
+      {
+        "input": "coins = [2], amount = 3",
+        "output": "-1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(coins, amount):\n    return -1\n",
+      "javascript": "export function solve(coins, amount) {\n  return -1\n}\n"
+    }
+  },
+  {
+    "id": "medium-graphs-flood-fill",
+    "title": "Flood Fill",
+    "difficulty": "medium",
+    "topic": "graphs",
+    "description": "Starting at image[sr][sc], change that cell and every connected cell with its original color to color. Cells connect horizontally or vertically. Return the new image.",
+    "encounterPokemonId": 73,
+    "constraints": [
+      "1 <= image.length, image[i].length <= 50",
+      "0 <= sr < image.length; 0 <= sc < image[0].length"
+    ],
+    "examples": [
+      {
+        "input": "image = [[1,1,1],[1,1,0],[1,0,1]], sr = 1, sc = 1, color = 2",
+        "output": "[[2,2,2],[2,2,0],[2,0,1]]"
+      },
+      {
+        "input": "image = [[0,0,0],[0,0,0]], sr = 0, sc = 0, color = 0",
+        "output": "[[0,0,0],[0,0,0]]"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(image, sr, sc, color):\n    return []\n",
+      "javascript": "export function solve(image, sr, sc, color) {\n  return []\n}\n"
+    }
+  },
+  {
+    "id": "medium-graphs-components",
+    "title": "Number of Connected Components",
+    "difficulty": "medium",
+    "topic": "graphs",
+    "description": "Given n nodes numbered 0 through n-1 and undirected edges, return the number of connected components.",
+    "encounterPokemonId": 117,
+    "constraints": [
+      "1 <= n <= 100000",
+      "0 <= edges.length <= 200000",
+      "Each edge joins two distinct valid nodes."
+    ],
+    "examples": [
+      {
+        "input": "n = 5, edges = [[0,1],[1,2],[3,4]]",
+        "output": "2"
+      },
+      {
+        "input": "n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]",
+        "output": "1"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n, edges):\n    return 0\n",
+      "javascript": "export function solve(n, edges) {\n  return 0\n}\n"
+    }
+  },
+  {
+    "id": "easy-graphs-valid-path",
+    "title": "Find if Path Exists in Graph",
+    "difficulty": "easy",
+    "topic": "graphs",
+    "description": "Given an undirected graph, return true if there is a path from source to destination.",
+    "encounterPokemonId": 41,
+    "constraints": [
+      "1 <= n <= 100000",
+      "0 <= edges.length <= 200000",
+      "source and destination are valid node indices."
+    ],
+    "examples": [
+      {
+        "input": "n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2",
+        "output": "true"
+      },
+      {
+        "input": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(n, edges, source, destination):\n    return False\n",
+      "javascript": "export function solve(n, edges, source, destination) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "easy-trees-same-tree",
+    "title": "Same Tree",
+    "difficulty": "easy",
+    "topic": "trees",
+    "description": "Two binary trees are given as level-order arrays with null gaps. Return true if their structure and values match.",
+    "encounterPokemonId": 13,
+    "constraints": [
+      "0 <= p.length, q.length <= 1023",
+      "null denotes an absent node."
+    ],
+    "examples": [
+      {
+        "input": "p = [1,2,3], q = [1,2,3]",
+        "output": "true"
+      },
+      {
+        "input": "p = [1,2], q = [1,null,2]",
+        "output": "false"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(p, q):\n    return False\n",
+      "javascript": "export function solve(p, q) {\n  return false\n}\n"
+    }
+  },
+  {
+    "id": "easy-trees-min-depth",
+    "title": "Minimum Depth of Binary Tree",
+    "difficulty": "easy",
+    "topic": "trees",
+    "description": "The tree is a level-order array with null gaps. Return the number of nodes on the shortest root-to-leaf path; return 0 for an empty tree.",
+    "encounterPokemonId": 46,
+    "constraints": [
+      "0 <= root.length <= 1023",
+      "null denotes an absent node."
+    ],
+    "examples": [
+      {
+        "input": "root = [3,9,20,null,null,15,7]",
+        "output": "2"
+      },
+      {
+        "input": "root = [2,null,3,null,null,null,4]",
+        "output": "3"
+      }
+    ],
+    "starterCode": {
+      "python": "def solve(root):\n    return 0\n",
+      "javascript": "export function solve(root) {\n  return 0\n}\n"
+    }
+  }
+]

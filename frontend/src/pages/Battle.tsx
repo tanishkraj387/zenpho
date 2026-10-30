@@ -403,7 +403,7 @@ export function Battle() {
         {
           efficiency: 'pending',
           hidden: 'pending',
-          samples: 'failed',
+          samples: 'pending',
         },
       )
     }

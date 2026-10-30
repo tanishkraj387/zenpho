@@ -1,0 +1,83 @@
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { PixelCard } from '../ui/PixelCard'
+import { useAuthStore } from '../../store/authStore'
+import { getPostLoginPath } from '../../lib/starter'
+import { isSupabaseConfigured } from '../../lib/supabase'
+
+type RouteWrapperProps = {
+  children?: ReactNode
+}
+
+function LoadingScreen() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-sky p-6 font-pixel text-ink">
+      <PixelCard title="Loading">
+        <p className="text-xl">Checking your trainer pass...</p>
+      </PixelCard>
+    </main>
+  )
+}
+
+export function ProtectedRoute({ children }: RouteWrapperProps) {
+  const loading = useAuthStore((state) => state.loading)
+  const user = useAuthStore((state) => state.user)
+  const session = useAuthStore((state) => state.session)
+  const location = useLocation()
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!user || (isSupabaseConfigured && !session)) {
+    return <Navigate replace state={{ from: location }} to="/login" />
+  }
+
+  return children ?? <Outlet />
+}
+
+export function PublicOnlyRoute({ children }: RouteWrapperProps) {
+  const loading = useAuthStore((state) => state.loading)
+  const user = useAuthStore((state) => state.user)
+  const [redirectPath, setRedirectPath] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    if (!user) {
+      setRedirectPath(null)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    getPostLoginPath(user.id)
+      .then((path) => {
+        if (isMounted) {
+          setRedirectPath(path)
+        }
+      })
+      .catch((error) => {
+        console.error('Unable to check starter status after login.', error)
+
+        if (isMounted) {
+          setRedirectPath('/starter')
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
+  if (loading || (user && !redirectPath)) {
+    return <LoadingScreen />
+  }
+
+  if (user && redirectPath) {
+    return <Navigate replace to={redirectPath} />
+  }
+
+  return children ?? <Outlet />
+}
